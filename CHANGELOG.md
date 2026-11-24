@@ -1,4 +1,30 @@
 # Changelog
+## v2.2.1
+- Board column colours are more vibrant, in both themes.
+
+## v2.2.0
+- Snoozing a task moves it to Waitlist instead of hiding it from the board. When the snooze ends (or is cancelled) it goes back to the column it came from (e.g. WIP or Ready). Moving a snoozed task to another column by hand ends the snooze.
+
+## v2.1.0
+- Board: each column has its own background colour (Waitlist lavender, Ready blue, WIP amber, Completed green), matched to the light and dark themes.
+
+## v2.0.0
+- Task window: Enter finishes the field you are in instead of creating the task; Shift+Enter creates (or saves) the task. In Other information, Enter still starts a new line.
+- Settings > Shortcuts: change both keys (click a shortcut, press the new keys). Saved in `settings.json` and checked by the server; each shortcut needs its own keys.
+- Each open task card has a Mark done button. Clicking it starts a 7-second countdown bar; the task then moves to Completed. Clicking it again during the countdown cancels.
+- Queue filters: a Show finished checkbox adds completed tasks to the list.
+
+## v1.3.0
+- Settings reorganised: categories on the left (General, Tasks, Storage, Settings file), one group of settings on the right.
+- Every setting saves as soon as you change it; no Save button.
+- Drawing types, social media choices and the title format are tag lists: type a name and press Enter to add, click a tag to rename it, x to remove it, drag to reorder.
+- The priority list is no longer editable (Critical, High, Medium, Low, Lowest); the default priority is still a setting.
+- Settings are kept in `settings.json` in the project folder, created on first start. Settings > Settings file shows its location and contents, downloads it, and loads a settings file (partial files are fine; invalid ones change nothing).
+- Settings are validated on the server, so a hand-edited or uploaded file can't store bad values.
+- Fix: two changes saved at the same moment could overwrite each other, and a page load could catch a settings or task file mid-save (on Windows a save could even fail). Saves and loads are now serialised and the settings file is written atomically.
+- A broken hand-edited `settings.json` no longer stops the app; it runs on the defaults until the next save.
+- Fix: the task form keeps a task's type or social media name even after it was removed from the lists.
+
 ## v1.2.0
 - Fix: the theme you pick is saved the moment you pick it. Before, it was only a preview until Save, so the next reload (e.g. saving a task) reverted it to the system theme.
 - Photos are saved as `task_records/photos/<task title>.png` (`_2`, `_3` for more) and renamed when the title changes.

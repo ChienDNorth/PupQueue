@@ -61,8 +61,17 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .c-thumbs .more{font-size:var(--fs-xs);color:var(--muted)}
 .c-foot{display:flex;gap:.35rem;align-items:center;margin-top:.65rem;padding-top:.5rem;border-top:1px solid var(--line)}
 .c-foot .sp{flex:1}
+.mdone{display:inline-flex;align-items:center;gap:.35rem}.mdone svg{width:1.15em;height:1.15em;flex:none}
+.mdone[aria-pressed=true]{border-color:#00873a;color:var(--ok-fg)}
+/* mark-done countdown: a bar that shrinks to nothing; the negative delay keeps its place across re-renders */
+.cd{height:.25rem;margin-top:.5rem;border-radius:1rem;background:var(--line);overflow:hidden}
+.cd i{display:block;height:100%;background:#00873a;animation:cd linear forwards}
+@keyframes cd{from{width:100%}to{width:0}}
 .board{display:grid;grid-template-columns:repeat(4,minmax(14rem,1fr));gap:.8rem;overflow-x:auto;align-items:start}
 .col{background:var(--bg);border:1px dashed var(--line);border-radius:.7rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
+/* each board column has its own tint so the stages are easy to tell apart */
+.col[data-s=Waitlist]{background:light-dark(#e2d6fd,#3a2c72)}.col[data-s=Ready]{background:light-dark(#d3deff,#1f3478)}
+.col[data-s=WIP]{background:light-dark(#ffe2ad,#4d3812)}.col[data-s=Completed]{background:light-dark(#c9efd7,#12492f)}
 .col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}
 .cnt{font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text);border-radius:1rem;padding:0 .5rem}
 .thumbs img{height:3.5rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
@@ -133,13 +142,38 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .pgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;border:1px solid var(--line)}
 .acts{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.9rem}
 
-/* settings */
-.settings{max-width:34rem;margin:0 auto .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
+/* settings: categories on the left, one group of settings on the right */
+.slayout{display:grid;grid-template-columns:12rem minmax(0,1fr);gap:1.2rem;max-width:58rem;margin:0 auto;align-items:start}
+.snav{position:sticky;top:1rem;display:flex;flex-direction:column;gap:.2rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:.4rem}
+.snav button{text-align:left;border:0;background:none;padding:.5rem .8rem;border-radius:.5rem}
+.snav button:hover{background:var(--accent-soft)}.snav button.on{background:var(--accent);color:#fff}
+@media(max-width:45rem){.slayout{grid-template-columns:1fr}.snav{position:static;flex-direction:row;overflow-x:auto}.snav button{white-space:nowrap}}
+.settings{margin:0 0 .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
 .settings label{display:block;margin:.8rem 0 .2rem;font-size:var(--fs-sm);color:var(--muted)}
 .settings>h3+label{margin-top:0}
-.settings select,.settings input,.settings textarea{width:100%}
+.settings select,.settings input:not([type=file]){width:100%}
 .settings .fp{display:flex;gap:.7rem;align-items:center;font-size:var(--fs-md)}
 .settings .fp button{width:auto}
+.note{margin:.6rem 0 0;font-size:var(--fs-xs);color:var(--muted)}
+.path{display:block;padding:.4rem .6rem;border:1px solid var(--line);border-radius:.4rem;background:var(--bg);font:var(--fs-sm)/1.4 ui-monospace,Consolas,monospace;word-break:break-all}
+.frow{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.7rem}
+.btn{display:inline-flex;align-items:center;font-size:var(--fs-xs);padding:.12rem .55rem;border:1px solid var(--line);border-radius:.35rem;background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--accent)}.settings label.btn{display:inline-flex;margin:0;font-size:var(--fs-xs);color:var(--fg)}
+#fpre{margin:.7rem 0 0;max-height:20rem;overflow:auto;padding:.7rem;border:1px solid var(--line);border-radius:.5rem;background:var(--bg);font:var(--fs-xs)/1.5 ui-monospace,Consolas,monospace}
+.fres{margin-top:.7rem;padding:.5rem .7rem;border-radius:.5rem;background:var(--ok-bg);color:var(--ok-fg);font-size:var(--fs-sm)}.fres.bad{background:var(--bad-bg);color:var(--bad-fg)}
+/* tag lists */
+.tags{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.45rem;border:1px solid var(--line);border-radius:.6rem;background:var(--bg);min-height:2.6rem}
+.tags:focus-within{border-color:var(--accent)}
+.tg{display:inline-flex;align-items:center;gap:.1rem;padding:.1rem .3rem .1rem .75rem;border:1px solid transparent;border-radius:2rem;background:var(--accent-soft);color:var(--accent-text);font-size:var(--fs-md);cursor:grab}
+.tg.locked{padding-right:.75rem}.tg.over{border-color:var(--accent)}
+.tgt{cursor:text}.tg.locked .tgt,.tags:has(.tgsel) .tgt{cursor:inherit}
+.tgx{border:0;background:none;color:inherit;padding:0 .4rem;font-size:1rem;line-height:1.3;border-radius:50%;opacity:.7}
+.tgx:hover{opacity:1;background:var(--bad-bg);color:var(--bad-fg)}
+.settings .tags input,.settings .tags select{width:auto}.tgin{flex:1;min-width:9rem;border:0;background:transparent;padding:.25rem .3rem;font-size:var(--fs-md);outline:none}
+.tgedit{flex:none;min-width:5rem;padding:.1rem .6rem;border:1px solid var(--accent);border-radius:2rem;font-size:var(--fs-md)}
+.tgsel{padding:.15rem .5rem;border-radius:2rem;font-size:var(--fs-sm)}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,.6rem);padding:.4rem .95rem;border-radius:1.5rem;background:var(--fg);color:var(--bg);font-size:var(--fs-sm);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--danger);color:#fff}
 </style></head><body>
 <div id="page">
 <header><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
@@ -149,15 +183,19 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 </div>
 <aside id="detail"></aside>
 <dialog id="dlg"><form id="form" novalidate></form></dialog>
+<div id="toast" class="toast" role="status"></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
-let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false},sel=null;
+let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false,done:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
+let wakeTimer;
 async function load(){S=await api("GET","/api/state");T=S.tasks;
+  const next=Math.min(...T.filter(snoozed).map(x=>new Date(x.snoozed_until)-Date.now()));  // reload when the next snooze ends, so the task moves back
+  clearTimeout(wakeTimer);if(isFinite(next))wakeTimer=setTimeout(load,Math.min(next+1000,864e5));
   localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;
   L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
 
@@ -189,6 +227,7 @@ const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per pri
   return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
 const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n-i,n)};
 const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
+const combo=e=>[e.ctrlKey&&"Ctrl",e.altKey&&"Alt",e.shiftKey&&"Shift",e.metaKey&&"Meta",e.key==" "?"Space":e.key?.length==1?e.key.toUpperCase():e.key].filter(Boolean).join("+");  // e.g. "Shift+Enter", "Ctrl+S"
 const chip=(txt,cls="")=>`<span class="chip ${cls}">${txt}</span>`;
 
 /* ---------- small popup menus (priority, snooze) ---------- */
@@ -217,6 +256,7 @@ const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))
   const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
   return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
 const sel_=(n,o,v,blank)=>`<select name="${n}">${blank?'<option value=""></option>':""}${o.map(a=>`<option ${a==v?"selected":""}>${esc(a)}</option>`).join("")}</select>`;
+const withVal=(list,v)=>v&&!list.includes(v)?[...list,v]:list;
 const curSel=(n,v)=>sel_(n,CURS.includes(v)?CURS:[...CURS,v],v);
 
 /* ---------- date & time picker ---------- */
@@ -261,6 +301,12 @@ function chrome(){document.title=$("#appname").textContent=t("app");
   $("#add").textContent=t("add_task");$("#add").onclick=()=>edit();
   const ls=$("#lang");ls.title=t("language");ls.innerHTML=Object.entries(S.languages).map(([c,n])=>`<option value="${c}" ${c==S.settings.language?"selected":""}>${esc(n)}</option>`).join("");
   ls.onchange=async()=>{await api("POST","/api/settings",{language:ls.value});load()}}
+const DONE_MS=7000,pending={};  // task id -> {start, timer} while a Mark done countdown runs
+const CHECK="M140 255L240 375L410 165";
+const doneIcon=on=>on?`<svg viewBox="0 0 550 550" aria-hidden="true"><circle cx="275" cy="275" r="275" fill="#00873a"/><path d="${CHECK}" fill="none" stroke="#fff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  :`<svg viewBox="0 0 550 550" aria-hidden="true" style="color:var(--accent)"><circle cx="275" cy="275" r="262" fill="none" stroke="currentColor" stroke-width="26"/><path d="${CHECK}" fill="none" stroke="currentColor" stroke-width="96" stroke-linecap="round" stroke-linejoin="round"/><path d="${CHECK}" fill="none" stroke="var(--card)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const doneBtn=x=>{const p=pending[x.id];return x.status=="Completed"?"":`<button class="sm mdone" data-a="done" data-id="${x.id}" aria-pressed="${!!p}" title="${p?t("done_undo_hint"):""}">${doneIcon(p)}${t("mark_done")}</button>`};
+const doneBar=x=>{const p=pending[x.id];return p?`<div class="cd"><i style="animation-duration:${DONE_MS}ms;animation-delay:-${Date.now()-p.start}ms"></i></div>`:""};
 const snoozeBtns=(x,cls="sm")=>`${snoozed(x)?`<button class="${cls}" data-a="unsnz" data-id="${x.id}">${t("cancel_snooze")}</button>`:""}<button class="${cls}" data-a="snz" data-id="${x.id}">${t("snooze")} ▾</button>`;
 function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
@@ -271,17 +317,17 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
   ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
   ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
   ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}
-  <div class="c-foot"><button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+  <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
-  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
+  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
 $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities;
-  const list=T.filter(x=>x.status!="Completed").filter(x=>{
+  const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
     if(!F.snoozed&&snoozed(x))return false;
     if(F.prio!="all"){const[k,p]=F.prio.split(":");const i=pr(x.priority),j=P.indexOf(p);if(k=="eq"?i!=j:i>j)return false}
     if(F.minPrice!==""&&!(parseFloat(x.price)>=+F.minPrice))return false;
@@ -295,10 +341,11 @@ function queue(m){const P=S.settings.priorities;
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
   <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:6.5rem">
   <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:9rem">
-  <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
+  <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label>
+  <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
-  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked)}
+  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked)}
 function board(m){let drag;
   m.querySelectorAll(".card[draggable]").forEach(c=>c.ondragstart=()=>drag=c.dataset.id);
   m.querySelectorAll(".col").forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add("over")};c.ondragleave=()=>c.classList.remove("over");
@@ -307,7 +354,12 @@ async function act(a,id,btn){const x=T.find(y=>y.id==id);
   if(a=="edit")edit(x);
   else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);if(sel==id)sel=null;load()}}
   else if(a=="snz")snoozeMenu(btn,id);
-  else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}}
+  else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}
+  else if(a=="done"){  // first click starts the countdown, a second click within it cancels
+    if(pending[id]){clearTimeout(pending[id].timer);delete pending[id]}
+    else pending[id]={start:Date.now(),timer:setTimeout(async()=>{delete pending[id];
+      try{await api("POST","/api/tasks",{id,status:"Completed"})}catch(er){flash(er.message,true)}load()},DONE_MS)};
+    render()}}
 
 /* ---------- detail drawer ---------- */
 function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
@@ -338,7 +390,7 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   <div class="dbody">
   <section class="sec"><h3>${t("sec_title")}</h3><label class="fld"><input name="title" value="${esc(x.title)}" autocomplete="off"><em class="ferr"></em></label></section>
   <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
-    <label class="fld"><span>${t("type")}</span>${sel_("type",s.types,x.type,1)}</label>
+    <label class="fld"><span>${t("type")}</span>${sel_("type",withVal(s.types,x.type),x.type,1)}</label>
     <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
     <label class="chk"><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
     <div id="pbox" class="grid ${x.paid?"":"hide"}"><label class="fld"><span>${t("paid_amount")}</span><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}"></label>
@@ -355,7 +407,7 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   </div>
   <div class="dfoot"><button type="button" id="cx">${t("cancel")}</button><button class="primary" type="submit">${t("save")}</button></div>`;
   const setErr=(n,m)=>{const fl=E(n).closest(".fld");fl.classList.toggle("bad",!!m);$(".ferr",fl).textContent=m||""};
-  const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
+  const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,withVal(s.socials,r.net),r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
     $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();st.socials.splice(+b.dataset.rm,1);drawSoc()})};
   const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
   const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="${purl(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
@@ -365,6 +417,10 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
   E("paid").onchange=()=>$("#pbox").classList.toggle("hide",!E("paid").checked);
+  f.onkeydown=e=>{const c=combo(e),k=s.shortcuts,el=e.target;
+    if(c==k.save_task){e.preventDefault();el.blur?.();f.requestSubmit();return}  // blur first so the field's change (e.g. estimate) is applied
+    const field=el.matches("input,select")||el.matches("textarea")&&c!="Enter";  // plain Enter in notes is a new line
+    if(field&&(c==k.finish_field||e.key=="Enter")){e.preventDefault();if(c==k.finish_field)el.blur()}};  // Enter never submits the form on its own
   f.oninput=e=>{if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
   const est=E("estimate"),normEst=()=>{const m=parseDur(est.value);est.value=fmtDur(m)};
   est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
@@ -389,26 +445,89 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   $("#dlg").showModal();E("title").focus()}
 
 /* ---------- settings ---------- */
+const PARTS=["type","social","title","price","paid"];
+let stab=localStorage.stab||"general",importNote=null,toastTimer;
+function flash(msg,bad){const el=$("#toast");el.textContent=msg;el.classList.toggle("bad",!!bad);el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),bad?4000:1600)}
+let saving=Promise.resolve();
+function saveSettings(patch){  // every setting saves as soon as it changes; saves go out one after another so the page never shows a stale copy
+  return saving=saving.then(async()=>{
+    try{S.settings=await api("POST","/api/settings",patch);flash(t("saved"))}
+    catch(er){flash(er.message,true);await load()}  // show the problem, then fall back to what the server really has
+  })
+}
+/* a list shown as removable, renamable, draggable tags; with `allowed` it is a fixed set of parts to pick from */
+function tagEditor(el,{items,save,allowed}){let list=[...items],drag=null;
+  const locked=v=>allowed&&v=="title";  // the title part can't be removed
+  const has=(v,except)=>list.some((x,i)=>i!==except&&x.toLowerCase()==v.toLowerCase());
+  const commit=()=>save([...list]);
+  const draw=()=>{const rest=allowed?allowed.filter(v=>!list.includes(v)):[];
+    el.innerHTML=list.map((v,i)=>`<span class="tg ${locked(v)?"locked":""}" draggable="true" data-i="${i}"><span class="tgt" ${allowed?"":`title="${t("edit")}"`}>${allowed?t("part_"+v):esc(v)}</span>${locked(v)?"":`<button type="button" class="tgx" data-x="${i}" title="${t("remove")}" aria-label="${t("remove")}">×</button>`}</span>`).join("")+
+      (allowed?(rest.length?`<select class="tgsel"><option value="">${t("part_add")}</option>${rest.map(v=>`<option value="${v}">${t("part_"+v)}</option>`).join("")}</select>`:""):`<input class="tgin" maxlength="40" placeholder="${t("tag_add")}" aria-label="${t("tag_add")}">`)};
+  const add=v=>{v=v.trim();if(!v||has(v))return false;list.push(v);commit();return true};
+  const rename=(span,i)=>{const chip=span.closest(".tg"),inp=document.createElement("input");chip.draggable=false;  // a draggable parent blocks selecting text
+    inp.className="tgedit";inp.maxLength=40;inp.value=list[i];span.replaceWith(inp);inp.focus();inp.select();let done=false;
+    const finish=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v&&v!==list[i]&&!has(v,i)){list[i]=v;commit()}draw()};
+    inp.onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();finish(true)}else if(e.key=="Escape"){e.preventDefault();e.stopPropagation();finish(false)}};
+    inp.onblur=()=>finish(true)};
+  el.onkeydown=e=>{if(e.target.matches(".tgin")&&(e.key=="Enter"||e.key==",")){e.preventDefault();const v=e.target.value;e.target.value="";if(add(v)){draw();$(".tgin",el).focus()}}};
+  el.addEventListener("focusout",e=>{if(e.target.matches(".tgin")&&e.target.value.trim()){const v=e.target.value;e.target.value="";if(add(v))draw()}});  // text typed but not confirmed is kept
+  el.onchange=e=>{if(e.target.matches(".tgsel")&&e.target.value){list.push(e.target.value);commit();draw()}};
+  el.onclick=e=>{const x=e.target.closest("[data-x]");if(x){list.splice(+x.dataset.x,1);commit();draw();return}
+    const tt=e.target.closest(".tgt");if(tt&&!allowed)rename(tt,+tt.closest(".tg").dataset.i)};
+  el.ondragstart=e=>{const c=e.target.closest(".tg");if(!c)return;drag=+c.dataset.i;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(drag))};
+  el.ondragover=e=>{const c=e.target.closest(".tg");if(drag===null||!c)return;e.preventDefault();el.querySelectorAll(".over").forEach(o=>o.classList.remove("over"));c.classList.add("over")};
+  el.ondrop=e=>{const c=e.target.closest(".tg");if(drag===null||!c)return;e.preventDefault();const j=+c.dataset.i;
+    if(j!==drag){const [v]=list.splice(drag,1);list.splice(j,0,v);commit()}drag=null;draw()};
+  el.ondragend=()=>{drag=null;draw()};
+  draw()}
 function settings(m){const s=S.settings,fp=S.finished_photos;
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
-  m.innerHTML=`<div class="settings"><h3>${t("sec_general")}</h3>
-  <label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
-  <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
-  <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select></div>
-  <div class="settings"><h3>${t("sec_lists")}</h3>
-  ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6">${esc(s[k].join("\n"))}</textarea>`).join("")}
-  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5">${esc(s.title_order.join("\n"))}</textarea>
-  <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>
-  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>
-  <div class="settings"><h3>${t("sec_storage")}</h3><label>${t("finished_photos")}</label>
-  <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div></div>`;
-  $("#sth").onchange=async e=>{S.settings.theme=localStorage.theme=document.documentElement.dataset.theme=e.target.value;  // applies and persists at once
-    try{await api("POST","/api/settings",{theme:e.target.value})}catch(er){$("#serr").textContent=er.message}};
-  $("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
-  $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const p=lines("priorities");
-    try{await api("POST","/api/settings",{theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
-      title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}
-    catch(er){$("#serr").textContent=er.message}}}
+  const card=(title,body)=>`<div class="settings"><h3>${title}</h3>${body}</div>`;
+  const pane={
+    general:()=>card(t("cat_general"),`<label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
+      <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
+      <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`),
+    tasks:()=>card(t("default_priority"),`<select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
+      card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
+      card(t("socials_label"),`<div class="tags" id="tg-socials"></div><p class="note">${t("tag_hint")}</p>`)+
+      card(t("title_format"),`<div class="tags" id="tg-title"></div><p class="note">${t("title_format_hint")}</p>`),
+    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`),
+    storage:()=>card(t("cat_storage"),`<label>${t("finished_photos")}</label>
+      <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`),
+    file:()=>card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
+      <label>${t("file_path")}</label><code class="path">${esc(S.settings_file)}</code>
+      <div class="frow"><button class="sm" id="fview">${t("file_view")}</button><a class="btn" href="/api/settings/file" download="pupqueue-settings.json">${t("file_download")}</a>
+      <label class="btn">${t("file_upload")}<input type="file" id="fup" accept=".json,application/json" hidden></label></div>
+      <p class="note">${t("file_upload_help")}</p><pre id="fpre" class="hide"></pre>
+      ${importNote?`<div class="fres ${importNote.ok?"":"bad"}">${importNote.html}</div>`:""}`)};
+  if(!pane[stab])stab="general";
+  m.innerHTML=`<div class="slayout"><nav class="snav">${Object.keys(pane).map(k=>`<button data-tab="${k}" class="${k==stab?"on":""}">${t("cat_"+k)}</button>`).join("")}</nav><div class="spane">${pane[stab]()}</div></div>`;
+  m.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{stab=localStorage.stab=b.dataset.tab;importNote=null;render()});
+  if(stab=="general"){
+    $("#sth").onchange=e=>{localStorage.theme=document.documentElement.dataset.theme=e.target.value;saveSettings({theme:e.target.value})};  // applies at once
+    $("#scur").onchange=e=>saveSettings({currency:e.target.value});
+    $("#sdt").onchange=e=>saveSettings({default_due_time:e.target.value})}
+  if(stab=="tasks"){
+    $("#sdp").onchange=e=>saveSettings({default_priority:e.target.value});
+    tagEditor($("#tg-types"),{items:s.types,save:v=>saveSettings({types:v})});
+    tagEditor($("#tg-socials"),{items:s.socials,save:v=>saveSettings({socials:v})});
+    tagEditor($("#tg-title"),{items:s.title_order,allowed:PARTS,save:v=>saveSettings({title_order:v})})}
+  if(stab=="shortcuts")m.querySelectorAll("[data-sc]").forEach(b=>{let rec=false;  // click, then press the new keys; Escape or clicking away cancels
+    b.onclick=()=>{rec=true;b.textContent=t("sc_press");b.classList.add("on")};
+    b.onblur=()=>{if(rec)render()};
+    b.onkeydown=e=>{if(!rec||["Control","Alt","Shift","Meta"].includes(e.key))return;e.preventDefault();rec=false;
+      const c=combo(e);if(c=="Escape")return render();
+      if(Object.entries(s.shortcuts).some(([k,v])=>k!=b.dataset.sc&&v==c)){flash(t("err_invalid_shortcuts"),true);return render()}
+      saveSettings({shortcuts:{...s.shortcuts,[b.dataset.sc]:c}}).then(render)}});
+  if(stab=="storage")$("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
+  if(stab=="file"){
+    $("#fview").onclick=async()=>{const pre=$("#fpre"),show=pre.classList.contains("hide");
+      if(show)pre.textContent=await fetch("/api/settings/file").then(r=>r.text());
+      pre.classList.toggle("hide",!show);$("#fview").textContent=t(show?"file_hide":"file_view")};
+    $("#fup").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+      try{const r=await api("POST","/api/settings/import",await f.text());
+        importNote={ok:true,html:`<b>${t("import_applied")}:</b> ${r.applied.map(esc).join(", ")||"—"}${r.ignored.length?`<br><b>${t("import_ignored")}:</b> ${r.ignored.map(esc).join(", ")}`:""}`}}
+      catch(er){importNote={ok:false,html:esc(er.message)}}
+      await load()}}}
 load();
 </script></body></html>

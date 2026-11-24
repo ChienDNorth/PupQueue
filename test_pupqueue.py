@@ -72,6 +72,95 @@ def test_storage_and_api():
     call("DELETE", f"/api/tasks/{b['id']}")
     assert len(call("GET", "/api/state")["tasks"]) == 1
 
+def test_settings_file_and_import():
+    tmp = Path(tempfile.mkdtemp())
+    pq.SETTINGS_FILE = tmp / "settings.json"
+    srv = pq.ThreadingHTTPServer(("127.0.0.1", 0), pq.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_port}"
+    def call(m, u, b=None):
+        data = b if isinstance(b, bytes) else json.dumps(b).encode() if b is not None else None
+        try: return json.load(urllib.request.urlopen(urllib.request.Request(base + u, data, method=m)))
+        except urllib.error.HTTPError as e: return {"status": e.code, **json.load(e)}
+    saved = lambda: json.loads(pq.SETTINGS_FILE.read_text("utf-8"))
+    # the file exists (created on demand) and is what the download serves
+    assert not pq.SETTINGS_FILE.exists()
+    r = urllib.request.urlopen(base + "/api/settings/file")
+    assert pq.SETTINGS_FILE.exists() and r.read() == pq.SETTINGS_FILE.read_bytes() and "attachment" in r.headers["Content-Disposition"]
+    state = call("GET", "/api/state")
+    assert state["settings_file"] == str(pq.SETTINGS_FILE.resolve()) and state["settings"]["priorities"] == pq.PRIORITIES
+    # priorities are fixed: never stored, never editable, a stale key in the file is ignored
+    assert "priorities" not in saved()
+    call("POST", "/api/settings", {"priorities": ["x"], "theme": "dark"})
+    assert "priorities" not in saved() and call("GET", "/api/state")["settings"]["priorities"] == pq.PRIORITIES
+    pq.SETTINGS_FILE.write_text(json.dumps({**saved(), "priorities": ["old"]}), "utf-8")
+    assert pq.load_settings()["priorities"] == pq.PRIORITIES and call("GET", "/api/state")["settings"]["theme"] == "dark"
+    # lists are trimmed, de-duplicated (ignoring case) and stripped of blanks
+    s = call("POST", "/api/settings", {"types": [" Gift ", "gift", "", "Commission"], "socials": ["QQ"]})
+    assert s["types"] == ["Gift", "Commission"] and saved()["types"] == ["Gift", "Commission"]
+    # each setting is validated
+    for bad, code in [({"types": "Gift"}, "invalid_list"), ({"types": ["x" * 41]}, "invalid_list"), ({"socials": [1]}, "invalid_list"),
+                      ({"title_order": ["type", "price"]}, "invalid_title_order"), ({"title_order": ["title", "title"]}, "invalid_title_order"),
+                      ({"title_order": ["title", "bogus"]}, "invalid_title_order"), ({"default_priority": "Urgent"}, "invalid_priority"),
+                      ({"language": "xx"}, "invalid_language"), ({"theme": "neon"}, "invalid_theme"), ({"currency": "euro"}, "invalid_currency"),
+                      ({"default_due_time": "9:00"}, "invalid_time"), ({"shortcuts": "Enter"}, "invalid_shortcuts"),
+                      ({"shortcuts": {"bogus": "A"}}, "invalid_shortcuts"), ({"shortcuts": {"save_task": "Ctrl+ Enter"}}, "invalid_shortcuts"),
+                      ({"shortcuts": {"save_task": "Enter"}}, "invalid_shortcuts")]:  # same keys as finish_field
+        assert call("POST", "/api/settings", bad)["error"] == code, bad
+    # a partial shortcuts value keeps the other shortcut
+    assert call("POST", "/api/settings", {"shortcuts": {"save_task": "Ctrl+S"}})["shortcuts"] == {"save_task": "Ctrl+S", "finish_field": "Enter"}
+    assert call("POST", "/api/settings", {"title_order": ["paid", "title", "type"], "default_priority": "Low"})["title_order"] == ["paid", "title", "type"]
+    # importing a preset file: partial files are merged, unknown keys are reported and ignored
+    before = saved()
+    r = call("POST", "/api/settings/import", json.dumps({"theme": "light", "types": ["A", "B"], "priorities": ["x"], "extra": 1}).encode())
+    assert r["applied"] == ["theme", "types"] and r["ignored"] == ["priorities", "extra"]
+    assert saved()["theme"] == "light" and saved()["types"] == ["A", "B"] and saved()["socials"] == before["socials"]
+    # a bad value, a non-object or junk applies nothing
+    before = saved()
+    assert call("POST", "/api/settings/import", json.dumps({"theme": "light", "currency": "euro"}).encode())["error"] == "invalid_currency"
+    for junk in (b"[1,2]", b"not json", b"\xff\xfe\x00", b'"text"'):
+        assert call("POST", "/api/settings/import", junk)["error"] == "invalid_settings_file", junk
+    assert call("POST", "/api/settings/import", b"{" + b" " * 100_001 + b"}")["error"] == "file_too_big"
+    assert saved() == before
+    assert call("POST", "/api/settings/import", b"\xef\xbb\xbf" + json.dumps({"theme": "auto"}).encode())["applied"] == ["theme"]  # Windows editors add a BOM
+
+def test_concurrent_writes_do_not_lose_updates():
+    tmp = Path(tempfile.mkdtemp())
+    pq.SETTINGS_FILE = tmp / "settings.json"
+    pq.RECORDS, pq.PHOTOS = tmp / "task_records", tmp / "task_records" / "photos"
+    srv = pq.ThreadingHTTPServer(("127.0.0.1", 0), pq.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_port}"
+    def post(u, body):
+        urllib.request.urlopen(urllib.request.Request(base + u, json.dumps(body).encode(), method="POST")).read()
+    patches = [{"currency": "EUR"}, {"default_due_time": "09:00"}, {"theme": "dark"}, {"default_priority": "High"}, {"types": ["A"]}, {"socials": ["B"]}]
+    jobs = [threading.Thread(target=post, args=("/api/settings", p)) for p in patches]
+    jobs += [threading.Thread(target=post, args=("/api/tasks", {"title": f"t{i}"})) for i in range(12)]
+    failures = []
+    def read_state():  # the page reads while saves happen: it must never see a half-written file
+        for _ in range(150):
+            try: json.load(urllib.request.urlopen(base + "/api/state"))
+            except Exception as e: failures.append(repr(e))
+    def keep_saving():
+        for i in range(60): post("/api/settings", {"types": [f"T{i}"]})
+    extra = [threading.Thread(target=read_state) for _ in range(3)] + [threading.Thread(target=keep_saving)]
+    for t in jobs + extra: t.start()
+    for t in jobs + extra: t.join()
+    assert not failures, failures[:3]
+    post("/api/settings", {"types": ["A"]})  # keep_saving ran concurrently; settle on a known value
+    s = pq.load_settings()
+    assert (s["currency"], s["default_due_time"], s["theme"], s["default_priority"], s["types"], s["socials"]) == ("EUR", "09:00", "dark", "High", ["A"], ["B"])
+    assert sorted(t["title"] for t in pq.load_tasks()) == sorted(f"t{i}" for i in range(12))
+
+def test_broken_settings_file_falls_back_to_defaults():
+    tmp = Path(tempfile.mkdtemp())
+    pq.SETTINGS_FILE = tmp / "settings.json"
+    for broken in ("{not json", "[1, 2]", '{"theme": "neon"}', '{"types": "Gift"}', ""):
+        pq.SETTINGS_FILE.write_text(broken, "utf-8")
+        assert pq.load_settings() == {**pq.DEFAULT_SETTINGS, "priorities": pq.PRIORITIES}, broken
+    pq.SETTINGS_FILE.write_bytes(b"\xef\xbb\xbf" + json.dumps({"theme": "dark"}).encode())  # a Windows editor's BOM
+    assert pq.load_settings()["theme"] == "dark"
+
 def _sandbox():
     tmp = Path(tempfile.mkdtemp())
     pq.RECORDS, pq.PHOTOS, pq.SETTINGS_FILE = tmp / "task_records", tmp / "task_records" / "photos", tmp / "s.json"
@@ -185,3 +274,23 @@ def test_legacy_rows_and_migration():
     assert old["currency"] == ""
     pq.upsert({"id": "ab12", "status": "WIP"})  # editing a legacy row must not fail
     assert next(t for t in pq.load_tasks() if t["id"] == "ab12")["status"] == "WIP"
+
+def test_snooze_parks_in_waitlist_and_returns():
+    _sandbox()
+    later, past = "2999-01-01T00:00", "2000-01-01T00:00"
+    t = pq.upsert({"title": "S", "status": "WIP"})
+    t = pq.upsert({"id": t["id"], "snoozed_until": later})
+    assert (t["status"], t["snoozed_from"]) == ("Waitlist", "WIP")
+    t = pq.upsert({"id": t["id"], "snoozed_until": "2999-02-01T00:00"})  # extending keeps the original status
+    assert (t["status"], t["snoozed_from"]) == ("Waitlist", "WIP")
+    t = pq.upsert({"id": t["id"], "snoozed_until": ""})  # cancel: back where it was
+    assert (t["status"], t["snoozed_from"]) == ("WIP", "")
+    pq.upsert({"id": t["id"], "status": "Ready"}); pq.upsert({"id": t["id"], "snoozed_until": later})
+    pq.wake_snoozed()  # not over yet: stays parked
+    assert pq.load_tasks()[0]["status"] == "Waitlist"
+    rows = pq.load_tasks(); rows[0]["snoozed_until"] = past; pq.save_tasks(rows)
+    pq.wake_snoozed()
+    assert [(x["status"], x["snoozed_from"], x["snoozed_until"]) for x in pq.load_tasks()] == [("Ready", "", "")]
+    pq.upsert({"id": t["id"], "snoozed_until": later})
+    t = pq.upsert({"id": t["id"], "status": "Completed"})  # moved by hand while snoozed: snooze ends, no return later
+    assert (t["status"], t["snoozed_from"], t["snoozed_until"]) == ("Completed", "", "")
