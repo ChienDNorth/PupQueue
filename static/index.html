@@ -2,58 +2,226 @@
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PupQueue</title>
 <style>
-:root{--bg:#f6f4f1;--fg:#222;--card:#fff;--line:#ddd;--accent:#d2691e}
-@media(prefers-color-scheme:dark){:root{--bg:#1d1b19;--fg:#eee;--card:#2a2725;--line:#444}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
-header{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-header h1{font-size:18px;margin:0 12px 0 0}
-button,select,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
-button{cursor:pointer}button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-main{padding:16px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
-.card.snoozed{opacity:.5}.meta{font-size:13px;opacity:.75}.tag{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px;margin-right:4px}
-.board{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:12px}
-.col{background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:8px;min-height:200px}.col.over{border-color:var(--accent)}
-.col h3{margin:0 0 8px;font-size:14px}.card[draggable]{cursor:grab}
-dialog{max-width:560px;width:92vw;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px}
-label{display:block;margin:8px 0 2px;font-size:13px}dialog input:not([type=checkbox]),dialog select,dialog textarea{width:100%;box-sizing:border-box}
-.thumbs img{height:60px;margin:4px 4px 0 0;border-radius:4px}.hide{display:none}
-#err{color:#c00;font-size:13px}
+:root{color-scheme:light dark;
+--bg:light-dark(#f2f6ff,#0d1224);--fg:light-dark(#16203a,#e6ebfb);--card:light-dark(#fff,#151c34);--line:light-dark(#d9e2f7,#27325a);
+--muted:light-dark(#5f6f93,#97a4cb);--accent:#4f63f0;--accent-text:light-dark(#3b4fd9,#93a4ff);--accent-soft:light-dark(#e6ebff,#222c55);
+--pc:light-dark(#5065f5,#7f93ff);--danger:light-dark(#d1344a,#ff7b8d);--shadow-c:light-dark(rgba(50,70,160,.18),rgba(0,0,0,.6));
+--shadow:0 .5rem 1.5rem var(--shadow-c);--dw:27rem}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+a{color:var(--accent-text)}
+*{box-sizing:border-box}
+/* auto zoom: the root font size follows the window width, everything else is in rem */
+html{font-size:clamp(14px,calc(9px + .45vw),24px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.45 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
+#page{min-height:100vh;display:flex;flex-direction:column;transition:margin-right .22s ease}
+@media(min-width:60rem){body.has-detail #page{margin-right:var(--dw)}}
+header{display:flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
+header h1{font-size:1.25rem;margin:0 .8rem 0 0;color:var(--accent-text)}
+main{flex:1;padding:1rem}
+footer{padding:.8rem 1rem;text-align:center;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+button,select,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:.4rem;padding:.35rem .6rem}
+button{cursor:pointer}button:hover{border-color:var(--accent)}
+button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.hide{display:none!important}.dim{color:var(--muted)}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem}
+.wrap{max-width:72rem;margin:0 auto}
+
+/* cards, board */
+.card{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.7rem .85rem;margin-bottom:.6rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--accent)}.card.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.card.snoozed{opacity:.5}.card[draggable]{cursor:grab}
+.meta{font-size:.85rem;color:var(--muted);margin-top:.15rem}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:1rem;padding:0 .55rem;font-size:.75rem;margin-right:.3rem}
+.board{display:grid;grid-template-columns:repeat(4,minmax(13rem,1fr));gap:.8rem;overflow-x:auto}
+.col{background:var(--bg);border:1px dashed var(--line);border-radius:.6rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
+.col h3{margin:0 0 .5rem;font-size:.95rem}
+.thumbs img{height:3.5rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
+
+/* task dialog */
+dialog{padding:0;width:min(46rem,94vw);max-height:92vh;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);overflow:hidden}
+dialog::backdrop{background:rgba(8,14,40,.5)}
+#form{display:flex;flex-direction:column;max-height:92vh}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap;padding:.8rem 1.1rem;border-bottom:1px solid var(--line);background:var(--card)}
+.dhead h2{margin:.3rem 0 0;font-size:1.25rem}
+.dbody{overflow:auto;padding:1rem 1.1rem .4rem;flex:1;min-height:0}
+.dfoot{display:flex;gap:.5rem;align-items:center;justify-content:flex-end;padding:.7rem 1.1rem;border-top:1px solid var(--line);background:var(--card)}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.8rem 1rem;margin-bottom:.8rem}
+.sec>h3,.dsec>h3{margin:0 0 .6rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent-text)}
+.sec>.grid+.fld,.sec>.fld+.fld,.sec>.fld+.grid,.sec>.grid+.grid,.sec>.chk+.grid{margin-top:.7rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.7rem}
+.fld{display:block}.fld>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.2rem}
+.fld input:not([type=checkbox]):not([type=file]):not([type=radio]),.fld select,.fld textarea{width:100%}
+.inl{display:flex;gap:.4rem}.inl input{flex:1;min-width:0}.inl select{width:6rem}
+.chk{display:flex;align-items:center;gap:.5rem;margin-top:.7rem;cursor:pointer}
+.hint{display:block;font-size:.8rem;color:var(--muted);margin-top:.2rem;min-height:1.1em}
+.ferr{display:block;color:var(--danger);font-size:.82rem;margin-top:.2rem}.ferr:empty{display:none}
+.bad input,.bad select,.bad textarea,.bad .dtbtn{border-color:var(--danger)}
+.srow{display:flex;gap:.4rem;margin-bottom:.4rem}.srow input{flex:1}.srow select{width:9rem}
+.th{position:relative;display:inline-block}.th button{position:absolute;top:.3rem;right:.4rem;padding:0 .35rem;line-height:1.2;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0}
+#perr{color:var(--danger);font-size:.82rem}
+
+/* priority: signal-bar icon + click-to-open menu */
+.bars{height:1.05em;flex:none}.bars rect{fill:var(--pc)}.bars .off{opacity:.3}
+.pb,.pickp{display:inline-flex;align-items:center;gap:.4rem;border:0;background:none;padding:.15rem .4rem;border-radius:.45rem;font-weight:600;font-size:.85rem;color:var(--fg)}
+.pickp{border:1px solid var(--line);background:var(--card);padding:.35rem .6rem;font-size:1rem}
+.pb:hover,.pickp:hover{background:var(--accent-soft)}
+#pmenu{position:fixed;z-index:60;min-width:11rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;box-shadow:var(--shadow);padding:.3rem}
+#pmenu button{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;border:0;background:none;padding:.45rem .7rem;border-radius:.4rem;font-size:1rem}
+#pmenu button:hover{background:var(--accent-soft)}#pmenu .cur{font-weight:600}
+
+/* date & time picker */
+.dt{position:relative;display:flex;gap:.3rem}
+.dtbtn{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtbtn.empty{color:var(--muted)}
+.pop{position:absolute;top:calc(100% + .35rem);left:0;width:17.5rem;max-width:calc(100vw - 2rem);z-index:40;background:var(--card);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);padding:.7rem}
+.cal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-weight:600}
+.cal-h button{border:0;background:none;font-size:1.15rem;line-height:1;padding:.25rem .65rem;border-radius:.4rem}
+.cal-h button:hover{background:var(--accent-soft)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem;text-align:center}
+.cal b{font-size:.75rem;color:var(--muted);font-weight:500;padding-bottom:.2rem}
+.day{border:0;background:none;aspect-ratio:1;padding:0;border-radius:50%;font-size:.85rem}
+.day:hover{background:var(--accent-soft)}.day.today{box-shadow:inset 0 0 0 1px var(--accent)}
+.day.on,.day.on:hover{background:var(--accent);color:#fff}
+.quick{display:flex;gap:.3rem;margin:.55rem 0}.quick button{flex:1;border-radius:1rem;padding:.15rem .3rem;font-size:.8rem}
+.tsel{display:flex;gap:.35rem;align-items:center;border-top:1px solid var(--line);padding-top:.55rem}
+.tsel select{width:auto;padding:.25rem .3rem}.tsel .primary{margin-left:auto}
+
+/* detail drawer */
+#detail{position:fixed;top:0;right:0;bottom:0;width:min(var(--dw),100vw);background:var(--card);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;overflow-y:auto;z-index:20;padding:1rem 1.1rem}
+#detail.open{transform:none;visibility:visible;transition:transform .22s ease}
+.dd-h{display:flex;gap:.6rem;justify-content:space-between;align-items:flex-start}
+.dd-h h2{margin:0 0 .4rem;font-size:1.2rem;word-break:break-word}
+.dsec{border-top:1px solid var(--line);padding-top:.7rem;margin-top:.9rem}
+dl{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0}
+dt{color:var(--muted);font-size:.85rem;padding-top:.1rem}dd{margin:0;word-break:break-word}
+.pre{white-space:pre-wrap}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(7rem,1fr));gap:.4rem}
+.pgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;border:1px solid var(--line)}
+.acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem}
+
+/* settings */
+.settings{max-width:34rem;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:.5rem 1.2rem 1.2rem}
+.settings label{display:block;margin:.8rem 0 .2rem;font-size:.85rem;color:var(--muted)}
+.settings select,.settings input,.settings textarea{width:100%}
 </style></head><body>
+<div id="page">
 <header><h1 id="appname"></h1><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button>
 <span style="flex:1"></span><button class="primary" id="add"></button></header>
 <main id="main"></main>
-<dialog id="dlg"><form method="dialog" id="form"></form></dialog>
+<footer id="foot"></footer>
+</div>
+<aside id="detail"></aside>
+<dialog id="dlg"><form id="form" novalidate></form></dialog>
 <script>
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let S, T, L={}, view=localStorage.view||"queue", F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false}, form=null;
+const pad=n=>String(n).padStart(2,"0");
+document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
+let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false},sel=null;
 const t=k=>L[k]??k;
-const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();if(!r.ok)throw new Error(j.error);return j};
+const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
+  if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
 async function load(){S=await api("GET","/api/state");T=S.tasks;
+  localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;
   L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
+
+/* ---------- helpers ---------- */
+const CURS=["USD","CNY","EUR","GBP","JPY","KRW","HKD","TWD","CAD","AUD","SGD"];
+const defCur=()=>S.settings.currency||L.default_currency||"USD";
+const cur=x=>x.currency||defCur();
+const A_="[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+";
+const EMAIL_RE=new RegExp("^"+A_+"(?:\\."+A_+")*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$");
+const UN={min:1,mins:1,minute:1,minutes:1,m:1,"分":1,"分钟":1,h:60,hr:60,hrs:60,hour:60,hours:60,"时":60,"小时":60,d:1440,day:1440,days:1440,"天":1440,"日":1440};
+function parseDur(s){s=s.toLowerCase().replace(/[\s,]/g,"");if(!s)return"";
+  const toks=[...s.matchAll(/(\d+(?:\.\d+)?)([^\d.]*)/g)];
+  if(!toks.length||toks.map(m=>m[0]).join("")!=s)throw 0;
+  let sum=0;toks.forEach(([,n,u],i)=>{if(Object.hasOwn(UN,u))sum+=n*UN[u];else if(u===""&&i==toks.length-1)sum+=+n;else throw 0});
+  return Math.round(sum)}
+const fmtDur=m=>{if(m==="")return"";const d=Math.floor(m/1440),h=Math.floor(m%1440/60),n=m%60;return(d?d+"d":"")+(h?h+"h":"")+(n?n+"min":"")||"0min"};
+const loc=()=>L.intl||S.settings.language;
+const fmtT=(h,m)=>L.hour12?`${h%12||12}:${pad(m)} ${t(h<12?"am":"pm")}`:`${pad(h)}:${pad(m)}`;
+const fmtD=d=>d.toLocaleDateString(loc(),{year:"numeric",month:"short",day:"numeric",weekday:"short"});
+const fmtDT=v=>{if(!v)return"";const d=new Date(v);return isNaN(d)?v:`${fmtD(d)} · ${fmtT(d.getHours(),d.getMinutes())}`};
+const localISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
+const photosOf=x=>x.photos?x.photos.split(";").filter(Boolean):[];
+const pr=p=>S.settings.priorities.indexOf(p);
+const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
+const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per priority level), the first `on` filled
+  return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
+const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n-i,n)};
+const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
+function closeMenu(){$("#pmenu")?.remove()}
+function prioMenu(anchor,cur,pick){const old=$("#pmenu");closeMenu();if(old&&old._a===anchor)return;
+  const P=S.settings.priorities,m=document.createElement("div");m.id="pmenu";m._a=anchor;m.setAttribute("role","menu");
+  m.innerHTML=P.map((p,i)=>`<button type="button" role="menuitem" data-p="${i}" class="${p==cur?"cur":""}">${bars(P.length-i,P.length)}<span>${esc(p)}</span></button>`).join("");
+  (anchor.closest("dialog")||document.body).appendChild(m);  // inside the dialog, or the modal would block it
+  const r=anchor.getBoundingClientRect(),h=m.offsetHeight,w=m.offsetWidth;
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+"px";m.style.top=(r.bottom+4+h>innerHeight?Math.max(8,r.top-h-4):r.bottom+4)+"px";
+  m.onclick=e=>{const b=e.target.closest("[data-p]");if(b){closeMenu();pick(P[+b.dataset.p])}}}
+const pmClick=b=>{const x=T.find(y=>y.id==b.dataset.pm);prioMenu(b,x.priority,async p=>{await api("POST","/api/tasks",{id:x.id,priority:p});load()})};
+const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
+  const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
+  return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
+const sel_=(n,o,v,blank)=>`<select name="${n}">${blank?'<option value=""></option>':""}${o.map(a=>`<option ${a==v?"selected":""}>${esc(a)}</option>`).join("")}</select>`;
+const curSel=(n,v)=>sel_(n,CURS.includes(v)?CURS:[...CURS,v],v);
+
+/* ---------- date & time picker ---------- */
+const dtField=(name,val,mode)=>`<div class="dt" data-mode="${mode}"><input type="hidden" name="${name}" value="${esc(val)}"><button type="button" class="dtbtn"></button><button type="button" class="dtx" title="${t("clear")}">×</button><div class="pop hide"></div></div>`;
+function bindDt(el){const inp=$("input",el),btn=$(".dtbtn",el),clr=$(".dtx",el),pop=$(".pop",el);let vy,vm;
+  const val=()=>inp.value?new Date(inp.value):null;
+  const label=()=>{btn.textContent="📅  "+(inp.value?fmtDT(inp.value):t("pick_datetime"));btn.classList.toggle("empty",!inp.value);clr.classList.toggle("hide",!inp.value)};
+  const defTime=()=>{if(el.dataset.mode=="now"){const n=new Date();return[n.getHours(),n.getMinutes()]}return S.settings.default_due_time.split(":").map(Number)};
+  const setVal=(y,m,d,h,mi)=>{inp.value=localISO(new Date(y,m,d,h,mi));label()};
+  const pickDay=(y,m,d)=>{const c=val(),[h,mi]=c?[c.getHours(),c.getMinutes()]:defTime();setVal(y,m,d,h,mi);vy=y;vm=m;draw()};
+  function draw(){const c=val(),now=new Date(),ws=L.week_start|0,lead=(new Date(vy,vm,1).getDay()-ws+7)%7,n=new Date(vy,vm+1,0).getDate();
+    const same=(d,y,m,dd)=>d&&d.getFullYear()==y&&d.getMonth()==m&&d.getDate()==dd;
+    const wd=[...Array(7)].map((_,i)=>`<b>${new Date(2024,0,7+(i+ws)%7).toLocaleDateString(loc(),{weekday:"narrow"})}</b>`).join("");
+    const days=[...Array(lead)].map(()=>"<i></i>").join("")+[...Array(n)].map((_,i)=>`<button type="button" class="day ${same(now,vy,vm,i+1)?"today":""} ${same(c,vy,vm,i+1)?"on":""}" data-day="${i+1}">${i+1}</button>`).join("");
+    const mins=[...Array(12)].map((_,i)=>i*5);if(c&&!mins.includes(c.getMinutes()))mins.push(c.getMinutes()),mins.sort((a,b)=>a-b);
+    pop.innerHTML=`<div class="cal-h"><button type="button" data-nav="-1">‹</button><span>${new Date(vy,vm,1).toLocaleDateString(loc(),{year:"numeric",month:"long"})}</span><button type="button" data-nav="1">›</button></div>
+    <div class="cal">${wd}${days}</div>
+    <div class="quick"><button type="button" data-q="0">${t("today")}</button><button type="button" data-q="1">${t("tomorrow")}</button><button type="button" data-q="7">${t("next_week")}</button></div>
+    <div class="tsel"><span>${t("time")}</span><select class="th_" ${c?"":"disabled"} aria-label="${t("hour")}">${[...Array(24)].map((_,h)=>`<option value="${h}" ${c&&c.getHours()==h?"selected":""}>${fmtT(h,0).replace(":00","")}</option>`).join("")}</select>:
+    <select class="tm_" ${c?"":"disabled"} aria-label="${t("minute")}">${mins.map(m=>`<option value="${m}" ${c&&c.getMinutes()==m?"selected":""}>${pad(m)}</option>`).join("")}</select>
+    <button type="button" class="primary" data-done>${t("done")}</button></div>`}
+  pop.onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.nav){const d=new Date(vy,vm+ +b.dataset.nav,1);vy=d.getFullYear();vm=d.getMonth();draw()}
+    else if(b.dataset.day)pickDay(vy,vm,+b.dataset.day);
+    else if(b.dataset.q){const d=new Date(Date.now()+ +b.dataset.q*864e5);pickDay(d.getFullYear(),d.getMonth(),d.getDate())}
+    else if("done" in b.dataset)pop.classList.add("hide")};
+  pop.onchange=()=>{const c=val();if(c)setVal(c.getFullYear(),c.getMonth(),c.getDate(),+$(".th_",pop).value,+$(".tm_",pop).value)};
+  btn.onclick=()=>{if(!pop.classList.contains("hide"))return pop.classList.add("hide");
+    document.querySelectorAll(".dt .pop").forEach(p=>p.classList.add("hide"));
+    const b=val()||new Date();vy=b.getFullYear();vm=b.getMonth();draw();pop.classList.remove("hide")};
+  clr.onclick=()=>{inp.value="";label();pop.classList.add("hide")};
+  label()}
+document.addEventListener("click",e=>{const path=e.composedPath();  // composedPath: the clicked node may already be re-rendered away
+  const pm=$("#pmenu");if(pm&&!path.includes(pm)&&!path.includes(pm._a))closeMenu();
+  document.querySelectorAll(".dt .pop:not(.hide)").forEach(p=>{if(!path.includes(p.parentElement))p.classList.add("hide")})});
+document.addEventListener("keydown",e=>{if(e.key!="Escape"||$("#dlg").open)return;if($("#pmenu"))closeMenu();else if(sel){sel=null;render()}});
+$("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".dt .pop:not(.hide)");if(open.length||$("#pmenu")){e.preventDefault();open.forEach(p=>p.classList.add("hide"));closeMenu()}});
+
+/* ---------- list / board ---------- */
 function chrome(){document.title=$("#appname").textContent=t("app");
   document.querySelectorAll("[data-v]").forEach(b=>{b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
   $("#add").textContent=t("add_task");$("#add").onclick=()=>edit()}
-const pr=p=>S.settings.priorities.indexOf(p);
-const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
 function card(x,drag){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
-  return `<div class="card ${snoozed(x)?"snoozed":""}" ${drag?`draggable="true" data-id="${x.id}"`:""}>
-  <b>${esc(fullTitle(x))}</b> <span class="tag">${esc(x.priority)}</span>${x.type?`<span class="tag">${esc(x.type)}</span>`:""}
-  <div class="meta">${x.price?`💲${esc(x.price)} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(x.due.replace("T"," "))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(x.snoozed_until.slice(0,10))}`:""}</div>
+  return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${drag?'draggable="true"':""}>
+  <b>${esc(fullTitle(x))}</b><div style="margin-top:.2rem">${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
+  <div class="meta">${x.price?`💲${esc(x.price)} ${esc(cur(x))} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(fmtDT(x.due))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(fmtDT(x.snoozed_until))}`:""}</div>
   ${x.client_name?`<div class="meta">👤 ${esc(x.client_name)} ${esc(x.client_email)} ${soc}</div>`:""}
   ${x.notes?`<div class="meta">${esc(x.notes)}</div>`:""}
-  <div class="thumbs">${(x.photos?x.photos.split(";"):[]).map(p=>`<img src="/${esc(p)}">`).join("")}</div>
-  <div class="row" style="margin:6px 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
+  <div class="thumbs">${photosOf(x).map(p=>`<img src="/${esc(p)}" alt="">`).join("")}</div>
+  <div class="row" style="margin:.5rem 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
   <button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
-  const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+S.settings.currency,paid:x.paid&&t("yes")};
-  return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
-const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
-function render(){chrome();const m=$("#main");
-  if(view=="settings")return settings(m);
-  if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>`<div class="col" data-s="${s}"><h3>${t(s)}</h3>${T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio).map(x=>card(x,1)).join("")}</div>`).join("")}</div>`;board(m)}
+function render(){closeMenu();chrome();const m=$("#main");
+  if(view=="settings"){sel=null;settings(m)}
+  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>`<div class="col" data-s="${s}"><h3>${t(s)}</h3>${T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio).map(x=>card(x,1)).join("")}</div>`).join("")}</div>`;board(m)}
   else queue(m);
-  m.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.a,b.dataset.id))}
+  detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
+$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id);
+  const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities;
   const list=T.filter(x=>x.status!="Completed").filter(x=>{
@@ -63,15 +231,15 @@ function queue(m){const P=S.settings.priorities;
     if(F.paid!="any"&&!!x.paid!=(F.paid=="yes"))return false;
     if(F.type!="all"&&x.type!=F.type)return false;
     if(F.maxEst!==""&&!(+x.estimate_min<=+F.maxEst&&x.estimate_min!==""))return false;return true}).sort(byPrio);
-  const sel=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
-  m.innerHTML=`<div class="row"><b>${t("filters")}</b>
-  ${sel("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),...P.map(p=>["ge:"+p,p+" "+t("and_above")])],F.prio)}
-  ${sel("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
-  ${sel("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
-  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:100px">
-  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:150px">
+  const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
+  m.innerHTML=`<div class="wrap"><div class="row"><b>${t("filters")}</b>
+  ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),...P.map(p=>["ge:"+p,p+" "+t("and_above")])],F.prio)}
+  ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
+  ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
+  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:7rem">
+  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:10rem">
   <label style="margin:0"><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label></div>
-  ${list.map(x=>card(x)).join("")||`<p class="meta">${t("no_tasks")}</p>`}`;
+  ${list.map(x=>card(x)).join("")||`<p class="meta">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
   bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked)}
 function board(m){let drag;
@@ -80,47 +248,102 @@ function board(m){let drag;
     c.ondrop=async e=>{e.preventDefault();if(drag){await api("POST","/api/tasks",{id:drag,status:c.dataset.s});load()}}})}
 async function act(a,id){const x=T.find(y=>y.id==id);
   if(a=="edit")edit(x);
-  else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);load()}}
-  else if(a=="snz"){const d=new Date(Date.now()+86400e3*(snoozed(x)?-1:1)).toISOString().slice(0,16);await api("POST","/api/tasks",{id,snoozed_until:snoozed(x)?"":d});load()}}
-function edit(x={}){const s=S.settings;form={photos:x.photos?x.photos.split(";"):[],socials:safe(x.client_socials)};
-  const f=$("#form"),sel=(n,o,v,blank)=>`<select name="${n}">${blank?'<option value=""></option>':""}${o.map(a=>`<option ${a==v?"selected":""}>${esc(a)}</option>`).join("")}</select>`;
-  f.innerHTML=`<label>${t("title")}</label><input name="title" required value="${esc(x.title)}">
-  <label>${t("type")}</label>${sel("type",s.types,x.type,1)}
-  <label>${t("priority")}</label>${sel("priority",s.priorities,x.priority||s.default_priority)}
-  <label>${t("price")}</label><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">
-  <label><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
-  <div id="pbox" class="${x.paid?"":"hide"}"><label>${t("paid_amount")}</label><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}">
-  <label>${t("paid_time")}</label><input name="paid_time" type="datetime-local" value="${esc(x.paid_time)}"></div>
-  <label>${t("estimate")}</label><input name="estimate" value="${esc(x.estimate)}">
-  <label>${t("due")}</label><input name="due" type="datetime-local" value="${esc(x.due)}">
-  <label>${t("client_name")}</label><input name="client_name" value="${esc(x.client_name)}">
-  <label>${t("client_email")}</label><input name="client_email" type="email" value="${esc(x.client_email)}">
-  <label>${t("socials")}</label><div id="soc"></div><button type="button" id="addsoc">${t("add_social")}</button>
-  <label>${t("notes")}</label><textarea name="notes" rows="4">${esc(x.notes)}</textarea>
-  <label>${t("photos")}</label><input type="file" id="file" accept="image/*" multiple><div class="thumbs" id="th"></div>
-  <p id="err"></p><div class="row"><button class="primary" value="save">${t("save")}</button><button type="button" id="cx">${t("cancel")}</button></div>`;
-  const drawSoc=()=>{$("#soc").innerHTML=form.socials.map((r,i)=>`<div class="row" style="margin-bottom:4px">${sel("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}" style="flex:1"><button type="button" data-rm="${i}">×</button></div>`).join("");
-    $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();form.socials.splice(+b.dataset.rm,1);drawSoc()})};
-  const sync=()=>form.socials=form.socials.map((_,i)=>({net:f["net"+i].value,handle:f["h"+i].value}));
-  const thumbs=()=>$("#th").innerHTML=form.photos.map(p=>`<img src="/${esc(p)}">`).join("");
-  drawSoc();thumbs();
-  $("#addsoc").onclick=()=>{sync();form.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
-  f.paid.onchange=()=>$("#pbox").classList.toggle("hide",!f.paid.checked);
-  $("#file").onchange=async e=>{for(const file of e.target.files)form.photos.push((await api("POST","/api/upload",file,{"X-Filename":file.name})).path);thumbs()};
+  else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);if(sel==id)sel=null;load()}}
+  else if(a=="snz"){await api("POST","/api/tasks",{id,snoozed_until:snoozed(x)?"":localISO(new Date(Date.now()+864e5))});load()}}
+
+/* ---------- detail drawer ---------- */
+function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
+  document.body.classList.toggle("has-detail",!!x);d.classList.toggle("open",!!x);
+  if(!x){d.innerHTML="";return}
+  const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
+  const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join("");
+  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2>${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
+    <button data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
+  <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
+    ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time))):""}
+    <dt>${t("status")}</dt><dd><select data-st>${S.statuses.map(s=>`<option value="${s}" ${s==x.status?"selected":""}>${t(s)}</option>`).join("")}</select></dd></dl></div>
+  <div class="dsec"><h3>${t("sec_time")}</h3><dl>${row("estimate",esc(x.estimate))}${row("due",esc(fmtDT(x.due)))}${snoozed(x)?row("snoozed_until",esc(fmtDT(x.snoozed_until))):""}</dl></div>
+  <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}
+    ${row("socials",soc)}${row("notes",x.notes&&`<div class="pre">${esc(x.notes)}</div>`)}</dl></div>
+  ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="/${esc(p)}" target="_blank"><img src="/${esc(p)}" alt=""></a>`).join("")}</div></div>`:""}
+  <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
+  <div class="acts"><button class="primary" data-a="edit" data-id="${x.id}">${t("edit")}</button><button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id)};
+$("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
+
+/* ---------- add / edit dialog ---------- */
+function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve()};
+  const f=$("#form"),E=n=>f.elements[n],curP=s.priorities.includes(x.priority)?x.priority:s.default_priority;
+  f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_task_title":"new_task_title")}</h2>
+    <input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button></div>
+  <div class="dbody">
+  <section class="sec"><h3>${t("sec_title")}</h3><label class="fld"><input name="title" value="${esc(x.title)}" autocomplete="off"><em class="ferr"></em></label></section>
+  <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
+    <label class="fld"><span>${t("type")}</span>${sel_("type",s.types,x.type,1)}</label>
+    <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
+    <label class="chk"><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
+    <div id="pbox" class="grid ${x.paid?"":"hide"}"><label class="fld"><span>${t("paid_amount")}</span><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}"></label>
+    <div class="fld"><span>${t("paid_time")}</span>${dtField("paid_time",x.paid_time,"now")}</div></div></section>
+  <section class="sec"><h3>${t("sec_time")}</h3><div class="grid">
+    <label class="fld"><span>${t("estimate")}</span><input name="estimate" value="${esc(x.estimate)}" placeholder="${esc(t("estimate_hint"))}" autocomplete="off"><small class="hint" id="esthint">${t("estimate_hint")}</small><em class="ferr"></em></label>
+    <div class="fld"><span>${t("due")}</span>${dtField("due",x.due,"due")}</div></div></section>
+  <section class="sec"><h3>${t("sec_client")}</h3><div class="grid">
+    <label class="fld"><span>${t("client_name")}</span><input name="client_name" value="${esc(x.client_name)}"></label>
+    <label class="fld"><span>${t("client_email")}</span><input name="client_email" type="email" inputmode="email" placeholder="${t("email_placeholder")}" value="${esc(x.client_email)}"><em class="ferr"></em></label></div>
+    <div class="fld"><span>${t("socials")}</span><div id="soc"></div><button type="button" id="addsoc">${t("add_social")}</button></div>
+    <label class="fld"><span>${t("notes")}</span><textarea name="notes" rows="4">${esc(x.notes)}</textarea></label>
+    <div class="fld"><span>${t("photos")}</span><input type="file" id="file" accept="image/*" multiple><div class="thumbs" id="th"></div><div id="perr"></div></div></section>
+  </div>
+  <div class="dfoot"><button type="button" id="cx">${t("cancel")}</button><button class="primary" type="submit">${t("save")}</button></div>`;
+  const setErr=(n,m)=>{const fl=E(n).closest(".fld");fl.classList.toggle("bad",!!m);$(".ferr",fl).textContent=m||""};
+  const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
+    $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();st.socials.splice(+b.dataset.rm,1);drawSoc()})};
+  const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
+  const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="/${esc(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
+    $("#th").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{st.photos.splice(+b.dataset.rp,1);thumbs()})};
+  const showP=()=>$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';
+  $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
+  drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
+  $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
+  E("paid").onchange=()=>$("#pbox").classList.toggle("hide",!E("paid").checked);
+  f.oninput=e=>{if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
+  const est=E("estimate"),normEst=()=>{const m=parseDur(est.value);est.value=fmtDur(m)};
+  est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
+  est.onchange=()=>{try{normEst();setErr("estimate","");$("#esthint").textContent=t("estimate_hint")}catch{setErr("estimate",t("err_invalid_estimate"))}};
+  $("#file").onchange=e=>{const fs=[...e.target.files];e.target.value="";$("#perr").textContent="";
+    st.up=st.up.then(async()=>{for(const file of fs){try{st.photos.push((await api("POST","/api/upload",file,{"X-Filename":encodeURIComponent(file.name)})).path)}
+      catch(er){$("#perr").textContent=`${t("err_upload")}: ${file.name} (${er.message})`}}thumbs()})};
   $("#cx").onclick=()=>$("#dlg").close();
-  f.onsubmit=async e=>{e.preventDefault();sync();const d=Object.fromEntries(new FormData(f));
-    const body={id:x.id,title:d.title,type:d.type,priority:d.priority,price:d.price,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid_time||"",
-      estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:d.client_email,client_socials:form.socials.filter(r=>r.handle),notes:d.notes,photos:form.photos.join(";")};
-    try{await api("POST","/api/tasks",body);$("#dlg").close();load()}catch(er){$("#err").textContent=er.message}};
-  $("#dlg").showModal()}
+  f.onsubmit=async e=>{e.preventDefault();sync();let bad=null;
+    const need=(n,ok,k)=>{if(!ok){setErr(n,t(k));bad??=n}};
+    need("title",E("title").value.trim(),"err_title_required");
+    const em=E("client_email").value.trim();need("client_email",!em||EMAIL_RE.test(em),"err_invalid_email");
+    need("price",!E("price").value||+E("price").value>=0,"err_invalid_price");
+    try{normEst()}catch{need("estimate",false,"err_invalid_estimate")}
+    if(bad)return E(bad).focus();
+    await st.up;  // don't save while a photo is still uploading
+    const d=Object.fromEntries(new FormData(f));
+    const body={id:x.id,title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",
+      estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:em,client_socials:st.socials.filter(r=>r.handle),notes:d.notes,photos:st.photos.join(";")};
+    try{await api("POST","/api/tasks",body);$("#dlg").close();load()}catch(er){$("#perr").textContent=er.message}};
+  $("#dlg").showModal();E("title").focus()}
+
+/* ---------- settings ---------- */
 function settings(m){const s=S.settings,ls=Object.entries(S.languages);
-  m.innerHTML=`<div style="max-width:480px"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>`<option value="${c}" ${c==s.language?"selected":""}>${esc(n)}</option>`).join("")}</select>
-  ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6" style="width:100%">${esc(s[k].join("\n"))}</textarea>`).join("")}
-  <label>${t("currency")}</label><input id="scur" value="${esc(s.currency)}">
-  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5" style="width:100%">${esc(s.title_order.join("\n"))}</textarea>
-  <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>`<option ${p==s.default_priority?"selected":""}>${esc(p)}</option>`).join("")}</select>
-  <p><button class="primary" id="ssave">${t("save")}</button></p></div>`;
+  const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
+  m.innerHTML=`<div class="settings"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>opt(c,n,s.language)).join("")}</select>
+  <label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
+  <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
+  <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>
+  ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6">${esc(s[k].join("\n"))}</textarea>`).join("")}
+  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5">${esc(s.title_order.join("\n"))}</textarea>
+  <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>
+  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>`;
+  $("#sth").onchange=e=>document.documentElement.dataset.theme=e.target.value;  // live preview until saved
   $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const p=lines("priorities");await api("POST","/api/settings",{language:$("#sl").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value.trim(),title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}}
+    const p=lines("priorities");
+    try{await api("POST","/api/settings",{language:$("#sl").value,theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
+      title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}
+    catch(er){$("#serr").textContent=er.message}}}
 load();
 </script></body></html>
