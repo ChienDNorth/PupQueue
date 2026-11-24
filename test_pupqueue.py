@@ -274,3 +274,23 @@ def test_legacy_rows_and_migration():
     assert old["currency"] == ""
     pq.upsert({"id": "ab12", "status": "WIP"})  # editing a legacy row must not fail
     assert next(t for t in pq.load_tasks() if t["id"] == "ab12")["status"] == "WIP"
+
+def test_snooze_parks_in_waitlist_and_returns():
+    _sandbox()
+    later, past = "2999-01-01T00:00", "2000-01-01T00:00"
+    t = pq.upsert({"title": "S", "status": "WIP"})
+    t = pq.upsert({"id": t["id"], "snoozed_until": later})
+    assert (t["status"], t["snoozed_from"]) == ("Waitlist", "WIP")
+    t = pq.upsert({"id": t["id"], "snoozed_until": "2999-02-01T00:00"})  # extending keeps the original status
+    assert (t["status"], t["snoozed_from"]) == ("Waitlist", "WIP")
+    t = pq.upsert({"id": t["id"], "snoozed_until": ""})  # cancel: back where it was
+    assert (t["status"], t["snoozed_from"]) == ("WIP", "")
+    pq.upsert({"id": t["id"], "status": "Ready"}); pq.upsert({"id": t["id"], "snoozed_until": later})
+    pq.wake_snoozed()  # not over yet: stays parked
+    assert pq.load_tasks()[0]["status"] == "Waitlist"
+    rows = pq.load_tasks(); rows[0]["snoozed_until"] = past; pq.save_tasks(rows)
+    pq.wake_snoozed()
+    assert [(x["status"], x["snoozed_from"], x["snoozed_until"]) for x in pq.load_tasks()] == [("Ready", "", "")]
+    pq.upsert({"id": t["id"], "snoozed_until": later})
+    t = pq.upsert({"id": t["id"], "status": "Completed"})  # moved by hand while snoozed: snooze ends, no return later
+    assert (t["status"], t["snoozed_from"], t["snoozed_until"]) == ("Completed", "", "")

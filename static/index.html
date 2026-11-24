@@ -192,7 +192,10 @@ let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
+let wakeTimer;
 async function load(){S=await api("GET","/api/state");T=S.tasks;
+  const next=Math.min(...T.filter(snoozed).map(x=>new Date(x.snoozed_until)-Date.now()));  // reload when the next snooze ends, so the task moves back
+  clearTimeout(wakeTimer);if(isFinite(next))wakeTimer=setTimeout(load,Math.min(next+1000,864e5));
   localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;
   L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
 
@@ -317,7 +320,7 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
   <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
-  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
+  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
 $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);

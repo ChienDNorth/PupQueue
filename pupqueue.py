@@ -5,14 +5,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "2.1.0", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "2.2.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
 SETTINGS_FILE = ROOT / "settings.json"
 FIELDS = ["id", "title", "type", "priority", "price", "currency", "paid", "paid_amount", "paid_time",
           "estimate_min", "due", "client_name", "client_email", "client_socials",
-          "notes", "photos", "status", "snoozed_until", "created"]
+          "notes", "photos", "status", "snoozed_until", "snoozed_from", "created"]  # snoozed_from: status to return to when the snooze ends
 STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
 PRIORITIES = ["Critical", "High", "Medium", "Low", "Lowest"]  # fixed, highest first; the icon shows one bar per level
 TITLE_PARTS = ["type", "social", "title", "price", "paid"]
@@ -286,6 +286,13 @@ def upsert(data):
     tasks = load_tasks()
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
+    if "snoozed_until" in data:
+        if new["snoozed_until"] and not new["snoozed_from"]:  # snoozing parks the task in Waitlist; re-snoozing keeps the first status
+            new["snoozed_from"], new["status"] = new["status"], "Waitlist"
+        elif not new["snoozed_until"] and new["snoozed_from"]:  # cancelled: back where it was
+            new["status"], new["snoozed_from"] = new["snoozed_from"], ""
+    elif "status" in data and new["snoozed_from"]:  # moved by hand while snoozed: that ends the snooze
+        new["snoozed_until"] = new["snoozed_from"] = ""
     for rel in set(photo_list(old)) - set(photo_list(new)):  # photos removed from the task
         discard_photo(rel)
     organize_photos(new)
@@ -300,6 +307,17 @@ def delete_task(tid):
     for rel in photo_list(gone):  # finished or not, a deleted task takes its photos with it
         discard_photo(rel)
     save_tasks([t for t in tasks if t["id"] != tid])
+
+
+def wake_snoozed():
+    """Tasks whose snooze has ended go back to the status they had before it."""
+    tasks, now = load_tasks(), datetime.now().isoformat(timespec="minutes")  # snoozed_until is local time, like now()
+    woke = [t for t in tasks if t["snoozed_from"] and t["snoozed_until"] <= now]
+    for t in woke:
+        t["status"], t["snoozed_from"], t["snoozed_until"] = t["snoozed_from"], "", ""
+        organize_photos(t)  # it may be returning to Completed
+    if woke:
+        save_tasks(tasks)
 
 
 def view(t):
@@ -335,6 +353,7 @@ class Handler(BaseHTTPRequestHandler):
             self._file(ROOT / "static" / "index.html", "text/html")
         elif p == "/api/state":
             with DATA_LOCK:  # build under the lock, send outside it so a slow browser can't stall saves
+                wake_snoozed()
                 state = {"tasks": [view(t) for t in load_tasks()], "settings": load_settings(),
                          "statuses": STATUSES, "version": VERSION, "settings_file": str(SETTINGS_FILE.resolve()),
                          "finished_photos": {"count": len(finished_photos()),
