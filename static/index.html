@@ -117,8 +117,7 @@ function settings(m){const s=S.settings,ls=Object.entries(S.languages);
   m.innerHTML=`<div style="max-width:480px"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>`<option value="${c}" ${c==s.language?"selected":""}>${esc(n)}</option>`).join("")}</select>
   ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6" style="width:100%">${esc(s[k].join("\n"))}</textarea>`).join("")}
   <label>${t("currency")}</label><input id="scur" value="${esc(s.currency)}">
-  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5" style="width:100%">${esc(s.title_order.join("
-"))}</textarea>
+  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5" style="width:100%">${esc(s.title_order.join("\n"))}</textarea>
   <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>`<option ${p==s.default_priority?"selected":""}>${esc(p)}</option>`).join("")}</select>
   <p><button class="primary" id="ssave">${t("save")}</button></p></div>`;
   $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
