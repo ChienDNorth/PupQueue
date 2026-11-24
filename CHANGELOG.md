@@ -3,7 +3,7 @@
 - Price currency choice: per task, with a default in Settings (USD for English, CNY for Chinese unless overridden).
 - Estimated time is normalised when you finish typing (`90min` -> `1h30min`; no unit = minutes; also `1.5h`, `1d2h`, `1h30`, `1.5小时`).
 - Due date uses a new calendar picker; time defaults to a full hour, set in Settings (default 12:00 AM).
-- Add/Edit task window split into Title / Basic information / Time / Client information; priority moved to the top right as flag icons with labels.
+- Add/Edit task window split into Title / Basic information / Time / Client information; priority moved to the top right as a signal-bar icon; click it (here or on any task card) to pick Critical / High / Medium / Low / Extra Low.
 - Client email is validated in the browser and on the server.
 - Click a task to open a detail panel on the right (status can be changed there).
 - Page scales with the window width so text stays readable on large monitors.
