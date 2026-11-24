@@ -17,7 +17,7 @@ STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
 DEFAULT_SETTINGS = {
     "language": "en",
     "types": ["Gift", "Self Project", "Drawing Swap", "Commission", "Else"],
-    "priorities": ["Highest", "High", "Medium", "Low", "Lowest"],  # highest first
+    "priorities": ["Critical", "High", "Medium", "Low", "Extra Low"],  # highest first; bars shown = list length
     "default_priority": "Medium",
     "socials": ["QQ", "Twitter", "Vgen", "Mihuashi"],
     "currency": "",  # "" = follow the language (en -> USD, zh -> CNY, see locales/*.json)

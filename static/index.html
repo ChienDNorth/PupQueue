@@ -28,8 +28,6 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .card.snoozed{opacity:.5}.card[draggable]{cursor:grab}
 .meta{font-size:.85rem;color:var(--muted);margin-top:.15rem}
 .tag{display:inline-block;border:1px solid var(--line);border-radius:1rem;padding:0 .55rem;font-size:.75rem;margin-right:.3rem}
-.pb{display:inline-flex;align-items:center;gap:.2rem;color:var(--c);font-size:.78rem;font-weight:600;margin-right:.4rem;vertical-align:middle}
-.pb svg{width:1em;height:1em}
 .board{display:grid;grid-template-columns:repeat(4,minmax(13rem,1fr));gap:.8rem;overflow-x:auto}
 .col{background:var(--bg);border:1px dashed var(--line);border-radius:.6rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
 .col h3{margin:0 0 .5rem;font-size:.95rem}
@@ -58,17 +56,16 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 .th{position:relative;display:inline-block}.th button{position:absolute;top:.3rem;right:.4rem;padding:0 .35rem;line-height:1.2;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0}
 #perr{color:#d33;font-size:.82rem}
 
-/* priority picker */
-.prio{display:flex;gap:.2rem;flex-wrap:wrap}
-.pbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:.05rem;min-width:3.6rem;padding:.3rem .4rem;border:1px solid transparent;border-radius:.55rem;cursor:pointer;color:var(--c)}
-.pbtn input{position:absolute;opacity:0;pointer-events:none}
-.pbtn svg{width:1.45rem;height:1.45rem;opacity:.4;transition:opacity .15s,transform .15s}
-.pbtn:hover svg{opacity:.8}
-.pbtn small{font-size:.7rem;color:var(--muted);max-width:4.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pbtn:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
-.pbtn:has(input:checked) svg{opacity:1;transform:scale(1.1)}
-.pbtn:has(input:checked) small{color:var(--fg);font-weight:600}
-.pbtn:has(input:focus-visible){outline:2px solid var(--accent)}
+/* priority: signal-bar icon + click-to-open menu */
+:root{--pc:#5065f5}
+@media(prefers-color-scheme:dark){:root{--pc:#7b8cff}}
+.bars{height:1.05em;flex:none}.bars rect{fill:var(--pc)}.bars .off{opacity:.3}
+.pb,.pickp{display:inline-flex;align-items:center;gap:.4rem;border:0;background:none;padding:.15rem .4rem;border-radius:.45rem;font-weight:600;font-size:.85rem;color:var(--fg)}
+.pickp{border:1px solid var(--line);background:var(--card);padding:.35rem .6rem;font-size:1rem}
+.pb:hover,.pickp:hover{background:var(--accent-soft)}
+#pmenu{position:fixed;z-index:60;min-width:11rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;box-shadow:var(--shadow);padding:.3rem}
+#pmenu button{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;border:0;background:none;padding:.45rem .7rem;border-radius:.4rem;font-size:1rem}
+#pmenu button:hover{background:var(--accent-soft)}#pmenu .cur{font-weight:600}
 
 /* date & time picker */
 .dt{position:relative;display:flex;gap:.3rem}
@@ -145,9 +142,19 @@ const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
 const photosOf=x=>x.photos?x.photos.split(";").filter(Boolean):[];
 const pr=p=>S.settings.priorities.indexOf(p);
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
-const FLAG='<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 21V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M6 4h12l-3.5 4.5L18 13H6z" fill="currentColor"/></svg>';
-const pcol=i=>{const n=S.settings.priorities.length;return i<0?"#888":`hsl(${n>1?Math.round(i/(n-1)*210):25} 75% 48%)`};  // red (highest) -> blue (lowest)
-const pbadge=p=>`<span class="pb" style="--c:${pcol(pr(p))}">${FLAG}${esc(p)}</span>`;
+const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per priority level), the first `on` filled
+  return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
+const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n-i,n)};
+const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
+function closeMenu(){$("#pmenu")?.remove()}
+function prioMenu(anchor,cur,pick){const old=$("#pmenu");closeMenu();if(old&&old._a===anchor)return;
+  const P=S.settings.priorities,m=document.createElement("div");m.id="pmenu";m._a=anchor;m.setAttribute("role","menu");
+  m.innerHTML=P.map((p,i)=>`<button type="button" role="menuitem" data-p="${i}" class="${p==cur?"cur":""}">${bars(P.length-i,P.length)}<span>${esc(p)}</span></button>`).join("");
+  (anchor.closest("dialog")||document.body).appendChild(m);  // inside the dialog, or the modal would block it
+  const r=anchor.getBoundingClientRect(),h=m.offsetHeight,w=m.offsetWidth;
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+"px";m.style.top=(r.bottom+4+h>innerHeight?Math.max(8,r.top-h-4):r.bottom+4)+"px";
+  m.onclick=e=>{const b=e.target.closest("[data-p]");if(b){closeMenu();pick(P[+b.dataset.p])}}}
+const pmClick=b=>{const x=T.find(y=>y.id==b.dataset.pm);prioMenu(b,x.priority,async p=>{await api("POST","/api/tasks",{id:x.id,priority:p});load()})};
 const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
   const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
   return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
@@ -185,9 +192,10 @@ function bindDt(el){const inp=$("input",el),btn=$(".dtbtn",el),clr=$(".dtx",el),
   clr.onclick=()=>{inp.value="";label();pop.classList.add("hide")};
   label()}
 document.addEventListener("click",e=>{const path=e.composedPath();  // composedPath: the clicked node may already be re-rendered away
+  const pm=$("#pmenu");if(pm&&!path.includes(pm)&&!path.includes(pm._a))closeMenu();
   document.querySelectorAll(".dt .pop:not(.hide)").forEach(p=>{if(!path.includes(p.parentElement))p.classList.add("hide")})});
-document.addEventListener("keydown",e=>{if(e.key=="Escape"&&!$("#dlg").open&&sel){sel=null;render()}});
-$("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".dt .pop:not(.hide)");if(open.length){e.preventDefault();open.forEach(p=>p.classList.add("hide"))}});
+document.addEventListener("keydown",e=>{if(e.key!="Escape"||$("#dlg").open)return;if($("#pmenu"))closeMenu();else if(sel){sel=null;render()}});
+$("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".dt .pop:not(.hide)");if(open.length||$("#pmenu")){e.preventDefault();open.forEach(p=>p.classList.add("hide"));closeMenu()}});
 
 /* ---------- list / board ---------- */
 function chrome(){document.title=$("#appname").textContent=t("app");
@@ -195,19 +203,19 @@ function chrome(){document.title=$("#appname").textContent=t("app");
   $("#add").textContent=t("add_task");$("#add").onclick=()=>edit()}
 function card(x,drag){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${drag?'draggable="true"':""}>
-  <b>${esc(fullTitle(x))}</b><div style="margin-top:.2rem">${pbadge(x.priority)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
+  <b>${esc(fullTitle(x))}</b><div style="margin-top:.2rem">${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
   <div class="meta">${x.price?`💲${esc(x.price)} ${esc(cur(x))} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(fmtDT(x.due))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(fmtDT(x.snoozed_until))}`:""}</div>
   ${x.client_name?`<div class="meta">👤 ${esc(x.client_name)} ${esc(x.client_email)} ${soc}</div>`:""}
   ${x.notes?`<div class="meta">${esc(x.notes)}</div>`:""}
   <div class="thumbs">${photosOf(x).map(p=>`<img src="/${esc(p)}" alt="">`).join("")}</div>
   <div class="row" style="margin:.5rem 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
   <button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-function render(){chrome();const m=$("#main");
+function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
   else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>`<div class="col" data-s="${s}"><h3>${t(s)}</h3>${T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio).map(x=>card(x,1)).join("")}</div>`).join("")}</div>`;board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
-$("#main").onclick=e=>{const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id);
+$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities;
@@ -244,7 +252,7 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   if(!x){d.innerHTML="";return}
   const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
   const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join("");
-  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2>${pbadge(x.priority)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
+  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2>${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
     <button data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
   <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
     ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time))):""}
@@ -255,14 +263,14 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="/${esc(p)}" target="_blank"><img src="/${esc(p)}" alt=""></a>`).join("")}</div></div>`:""}
   <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
   <div class="acts"><button class="primary" data-a="edit" data-id="${x.id}">${t("edit")}</button><button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-$("#detail").onclick=e=>{if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id)};
+$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id)};
 $("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
 
 /* ---------- add / edit dialog ---------- */
 function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve()};
   const f=$("#form"),E=n=>f.elements[n],curP=s.priorities.includes(x.priority)?x.priority:s.default_priority;
   f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_task_title":"new_task_title")}</h2>
-    <div class="prio" role="radiogroup" aria-label="${t("priority")}">${s.priorities.map((p,i)=>`<label class="pbtn" title="${t("priority")}: ${esc(p)}" style="--c:${pcol(i)}"><input type="radio" name="priority" value="${esc(p)}" ${p==curP?"checked":""}>${FLAG}<small>${esc(p)}</small></label>`).join("")}</div></div>
+    <input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button></div>
   <div class="dbody">
   <section class="sec"><h3>${t("sec_title")}</h3><label class="fld"><input name="title" value="${esc(x.title)}" autocomplete="off"><em class="ferr"></em></label></section>
   <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
@@ -288,6 +296,8 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
   const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="/${esc(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
     $("#th").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{st.photos.splice(+b.dataset.rp,1);thumbs()})};
+  const showP=()=>$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';
+  $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
   E("paid").onchange=()=>$("#pbox").classList.toggle("hide",!E("paid").checked);
