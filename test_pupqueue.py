@@ -1,17 +1,28 @@
-import json, tempfile, threading, urllib.request
+import json, re, tempfile, threading, urllib.request
 from pathlib import Path
 import pupqueue as pq
 
+CANON = re.compile(r"(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)min)?")
+
 def test_duration():
-    assert pq.format_duration(pq.parse_duration("70min")) == "1h10min"
-    assert pq.format_duration(pq.parse_duration("90min")) == "1h30min"
-    assert pq.format_duration(pq.parse_duration("90")) == "1h30min"  # no unit -> minutes
-    assert pq.format_duration(pq.parse_duration("1h30")) == "1h30min"
-    assert pq.format_duration(pq.parse_duration("0.5h")) == "30min"
-    assert pq.format_duration(pq.parse_duration("24h")) == "1d"
-    assert pq.format_duration(pq.parse_duration("1.5 小时")) == "1h30min"
-    assert pq.parse_duration("1d2h") == 1560 and pq.parse_duration("") == ""
-    for bad in ("abc", "5x", "h", "1.5.5", "1 h 2 x"):
+    # every minute count: formatted form is canonical (h < 24, min < 60, no zero parts) and parses back
+    for m in range(30000):
+        s = pq.format_duration(m)
+        d, h, n = (int(x or 0) for x in CANON.fullmatch(s).groups()) if m else (0, 0, 0)
+        assert h < 24 and n < 60 and d * 1440 + h * 60 + n == m, (m, s)
+        assert pq.parse_duration(s) == pq.parse_duration(str(m)) == pq.parse_duration(f"{m}min") == m, (m, s)
+    # any mix of units gives the same total, and in any spelling
+    for d in range(4):
+        for h in range(0, 49, 5):
+            for n in range(0, 200, 13):
+                total = d * 1440 + h * 60 + n
+                for spelling in (f"{d}d{h}h{n}min", f"{d} days {h} hours {n} minutes", f"{d}天{h}小时{n}分钟"):
+                    assert pq.parse_duration(spelling) == total, spelling
+                assert pq.format_duration(pq.parse_duration(f"{d}d{h}h{n}")) == pq.format_duration(total)  # last unit omitted = min
+    for h in range(300):  # whole hours and days convert up
+        assert pq.parse_duration(f"{h}h") == h * 60 and pq.parse_duration(f"{h}d") == h * 1440
+    assert pq.parse_duration("1.5h") == 90 and pq.parse_duration("0.25d") == 360 and pq.parse_duration("") == ""
+    for bad in ("abc", "5x", "h", "-5", "1.5.5", "1 h 2 x", "min5"):
         try: pq.parse_duration(bad); assert False, bad
         except ValueError: pass
 
