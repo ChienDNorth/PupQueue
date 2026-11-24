@@ -1,4 +1,7 @@
 # Changelog
+## v2.1.0
+- Board: each column has its own background colour (Waitlist lavender, Ready blue, WIP amber, Completed green), matched to the light and dark themes.
+
 ## v2.0.0
 - Task window: Enter finishes the field you are in instead of creating the task; Shift+Enter creates (or saves) the task. In Other information, Enter still starts a new line.
 - Settings > Shortcuts: change both keys (click a shortcut, press the new keys). Saved in `settings.json` and checked by the server; each shortcut needs its own keys.
