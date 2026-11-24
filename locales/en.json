@@ -13,7 +13,7 @@
   "min_price": "Min price", "max_est": "Max estimate (min)", "any": "Any", "yes": "Paid", "no": "Unpaid",
   "show_snoozed": "Show snoozed", "snoozed_until": "Snoozed until",
   "Waitlist": "Waitlist", "Ready": "Ready", "WIP": "WIP", "Completed": "Completed",
-  "language": "Language", "default_priority": "Default priority",
+  "language": "Language", "currency": "Currency", "title_order_list": "Title order (one per line; any of: type, social, title, price, paid)", "default_priority": "Default priority",
   "types_list": "Drawing types (one per line)", "priorities_list": "Priorities (highest first, one per line)",
   "socials_list": "Social media choices (one per line)", "no_tasks": "No tasks",
   "confirm_delete": "Delete this task?"

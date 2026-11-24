@@ -13,7 +13,7 @@
   "min_price": "最低价格", "max_est": "最长用时（分钟）", "any": "不限", "yes": "已付款", "no": "未付款",
   "show_snoozed": "显示已推迟", "snoozed_until": "推迟至",
   "Waitlist": "候补", "Ready": "待开始", "WIP": "进行中", "Completed": "已完成",
-  "language": "语言", "default_priority": "默认优先级",
+  "language": "语言", "currency": "货币", "title_order_list": "标题排序（每行一个，可选：type, social, title, price, paid）", "default_priority": "默认优先级",
   "types_list": "绘画类型（每行一个）", "priorities_list": "优先级（从高到低，每行一个）",
   "socials_list": "社交媒体选项（每行一个）", "no_tasks": "暂无任务",
   "confirm_delete": "确定删除该任务？"

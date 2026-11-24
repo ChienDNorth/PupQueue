@@ -17,6 +17,8 @@ DEFAULT_SETTINGS = {
     "priorities": ["Highest", "High", "Medium", "Low", "Lowest"],  # highest first
     "default_priority": "Medium",
     "socials": ["QQ", "Twitter", "Vgen", "Mihuashi"],
+    "currency": "USD",
+    "title_order": ["type", "social", "title", "price", "paid"],  # parts of the displayed title
 }
 
 

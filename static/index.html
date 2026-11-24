@@ -38,13 +38,16 @@ const pr=p=>S.settings.priorities.indexOf(p);
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
 function card(x,drag){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   return `<div class="card ${snoozed(x)?"snoozed":""}" ${drag?`draggable="true" data-id="${x.id}"`:""}>
-  <b>${esc(x.title)}</b> <span class="tag">${esc(x.priority)}</span>${x.type?`<span class="tag">${esc(x.type)}</span>`:""}
+  <b>${esc(fullTitle(x))}</b> <span class="tag">${esc(x.priority)}</span>${x.type?`<span class="tag">${esc(x.type)}</span>`:""}
   <div class="meta">${x.price?`💲${esc(x.price)} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(x.due.replace("T"," "))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(x.snoozed_until.slice(0,10))}`:""}</div>
   ${x.client_name?`<div class="meta">👤 ${esc(x.client_name)} ${esc(x.client_email)} ${soc}</div>`:""}
   ${x.notes?`<div class="meta">${esc(x.notes)}</div>`:""}
   <div class="thumbs">${(x.photos?x.photos.split(";"):[]).map(p=>`<img src="/${esc(p)}">`).join("")}</div>
   <div class="row" style="margin:6px 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
   <button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
+  const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+S.settings.currency,paid:x.paid&&t("yes")};
+  return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
 const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
 function render(){chrome();const m=$("#main");
   if(view=="settings")return settings(m);
@@ -113,9 +116,12 @@ function edit(x={}){const s=S.settings;form={photos:x.photos?x.photos.split(";")
 function settings(m){const s=S.settings,ls=Object.entries(S.languages);
   m.innerHTML=`<div style="max-width:480px"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>`<option value="${c}" ${c==s.language?"selected":""}>${esc(n)}</option>`).join("")}</select>
   ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6" style="width:100%">${esc(s[k].join("\n"))}</textarea>`).join("")}
+  <label>${t("currency")}</label><input id="scur" value="${esc(s.currency)}">
+  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5" style="width:100%">${esc(s.title_order.join("
+"))}</textarea>
   <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>`<option ${p==s.default_priority?"selected":""}>${esc(p)}</option>`).join("")}</select>
   <p><button class="primary" id="ssave">${t("save")}</button></p></div>`;
   $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const p=lines("priorities");await api("POST","/api/settings",{language:$("#sl").value,types:lines("types"),priorities:p,socials:lines("socials"),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}}
+    const p=lines("priorities");await api("POST","/api/settings",{language:$("#sl").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value.trim(),title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}}
 load();
 </script></body></html>
