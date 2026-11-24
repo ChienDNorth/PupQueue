@@ -133,13 +133,38 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .pgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;border:1px solid var(--line)}
 .acts{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.9rem}
 
-/* settings */
-.settings{max-width:34rem;margin:0 auto .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
+/* settings: categories on the left, one group of settings on the right */
+.slayout{display:grid;grid-template-columns:12rem minmax(0,1fr);gap:1.2rem;max-width:58rem;margin:0 auto;align-items:start}
+.snav{position:sticky;top:1rem;display:flex;flex-direction:column;gap:.2rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:.4rem}
+.snav button{text-align:left;border:0;background:none;padding:.5rem .8rem;border-radius:.5rem}
+.snav button:hover{background:var(--accent-soft)}.snav button.on{background:var(--accent);color:#fff}
+@media(max-width:45rem){.slayout{grid-template-columns:1fr}.snav{position:static;flex-direction:row;overflow-x:auto}.snav button{white-space:nowrap}}
+.settings{margin:0 0 .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
 .settings label{display:block;margin:.8rem 0 .2rem;font-size:var(--fs-sm);color:var(--muted)}
 .settings>h3+label{margin-top:0}
-.settings select,.settings input,.settings textarea{width:100%}
+.settings select,.settings input:not([type=file]){width:100%}
 .settings .fp{display:flex;gap:.7rem;align-items:center;font-size:var(--fs-md)}
 .settings .fp button{width:auto}
+.note{margin:.6rem 0 0;font-size:var(--fs-xs);color:var(--muted)}
+.path{display:block;padding:.4rem .6rem;border:1px solid var(--line);border-radius:.4rem;background:var(--bg);font:var(--fs-sm)/1.4 ui-monospace,Consolas,monospace;word-break:break-all}
+.frow{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.7rem}
+.btn{display:inline-flex;align-items:center;font-size:var(--fs-xs);padding:.12rem .55rem;border:1px solid var(--line);border-radius:.35rem;background:var(--card);color:var(--fg);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--accent)}.settings label.btn{display:inline-flex;margin:0;font-size:var(--fs-xs);color:var(--fg)}
+#fpre{margin:.7rem 0 0;max-height:20rem;overflow:auto;padding:.7rem;border:1px solid var(--line);border-radius:.5rem;background:var(--bg);font:var(--fs-xs)/1.5 ui-monospace,Consolas,monospace}
+.fres{margin-top:.7rem;padding:.5rem .7rem;border-radius:.5rem;background:var(--ok-bg);color:var(--ok-fg);font-size:var(--fs-sm)}.fres.bad{background:var(--bad-bg);color:var(--bad-fg)}
+/* tag lists */
+.tags{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.45rem;border:1px solid var(--line);border-radius:.6rem;background:var(--bg);min-height:2.6rem}
+.tags:focus-within{border-color:var(--accent)}
+.tg{display:inline-flex;align-items:center;gap:.1rem;padding:.1rem .3rem .1rem .75rem;border:1px solid transparent;border-radius:2rem;background:var(--accent-soft);color:var(--accent-text);font-size:var(--fs-md);cursor:grab}
+.tg.locked{padding-right:.75rem}.tg.over{border-color:var(--accent)}
+.tgt{cursor:text}.tg.locked .tgt,.tags:has(.tgsel) .tgt{cursor:inherit}
+.tgx{border:0;background:none;color:inherit;padding:0 .4rem;font-size:1rem;line-height:1.3;border-radius:50%;opacity:.7}
+.tgx:hover{opacity:1;background:var(--bad-bg);color:var(--bad-fg)}
+.settings .tags input,.settings .tags select{width:auto}.tgin{flex:1;min-width:9rem;border:0;background:transparent;padding:.25rem .3rem;font-size:var(--fs-md);outline:none}
+.tgedit{flex:none;min-width:5rem;padding:.1rem .6rem;border:1px solid var(--accent);border-radius:2rem;font-size:var(--fs-md)}
+.tgsel{padding:.15rem .5rem;border-radius:2rem;font-size:var(--fs-sm)}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,.6rem);padding:.4rem .95rem;border-radius:1.5rem;background:var(--fg);color:var(--bg);font-size:var(--fs-sm);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80}
+.toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--danger);color:#fff}
 </style></head><body>
 <div id="page">
 <header><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
@@ -149,6 +174,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 </div>
 <aside id="detail"></aside>
 <dialog id="dlg"><form id="form" novalidate></form></dialog>
+<div id="toast" class="toast" role="status"></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
@@ -217,6 +243,7 @@ const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))
   const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
   return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
 const sel_=(n,o,v,blank)=>`<select name="${n}">${blank?'<option value=""></option>':""}${o.map(a=>`<option ${a==v?"selected":""}>${esc(a)}</option>`).join("")}</select>`;
+const withVal=(list,v)=>v&&!list.includes(v)?[...list,v]:list;
 const curSel=(n,v)=>sel_(n,CURS.includes(v)?CURS:[...CURS,v],v);
 
 /* ---------- date & time picker ---------- */
@@ -338,7 +365,7 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   <div class="dbody">
   <section class="sec"><h3>${t("sec_title")}</h3><label class="fld"><input name="title" value="${esc(x.title)}" autocomplete="off"><em class="ferr"></em></label></section>
   <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
-    <label class="fld"><span>${t("type")}</span>${sel_("type",s.types,x.type,1)}</label>
+    <label class="fld"><span>${t("type")}</span>${sel_("type",withVal(s.types,x.type),x.type,1)}</label>
     <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
     <label class="chk"><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
     <div id="pbox" class="grid ${x.paid?"":"hide"}"><label class="fld"><span>${t("paid_amount")}</span><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}"></label>
@@ -355,7 +382,7 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   </div>
   <div class="dfoot"><button type="button" id="cx">${t("cancel")}</button><button class="primary" type="submit">${t("save")}</button></div>`;
   const setErr=(n,m)=>{const fl=E(n).closest(".fld");fl.classList.toggle("bad",!!m);$(".ferr",fl).textContent=m||""};
-  const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
+  const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,withVal(s.socials,r.net),r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
     $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();st.socials.splice(+b.dataset.rm,1);drawSoc()})};
   const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
   const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="${purl(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
@@ -389,26 +416,81 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   $("#dlg").showModal();E("title").focus()}
 
 /* ---------- settings ---------- */
+const PARTS=["type","social","title","price","paid"];
+let stab=localStorage.stab||"general",importNote=null,toastTimer;
+function flash(msg,bad){const el=$("#toast");el.textContent=msg;el.classList.toggle("bad",!!bad);el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),bad?4000:1600)}
+let saving=Promise.resolve();
+function saveSettings(patch){  // every setting saves as soon as it changes; saves go out one after another so the page never shows a stale copy
+  return saving=saving.then(async()=>{
+    try{S.settings=await api("POST","/api/settings",patch);flash(t("saved"))}
+    catch(er){flash(er.message,true);await load()}  // show the problem, then fall back to what the server really has
+  })
+}
+/* a list shown as removable, renamable, draggable tags; with `allowed` it is a fixed set of parts to pick from */
+function tagEditor(el,{items,save,allowed}){let list=[...items],drag=null;
+  const locked=v=>allowed&&v=="title";  // the title part can't be removed
+  const has=(v,except)=>list.some((x,i)=>i!==except&&x.toLowerCase()==v.toLowerCase());
+  const commit=()=>save([...list]);
+  const draw=()=>{const rest=allowed?allowed.filter(v=>!list.includes(v)):[];
+    el.innerHTML=list.map((v,i)=>`<span class="tg ${locked(v)?"locked":""}" draggable="true" data-i="${i}"><span class="tgt" ${allowed?"":`title="${t("edit")}"`}>${allowed?t("part_"+v):esc(v)}</span>${locked(v)?"":`<button type="button" class="tgx" data-x="${i}" title="${t("remove")}" aria-label="${t("remove")}">×</button>`}</span>`).join("")+
+      (allowed?(rest.length?`<select class="tgsel"><option value="">${t("part_add")}</option>${rest.map(v=>`<option value="${v}">${t("part_"+v)}</option>`).join("")}</select>`:""):`<input class="tgin" maxlength="40" placeholder="${t("tag_add")}" aria-label="${t("tag_add")}">`)};
+  const add=v=>{v=v.trim();if(!v||has(v))return false;list.push(v);commit();return true};
+  const rename=(span,i)=>{const chip=span.closest(".tg"),inp=document.createElement("input");chip.draggable=false;  // a draggable parent blocks selecting text
+    inp.className="tgedit";inp.maxLength=40;inp.value=list[i];span.replaceWith(inp);inp.focus();inp.select();let done=false;
+    const finish=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v&&v!==list[i]&&!has(v,i)){list[i]=v;commit()}draw()};
+    inp.onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();finish(true)}else if(e.key=="Escape"){e.preventDefault();e.stopPropagation();finish(false)}};
+    inp.onblur=()=>finish(true)};
+  el.onkeydown=e=>{if(e.target.matches(".tgin")&&(e.key=="Enter"||e.key==",")){e.preventDefault();const v=e.target.value;e.target.value="";if(add(v)){draw();$(".tgin",el).focus()}}};
+  el.addEventListener("focusout",e=>{if(e.target.matches(".tgin")&&e.target.value.trim()){const v=e.target.value;e.target.value="";if(add(v))draw()}});  // text typed but not confirmed is kept
+  el.onchange=e=>{if(e.target.matches(".tgsel")&&e.target.value){list.push(e.target.value);commit();draw()}};
+  el.onclick=e=>{const x=e.target.closest("[data-x]");if(x){list.splice(+x.dataset.x,1);commit();draw();return}
+    const tt=e.target.closest(".tgt");if(tt&&!allowed)rename(tt,+tt.closest(".tg").dataset.i)};
+  el.ondragstart=e=>{const c=e.target.closest(".tg");if(!c)return;drag=+c.dataset.i;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",String(drag))};
+  el.ondragover=e=>{const c=e.target.closest(".tg");if(drag===null||!c)return;e.preventDefault();el.querySelectorAll(".over").forEach(o=>o.classList.remove("over"));c.classList.add("over")};
+  el.ondrop=e=>{const c=e.target.closest(".tg");if(drag===null||!c)return;e.preventDefault();const j=+c.dataset.i;
+    if(j!==drag){const [v]=list.splice(drag,1);list.splice(j,0,v);commit()}drag=null;draw()};
+  el.ondragend=()=>{drag=null;draw()};
+  draw()}
 function settings(m){const s=S.settings,fp=S.finished_photos;
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
-  m.innerHTML=`<div class="settings"><h3>${t("sec_general")}</h3>
-  <label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
-  <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
-  <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select></div>
-  <div class="settings"><h3>${t("sec_lists")}</h3>
-  ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6">${esc(s[k].join("\n"))}</textarea>`).join("")}
-  <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5">${esc(s.title_order.join("\n"))}</textarea>
-  <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>
-  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>
-  <div class="settings"><h3>${t("sec_storage")}</h3><label>${t("finished_photos")}</label>
-  <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div></div>`;
-  $("#sth").onchange=async e=>{S.settings.theme=localStorage.theme=document.documentElement.dataset.theme=e.target.value;  // applies and persists at once
-    try{await api("POST","/api/settings",{theme:e.target.value})}catch(er){$("#serr").textContent=er.message}};
-  $("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
-  $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const p=lines("priorities");
-    try{await api("POST","/api/settings",{theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
-      title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}
-    catch(er){$("#serr").textContent=er.message}}}
+  const card=(title,body)=>`<div class="settings"><h3>${title}</h3>${body}</div>`;
+  const pane={
+    general:()=>card(t("cat_general"),`<label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
+      <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
+      <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`),
+    tasks:()=>card(t("default_priority"),`<select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
+      card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
+      card(t("socials_label"),`<div class="tags" id="tg-socials"></div><p class="note">${t("tag_hint")}</p>`)+
+      card(t("title_format"),`<div class="tags" id="tg-title"></div><p class="note">${t("title_format_hint")}</p>`),
+    storage:()=>card(t("cat_storage"),`<label>${t("finished_photos")}</label>
+      <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`),
+    file:()=>card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
+      <label>${t("file_path")}</label><code class="path">${esc(S.settings_file)}</code>
+      <div class="frow"><button class="sm" id="fview">${t("file_view")}</button><a class="btn" href="/api/settings/file" download="pupqueue-settings.json">${t("file_download")}</a>
+      <label class="btn">${t("file_upload")}<input type="file" id="fup" accept=".json,application/json" hidden></label></div>
+      <p class="note">${t("file_upload_help")}</p><pre id="fpre" class="hide"></pre>
+      ${importNote?`<div class="fres ${importNote.ok?"":"bad"}">${importNote.html}</div>`:""}`)};
+  if(!pane[stab])stab="general";
+  m.innerHTML=`<div class="slayout"><nav class="snav">${Object.keys(pane).map(k=>`<button data-tab="${k}" class="${k==stab?"on":""}">${t("cat_"+k)}</button>`).join("")}</nav><div class="spane">${pane[stab]()}</div></div>`;
+  m.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{stab=localStorage.stab=b.dataset.tab;importNote=null;render()});
+  if(stab=="general"){
+    $("#sth").onchange=e=>{localStorage.theme=document.documentElement.dataset.theme=e.target.value;saveSettings({theme:e.target.value})};  // applies at once
+    $("#scur").onchange=e=>saveSettings({currency:e.target.value});
+    $("#sdt").onchange=e=>saveSettings({default_due_time:e.target.value})}
+  if(stab=="tasks"){
+    $("#sdp").onchange=e=>saveSettings({default_priority:e.target.value});
+    tagEditor($("#tg-types"),{items:s.types,save:v=>saveSettings({types:v})});
+    tagEditor($("#tg-socials"),{items:s.socials,save:v=>saveSettings({socials:v})});
+    tagEditor($("#tg-title"),{items:s.title_order,allowed:PARTS,save:v=>saveSettings({title_order:v})})}
+  if(stab=="storage")$("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
+  if(stab=="file"){
+    $("#fview").onclick=async()=>{const pre=$("#fpre"),show=pre.classList.contains("hide");
+      if(show)pre.textContent=await fetch("/api/settings/file").then(r=>r.text());
+      pre.classList.toggle("hide",!show);$("#fview").textContent=t(show?"file_hide":"file_view")};
+    $("#fup").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+      try{const r=await api("POST","/api/settings/import",await f.text());
+        importNote={ok:true,html:`<b>${t("import_applied")}:</b> ${r.applied.map(esc).join(", ")||"—"}${r.ignored.length?`<br><b>${t("import_ignored")}:</b> ${r.ignored.map(esc).join(", ")}`:""}`}}
+      catch(er){importNote={ok:false,html:esc(er.message)}}
+      await load()}}}
 load();
 </script></body></html>

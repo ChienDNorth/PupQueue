@@ -1,11 +1,11 @@
 """PupQueue - commission queue tracker. Stdlib only. Run: python pupqueue.py [port]"""
-import csv, json, math, mimetypes, re, shutil, sys, uuid, webbrowser
+import csv, json, math, mimetypes, re, shutil, sys, threading, uuid, webbrowser
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "1.2.0", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "1.3.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -14,19 +14,21 @@ FIELDS = ["id", "title", "type", "priority", "price", "currency", "paid", "paid_
           "estimate_min", "due", "client_name", "client_email", "client_socials",
           "notes", "photos", "status", "snoozed_until", "created"]
 STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
+PRIORITIES = ["Critical", "High", "Medium", "Low", "Lowest"]  # fixed, highest first; the icon shows one bar per level
+TITLE_PARTS = ["type", "social", "title", "price", "paid"]
 DEFAULT_SETTINGS = {
     "language": "en",
     "types": ["Gift", "Self Project", "Drawing Swap", "Commission", "Else"],
-    "priorities": ["Critical", "High", "Medium", "Low", "Lowest"],  # highest first; bars shown = list length
     "default_priority": "Medium",
     "socials": ["QQ", "Twitter", "Vgen", "Mihuashi"],
     "currency": "",  # "" = follow the language (en -> USD, zh -> CNY, see locales/*.json)
     "theme": "auto",  # auto = follow the system, or light / dark
     "default_due_time": "00:00",  # time of day filled in when a due date is picked
-    "title_order": ["type", "social", "title", "price", "paid"],  # parts of the displayed title
+    "title_order": list(TITLE_PARTS),  # parts of the displayed title, in order
 }
 FINISHED_DIR = "finished_task_photos"  # inside the photos folder
 RESERVED_NAME = re.compile(r"CON|PRN|AUX|NUL|COM\d|LPT\d")
+DATA_LOCK = threading.Lock()  # requests run in threads: writes must not interleave, and nobody may read a file while it is replaced (Windows refuses)
 IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "heic"}
 UNITS = {**dict.fromkeys(("min", "mins", "minute", "minutes", "m", "分", "分钟"), 1),
          **dict.fromkeys(("h", "hr", "hrs", "hour", "hours", "时", "小时"), 60),
@@ -163,19 +165,59 @@ def delete_unsaved_photo(name):
 def load_settings():
     s = dict(DEFAULT_SETTINGS)
     if SETTINGS_FILE.exists():
-        s.update(json.loads(SETTINGS_FILE.read_text(encoding="utf-8")))
-    return s
+        try:
+            saved = json.loads(SETTINGS_FILE.read_text(encoding="utf-8-sig"))
+            s = clean_settings({**s, **{k: v for k, v in saved.items() if k in DEFAULT_SETTINGS}})  # a leftover "priorities" key is ignored
+        except (ValueError, AttributeError):  # a hand-edited file that is broken: run on the defaults instead of failing
+            s = dict(DEFAULT_SETTINGS)
+    return {**s, "priorities": PRIORITIES}
+
+
+def clean_settings(s):
+    """Validate and normalise a settings dict (it comes from the page or an uploaded file); returns only the known keys."""
+    out = {k: s[k] for k in DEFAULT_SETTINGS if k in s}
+
+    def need(ok, code):
+        if not ok:
+            raise ValueError(code)
+    need(isinstance(out["language"], str) and out["language"] in [f.stem for f in (ROOT / "locales").glob("*.json")], "invalid_language")
+    need(out["theme"] in ("auto", "light", "dark"), "invalid_theme")
+    need(isinstance(out["currency"], str) and re.fullmatch(r"([A-Z]{3})?", out["currency"]), "invalid_currency")
+    need(isinstance(out["default_due_time"], str) and re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", out["default_due_time"]), "invalid_time")
+    need(out["default_priority"] in PRIORITIES, "invalid_priority")
+    for k in ("types", "socials"):
+        v = out[k]
+        need(isinstance(v, list) and len(v) <= 50 and all(isinstance(x, str) and len(x.strip()) <= 40 for x in v), "invalid_list")
+        items = []
+        for x in (x.strip() for x in v):
+            if x and x.lower() not in [i.lower() for i in items]:  # drop blanks and case-insensitive duplicates
+                items.append(x)
+        out[k] = items
+    v = out["title_order"]
+    need(isinstance(v, list) and len(set(v)) == len(v) and "title" in v and all(x in TITLE_PARTS for x in v), "invalid_title_order")
+    return out
 
 
 def save_settings(s):
-    if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", s["default_due_time"]):
-        raise ValueError("invalid_time")
-    if not re.fullmatch(r"([A-Z]{3})?", s["currency"]):
-        raise ValueError("invalid_currency")
-    if s["theme"] not in ("auto", "light", "dark"):
-        raise ValueError("invalid_theme")
-    SETTINGS_FILE.write_text(json.dumps({k: s[k] for k in DEFAULT_SETTINGS if k in s},
-                                        ensure_ascii=False, indent=2), encoding="utf-8")
+    out = clean_settings(s)
+    tmp = SETTINGS_FILE.with_name(SETTINGS_FILE.name + ".tmp")
+    tmp.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(SETTINGS_FILE)  # atomic: a reader never sees a half-written file
+    return out
+
+
+def ensure_settings_file():
+    if not SETTINGS_FILE.exists():
+        save_settings(load_settings())
+
+
+def import_settings(data):
+    """Apply a (possibly partial) settings file. Nothing is applied if any value is invalid."""
+    if not isinstance(data, dict):
+        raise ValueError("invalid_settings_file")
+    known = {k: v for k, v in data.items() if k in DEFAULT_SETTINGS}
+    save_settings({**load_settings(), **known})
+    return {"applied": list(known), "ignored": [k for k in data if k not in DEFAULT_SETTINGS]}
 
 
 def load_tasks():
@@ -259,7 +301,7 @@ def view(t):
 
 
 class Handler(BaseHTTPRequestHandler):
-    def _send(self, code, body, ctype="application/json"):
+    def _send(self, code, body, ctype="application/json", headers=None):
         if not isinstance(body, bytes):
             body = json.dumps(body, ensure_ascii=False).encode()
         if ctype.startswith("text/") or ctype == "application/json":
@@ -267,6 +309,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
 
@@ -284,12 +328,20 @@ class Handler(BaseHTTPRequestHandler):
         if p == "/":
             self._file(ROOT / "static" / "index.html", "text/html")
         elif p == "/api/state":
-            self._send(200, {"tasks": [view(t) for t in load_tasks()], "settings": load_settings(),
-                             "statuses": STATUSES, "version": VERSION,
-                             "finished_photos": {"count": len(finished_photos()),
-                                                 "bytes": sum(f.stat().st_size for f in finished_photos())}, "author": AUTHOR, "year": YEAR,
-                             "languages": {f.stem: json.loads(f.read_text(encoding="utf-8"))["name"]
-                                           for f in sorted((ROOT / "locales").glob("*.json"))}})
+            with DATA_LOCK:  # build under the lock, send outside it so a slow browser can't stall saves
+                state = {"tasks": [view(t) for t in load_tasks()], "settings": load_settings(),
+                         "statuses": STATUSES, "version": VERSION, "settings_file": str(SETTINGS_FILE.resolve()),
+                         "finished_photos": {"count": len(finished_photos()),
+                                             "bytes": sum(f.stat().st_size for f in finished_photos())}, "author": AUTHOR, "year": YEAR,
+                         "languages": {f.stem: json.loads(f.read_text(encoding="utf-8"))["name"]
+                                       for f in sorted((ROOT / "locales").glob("*.json"))}}
+            self._send(200, state)
+        elif p == "/api/settings/file":
+            with DATA_LOCK:
+                ensure_settings_file()
+                data = SETTINGS_FILE.read_bytes()
+            self._send(200, data, "application/json",
+                       {"Content-Disposition": 'attachment; filename="pupqueue-settings.json"'})
         elif m := re.fullmatch(r"/locales/([a-z\-]+)\.json", p):
             self._file(ROOT / "locales" / f"{m[1]}.json", "application/json")
         elif p.startswith("/photos/"):
@@ -299,13 +351,32 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        with DATA_LOCK:
+            self._post()
+
+    def do_DELETE(self):
+        with DATA_LOCK:
+            self._delete()
+
+    def _post(self):
         try:
             if self.path == "/api/tasks":
                 self._send(200, view(upsert(json.loads(self._body()))))
             elif self.path == "/api/settings":
-                s = {**load_settings(), **json.loads(self._body())}
-                save_settings(s)
-                self._send(200, s)
+                body = json.loads(self._body())
+                if not isinstance(body, dict):
+                    raise ValueError("invalid_settings_file")
+                save_settings({**load_settings(), **body})
+                self._send(200, load_settings())
+            elif self.path == "/api/settings/import":
+                raw = self._body()
+                if len(raw) > 100_000:
+                    raise ValueError("file_too_big")
+                try:
+                    data = json.loads(raw.decode("utf-8-sig"))
+                except ValueError:
+                    raise ValueError("invalid_settings_file")
+                self._send(200, {**import_settings(data), "settings": load_settings()})
             elif self.path == "/api/photos/clear-finished":
                 self._send(200, clear_finished_photos())
             elif self.path == "/api/upload":
@@ -322,7 +393,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, KeyError) as e:
             self._send(400, {"error": str(e)})
 
-    def do_DELETE(self):
+    def _delete(self):
         if m := re.fullmatch(r"/api/tasks/(\w+)", self.path):
             delete_task(m[1])
             self._send(200, {"ok": True})
@@ -338,6 +409,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     migrate()
+    ensure_settings_file()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)  # localhost only: no auth
     print(f"PupQueue v{VERSION} running at http://127.0.0.1:{port}  (Ctrl+C to stop)")
