@@ -1,0 +1,20 @@
+{
+  "name": "English",
+  "app": "PupQueue",
+  "queue": "Queue", "board": "Board", "settings": "Settings",
+  "add_task": "+ Add task", "edit": "Edit", "delete": "Delete", "snooze": "Snooze 1 day", "unsnooze": "Wake",
+  "save": "Save", "cancel": "Cancel",
+  "title": "Title", "type": "Drawing type", "priority": "Priority", "price": "Price",
+  "paid": "Paid?", "paid_amount": "Amount paid", "paid_time": "Paid at",
+  "estimate": "Estimated time (e.g. 70min, 0.5h, 2d)", "due": "Due (date & time)",
+  "client_name": "Client name", "client_email": "Client email", "socials": "Social media", "add_social": "+ Add social",
+  "notes": "Other information", "photos": "Photos",
+  "filters": "Filters", "all": "All", "only": "Only", "and_above": "and above",
+  "min_price": "Min price", "max_est": "Max estimate (min)", "any": "Any", "yes": "Paid", "no": "Unpaid",
+  "show_snoozed": "Show snoozed", "snoozed_until": "Snoozed until",
+  "Waitlist": "Waitlist", "Ready": "Ready", "WIP": "WIP", "Completed": "Completed",
+  "language": "Language", "default_priority": "Default priority",
+  "types_list": "Drawing types (one per line)", "priorities_list": "Priorities (highest first, one per line)",
+  "socials_list": "Social media choices (one per line)", "no_tasks": "No tasks",
+  "confirm_delete": "Delete this task?"
+}

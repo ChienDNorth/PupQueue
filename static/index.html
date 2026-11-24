@@ -1,0 +1,121 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PupQueue</title>
+<style>
+:root{--bg:#f6f4f1;--fg:#222;--card:#fff;--line:#ddd;--accent:#d2691e}
+@media(prefers-color-scheme:dark){:root{--bg:#1d1b19;--fg:#eee;--card:#2a2725;--line:#444}}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
+header{display:flex;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:18px;margin:0 12px 0 0}
+button,select,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+button{cursor:pointer}button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+main{padding:16px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.card.snoozed{opacity:.5}.meta{font-size:13px;opacity:.75}.tag{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:0 8px;font-size:12px;margin-right:4px}
+.board{display:grid;grid-template-columns:repeat(4,minmax(200px,1fr));gap:12px}
+.col{background:var(--bg);border:1px dashed var(--line);border-radius:8px;padding:8px;min-height:200px}.col.over{border-color:var(--accent)}
+.col h3{margin:0 0 8px;font-size:14px}.card[draggable]{cursor:grab}
+dialog{max-width:560px;width:92vw;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px}
+label{display:block;margin:8px 0 2px;font-size:13px}dialog input:not([type=checkbox]),dialog select,dialog textarea{width:100%;box-sizing:border-box}
+.thumbs img{height:60px;margin:4px 4px 0 0;border-radius:4px}.hide{display:none}
+#err{color:#c00;font-size:13px}
+</style></head><body>
+<header><h1 id="appname"></h1><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button>
+<span style="flex:1"></span><button class="primary" id="add"></button></header>
+<main id="main"></main>
+<dialog id="dlg"><form method="dialog" id="form"></form></dialog>
+<script>
+const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S, T, L={}, view=localStorage.view||"queue", F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false}, form=null;
+const t=k=>L[k]??k;
+const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();if(!r.ok)throw new Error(j.error);return j};
+async function load(){S=await api("GET","/api/state");T=S.tasks;
+  L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
+function chrome(){document.title=$("#appname").textContent=t("app");
+  document.querySelectorAll("[data-v]").forEach(b=>{b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
+  $("#add").textContent=t("add_task");$("#add").onclick=()=>edit()}
+const pr=p=>S.settings.priorities.indexOf(p);
+const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
+function card(x,drag){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
+  return `<div class="card ${snoozed(x)?"snoozed":""}" ${drag?`draggable="true" data-id="${x.id}"`:""}>
+  <b>${esc(x.title)}</b> <span class="tag">${esc(x.priority)}</span>${x.type?`<span class="tag">${esc(x.type)}</span>`:""}
+  <div class="meta">${x.price?`💲${esc(x.price)} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(x.due.replace("T"," "))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(x.snoozed_until.slice(0,10))}`:""}</div>
+  ${x.client_name?`<div class="meta">👤 ${esc(x.client_name)} ${esc(x.client_email)} ${soc}</div>`:""}
+  ${x.notes?`<div class="meta">${esc(x.notes)}</div>`:""}
+  <div class="thumbs">${(x.photos?x.photos.split(";"):[]).map(p=>`<img src="/${esc(p)}">`).join("")}</div>
+  <div class="row" style="margin:6px 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
+  <button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
+function render(){chrome();const m=$("#main");
+  if(view=="settings")return settings(m);
+  if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>`<div class="col" data-s="${s}"><h3>${t(s)}</h3>${T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio).map(x=>card(x,1)).join("")}</div>`).join("")}</div>`;board(m)}
+  else queue(m);
+  m.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.a,b.dataset.id))}
+const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
+function queue(m){const P=S.settings.priorities;
+  const list=T.filter(x=>x.status!="Completed").filter(x=>{
+    if(!F.snoozed&&snoozed(x))return false;
+    if(F.prio!="all"){const[k,p]=F.prio.split(":");const i=pr(x.priority),j=P.indexOf(p);if(k=="eq"?i!=j:i>j)return false}
+    if(F.minPrice!==""&&!(parseFloat(x.price)>=+F.minPrice))return false;
+    if(F.paid!="any"&&!!x.paid!=(F.paid=="yes"))return false;
+    if(F.type!="all"&&x.type!=F.type)return false;
+    if(F.maxEst!==""&&!(+x.estimate_min<=+F.maxEst&&x.estimate_min!==""))return false;return true}).sort(byPrio);
+  const sel=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
+  m.innerHTML=`<div class="row"><b>${t("filters")}</b>
+  ${sel("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),...P.map(p=>["ge:"+p,p+" "+t("and_above")])],F.prio)}
+  ${sel("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
+  ${sel("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
+  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:100px">
+  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:150px">
+  <label style="margin:0"><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label></div>
+  ${list.map(x=>card(x)).join("")||`<p class="meta">${t("no_tasks")}</p>`}`;
+  const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
+  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked)}
+function board(m){let drag;
+  m.querySelectorAll(".card[draggable]").forEach(c=>c.ondragstart=()=>drag=c.dataset.id);
+  m.querySelectorAll(".col").forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add("over")};c.ondragleave=()=>c.classList.remove("over");
+    c.ondrop=async e=>{e.preventDefault();if(drag){await api("POST","/api/tasks",{id:drag,status:c.dataset.s});load()}}})}
+async function act(a,id){const x=T.find(y=>y.id==id);
+  if(a=="edit")edit(x);
+  else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);load()}}
+  else if(a=="snz"){const d=new Date(Date.now()+86400e3*(snoozed(x)?-1:1)).toISOString().slice(0,16);await api("POST","/api/tasks",{id,snoozed_until:snoozed(x)?"":d});load()}}
+function edit(x={}){const s=S.settings;form={photos:x.photos?x.photos.split(";"):[],socials:safe(x.client_socials)};
+  const f=$("#form"),sel=(n,o,v,blank)=>`<select name="${n}">${blank?'<option value=""></option>':""}${o.map(a=>`<option ${a==v?"selected":""}>${esc(a)}</option>`).join("")}</select>`;
+  f.innerHTML=`<label>${t("title")}</label><input name="title" required value="${esc(x.title)}">
+  <label>${t("type")}</label>${sel("type",s.types,x.type,1)}
+  <label>${t("priority")}</label>${sel("priority",s.priorities,x.priority||s.default_priority)}
+  <label>${t("price")}</label><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">
+  <label><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
+  <div id="pbox" class="${x.paid?"":"hide"}"><label>${t("paid_amount")}</label><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}">
+  <label>${t("paid_time")}</label><input name="paid_time" type="datetime-local" value="${esc(x.paid_time)}"></div>
+  <label>${t("estimate")}</label><input name="estimate" value="${esc(x.estimate)}">
+  <label>${t("due")}</label><input name="due" type="datetime-local" value="${esc(x.due)}">
+  <label>${t("client_name")}</label><input name="client_name" value="${esc(x.client_name)}">
+  <label>${t("client_email")}</label><input name="client_email" type="email" value="${esc(x.client_email)}">
+  <label>${t("socials")}</label><div id="soc"></div><button type="button" id="addsoc">${t("add_social")}</button>
+  <label>${t("notes")}</label><textarea name="notes" rows="4">${esc(x.notes)}</textarea>
+  <label>${t("photos")}</label><input type="file" id="file" accept="image/*" multiple><div class="thumbs" id="th"></div>
+  <p id="err"></p><div class="row"><button class="primary" value="save">${t("save")}</button><button type="button" id="cx">${t("cancel")}</button></div>`;
+  const drawSoc=()=>{$("#soc").innerHTML=form.socials.map((r,i)=>`<div class="row" style="margin-bottom:4px">${sel("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}" style="flex:1"><button type="button" data-rm="${i}">×</button></div>`).join("");
+    $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();form.socials.splice(+b.dataset.rm,1);drawSoc()})};
+  const sync=()=>form.socials=form.socials.map((_,i)=>({net:f["net"+i].value,handle:f["h"+i].value}));
+  const thumbs=()=>$("#th").innerHTML=form.photos.map(p=>`<img src="/${esc(p)}">`).join("");
+  drawSoc();thumbs();
+  $("#addsoc").onclick=()=>{sync();form.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
+  f.paid.onchange=()=>$("#pbox").classList.toggle("hide",!f.paid.checked);
+  $("#file").onchange=async e=>{for(const file of e.target.files)form.photos.push((await api("POST","/api/upload",file,{"X-Filename":file.name})).path);thumbs()};
+  $("#cx").onclick=()=>$("#dlg").close();
+  f.onsubmit=async e=>{e.preventDefault();sync();const d=Object.fromEntries(new FormData(f));
+    const body={id:x.id,title:d.title,type:d.type,priority:d.priority,price:d.price,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid_time||"",
+      estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:d.client_email,client_socials:form.socials.filter(r=>r.handle),notes:d.notes,photos:form.photos.join(";")};
+    try{await api("POST","/api/tasks",body);$("#dlg").close();load()}catch(er){$("#err").textContent=er.message}};
+  $("#dlg").showModal()}
+function settings(m){const s=S.settings,ls=Object.entries(S.languages);
+  m.innerHTML=`<div style="max-width:480px"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>`<option value="${c}" ${c==s.language?"selected":""}>${esc(n)}</option>`).join("")}</select>
+  ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6" style="width:100%">${esc(s[k].join("\n"))}</textarea>`).join("")}
+  <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>`<option ${p==s.default_priority?"selected":""}>${esc(p)}</option>`).join("")}</select>
+  <p><button class="primary" id="ssave">${t("save")}</button></p></div>`;
+  $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
+    const p=lines("priorities");await api("POST","/api/settings",{language:$("#sl").value,types:lines("types"),priorities:p,socials:lines("socials"),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}}
+load();
+</script></body></html>

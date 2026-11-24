@@ -1,0 +1,20 @@
+{
+  "name": "中文",
+  "app": "翼犬稿单",
+  "queue": "队列", "board": "看板", "settings": "设置",
+  "add_task": "+ 添加任务", "edit": "编辑", "delete": "删除", "snooze": "推迟一天", "unsnooze": "唤醒",
+  "save": "保存", "cancel": "取消",
+  "title": "标题", "type": "绘画类型", "priority": "优先级", "price": "价格",
+  "paid": "已付款？", "paid_amount": "付款金额", "paid_time": "付款时间",
+  "estimate": "预计用时（如 70min、0.5h、2d）", "due": "截止日期与时间",
+  "client_name": "客户名称", "client_email": "客户邮箱", "socials": "社交媒体", "add_social": "+ 添加社交账号",
+  "notes": "其他信息", "photos": "图片",
+  "filters": "筛选", "all": "全部", "only": "仅", "and_above": "及以上",
+  "min_price": "最低价格", "max_est": "最长用时（分钟）", "any": "不限", "yes": "已付款", "no": "未付款",
+  "show_snoozed": "显示已推迟", "snoozed_until": "推迟至",
+  "Waitlist": "候补", "Ready": "待开始", "WIP": "进行中", "Completed": "已完成",
+  "language": "语言", "default_priority": "默认优先级",
+  "types_list": "绘画类型（每行一个）", "priorities_list": "优先级（从高到低，每行一个）",
+  "socials_list": "社交媒体选项（每行一个）", "no_tasks": "暂无任务",
+  "confirm_delete": "确定删除该任务？"
+}
