@@ -61,6 +61,12 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .c-thumbs .more{font-size:var(--fs-xs);color:var(--muted)}
 .c-foot{display:flex;gap:.35rem;align-items:center;margin-top:.65rem;padding-top:.5rem;border-top:1px solid var(--line)}
 .c-foot .sp{flex:1}
+.mdone{display:inline-flex;align-items:center;gap:.35rem}.mdone svg{width:1.15em;height:1.15em;flex:none}
+.mdone[aria-pressed=true]{border-color:#00873a;color:var(--ok-fg)}
+/* mark-done countdown: a bar that shrinks to nothing; the negative delay keeps its place across re-renders */
+.cd{height:.25rem;margin-top:.5rem;border-radius:1rem;background:var(--line);overflow:hidden}
+.cd i{display:block;height:100%;background:#00873a;animation:cd linear forwards}
+@keyframes cd{from{width:100%}to{width:0}}
 .board{display:grid;grid-template-columns:repeat(4,minmax(14rem,1fr));gap:.8rem;overflow-x:auto;align-items:start}
 .col{background:var(--bg);border:1px dashed var(--line);border-radius:.7rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
 .col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}
@@ -179,7 +185,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
-let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false},sel=null;
+let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false,done:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
@@ -215,6 +221,7 @@ const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per pri
   return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
 const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n-i,n)};
 const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
+const combo=e=>[e.ctrlKey&&"Ctrl",e.altKey&&"Alt",e.shiftKey&&"Shift",e.metaKey&&"Meta",e.key==" "?"Space":e.key?.length==1?e.key.toUpperCase():e.key].filter(Boolean).join("+");  // e.g. "Shift+Enter", "Ctrl+S"
 const chip=(txt,cls="")=>`<span class="chip ${cls}">${txt}</span>`;
 
 /* ---------- small popup menus (priority, snooze) ---------- */
@@ -288,6 +295,12 @@ function chrome(){document.title=$("#appname").textContent=t("app");
   $("#add").textContent=t("add_task");$("#add").onclick=()=>edit();
   const ls=$("#lang");ls.title=t("language");ls.innerHTML=Object.entries(S.languages).map(([c,n])=>`<option value="${c}" ${c==S.settings.language?"selected":""}>${esc(n)}</option>`).join("");
   ls.onchange=async()=>{await api("POST","/api/settings",{language:ls.value});load()}}
+const DONE_MS=7000,pending={};  // task id -> {start, timer} while a Mark done countdown runs
+const CHECK="M140 255L240 375L410 165";
+const doneIcon=on=>on?`<svg viewBox="0 0 550 550" aria-hidden="true"><circle cx="275" cy="275" r="275" fill="#00873a"/><path d="${CHECK}" fill="none" stroke="#fff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+  :`<svg viewBox="0 0 550 550" aria-hidden="true" style="color:var(--accent)"><circle cx="275" cy="275" r="262" fill="none" stroke="currentColor" stroke-width="26"/><path d="${CHECK}" fill="none" stroke="currentColor" stroke-width="96" stroke-linecap="round" stroke-linejoin="round"/><path d="${CHECK}" fill="none" stroke="var(--card)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const doneBtn=x=>{const p=pending[x.id];return x.status=="Completed"?"":`<button class="sm mdone" data-a="done" data-id="${x.id}" aria-pressed="${!!p}" title="${p?t("done_undo_hint"):""}">${doneIcon(p)}${t("mark_done")}</button>`};
+const doneBar=x=>{const p=pending[x.id];return p?`<div class="cd"><i style="animation-duration:${DONE_MS}ms;animation-delay:-${Date.now()-p.start}ms"></i></div>`:""};
 const snoozeBtns=(x,cls="sm")=>`${snoozed(x)?`<button class="${cls}" data-a="unsnz" data-id="${x.id}">${t("cancel_snooze")}</button>`:""}<button class="${cls}" data-a="snz" data-id="${x.id}">${t("snooze")} ▾</button>`;
 function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
@@ -298,7 +311,7 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
   ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
   ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
   ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}
-  <div class="c-foot"><button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+  <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
   else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
@@ -308,7 +321,7 @@ $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmCli
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities;
-  const list=T.filter(x=>x.status!="Completed").filter(x=>{
+  const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
     if(!F.snoozed&&snoozed(x))return false;
     if(F.prio!="all"){const[k,p]=F.prio.split(":");const i=pr(x.priority),j=P.indexOf(p);if(k=="eq"?i!=j:i>j)return false}
     if(F.minPrice!==""&&!(parseFloat(x.price)>=+F.minPrice))return false;
@@ -322,10 +335,11 @@ function queue(m){const P=S.settings.priorities;
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
   <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:6.5rem">
   <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:9rem">
-  <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
+  <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label>
+  <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
-  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked)}
+  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked)}
 function board(m){let drag;
   m.querySelectorAll(".card[draggable]").forEach(c=>c.ondragstart=()=>drag=c.dataset.id);
   m.querySelectorAll(".col").forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add("over")};c.ondragleave=()=>c.classList.remove("over");
@@ -334,7 +348,12 @@ async function act(a,id,btn){const x=T.find(y=>y.id==id);
   if(a=="edit")edit(x);
   else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);if(sel==id)sel=null;load()}}
   else if(a=="snz")snoozeMenu(btn,id);
-  else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}}
+  else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}
+  else if(a=="done"){  // first click starts the countdown, a second click within it cancels
+    if(pending[id]){clearTimeout(pending[id].timer);delete pending[id]}
+    else pending[id]={start:Date.now(),timer:setTimeout(async()=>{delete pending[id];
+      try{await api("POST","/api/tasks",{id,status:"Completed"})}catch(er){flash(er.message,true)}load()},DONE_MS)};
+    render()}}
 
 /* ---------- detail drawer ---------- */
 function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
@@ -392,6 +411,10 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
   E("paid").onchange=()=>$("#pbox").classList.toggle("hide",!E("paid").checked);
+  f.onkeydown=e=>{const c=combo(e),k=s.shortcuts,el=e.target;
+    if(c==k.save_task){e.preventDefault();el.blur?.();f.requestSubmit();return}  // blur first so the field's change (e.g. estimate) is applied
+    const field=el.matches("input,select")||el.matches("textarea")&&c!="Enter";  // plain Enter in notes is a new line
+    if(field&&(c==k.finish_field||e.key=="Enter")){e.preventDefault();if(c==k.finish_field)el.blur()}};  // Enter never submits the form on its own
   f.oninput=e=>{if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
   const est=E("estimate"),normEst=()=>{const m=parseDur(est.value);est.value=fmtDur(m)};
   est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
@@ -462,6 +485,7 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
       card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
       card(t("socials_label"),`<div class="tags" id="tg-socials"></div><p class="note">${t("tag_hint")}</p>`)+
       card(t("title_format"),`<div class="tags" id="tg-title"></div><p class="note">${t("title_format_hint")}</p>`),
+    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`),
     storage:()=>card(t("cat_storage"),`<label>${t("finished_photos")}</label>
       <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`),
     file:()=>card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
@@ -482,6 +506,13 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
     tagEditor($("#tg-types"),{items:s.types,save:v=>saveSettings({types:v})});
     tagEditor($("#tg-socials"),{items:s.socials,save:v=>saveSettings({socials:v})});
     tagEditor($("#tg-title"),{items:s.title_order,allowed:PARTS,save:v=>saveSettings({title_order:v})})}
+  if(stab=="shortcuts")m.querySelectorAll("[data-sc]").forEach(b=>{let rec=false;  // click, then press the new keys; Escape or clicking away cancels
+    b.onclick=()=>{rec=true;b.textContent=t("sc_press");b.classList.add("on")};
+    b.onblur=()=>{if(rec)render()};
+    b.onkeydown=e=>{if(!rec||["Control","Alt","Shift","Meta"].includes(e.key))return;e.preventDefault();rec=false;
+      const c=combo(e);if(c=="Escape")return render();
+      if(Object.entries(s.shortcuts).some(([k,v])=>k!=b.dataset.sc&&v==c)){flash(t("err_invalid_shortcuts"),true);return render()}
+      saveSettings({shortcuts:{...s.shortcuts,[b.dataset.sc]:c}}).then(render)}});
   if(stab=="storage")$("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
   if(stab=="file"){
     $("#fview").onclick=async()=>{const pre=$("#fpre"),show=pre.classList.contains("hide");

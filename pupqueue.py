@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "1.3.0", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "2.0.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -25,7 +25,9 @@ DEFAULT_SETTINGS = {
     "theme": "auto",  # auto = follow the system, or light / dark
     "default_due_time": "00:00",  # time of day filled in when a due date is picked
     "title_order": list(TITLE_PARTS),  # parts of the displayed title, in order
+    "shortcuts": {"save_task": "Shift+Enter", "finish_field": "Enter"},  # keys in the task window, written like the page records them
 }
+SHORTCUT_RE = re.compile(r"((Ctrl|Alt|Shift|Meta)\+)*[^\s+]{1,20}")
 FINISHED_DIR = "finished_task_photos"  # inside the photos folder
 RESERVED_NAME = re.compile(r"CON|PRN|AUX|NUL|COM\d|LPT\d")
 DATA_LOCK = threading.Lock()  # requests run in threads: writes must not interleave, and nobody may read a file while it is replaced (Windows refuses)
@@ -193,6 +195,10 @@ def clean_settings(s):
             if x and x.lower() not in [i.lower() for i in items]:  # drop blanks and case-insensitive duplicates
                 items.append(x)
         out[k] = items
+    v = out["shortcuts"]
+    need(isinstance(v, dict) and set(v) <= set(DEFAULT_SETTINGS["shortcuts"]), "invalid_shortcuts")
+    v = out["shortcuts"] = {**DEFAULT_SETTINGS["shortcuts"], **v}  # a partial file keeps the other keys
+    need(all(isinstance(x, str) and SHORTCUT_RE.fullmatch(x) for x in v.values()) and len(set(v.values())) == len(v), "invalid_shortcuts")
     v = out["title_order"]
     need(isinstance(v, list) and len(set(v)) == len(v) and "title" in v and all(x in TITLE_PARTS for x in v), "invalid_title_order")
     return out

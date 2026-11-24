@@ -103,8 +103,12 @@ def test_settings_file_and_import():
                       ({"title_order": ["type", "price"]}, "invalid_title_order"), ({"title_order": ["title", "title"]}, "invalid_title_order"),
                       ({"title_order": ["title", "bogus"]}, "invalid_title_order"), ({"default_priority": "Urgent"}, "invalid_priority"),
                       ({"language": "xx"}, "invalid_language"), ({"theme": "neon"}, "invalid_theme"), ({"currency": "euro"}, "invalid_currency"),
-                      ({"default_due_time": "9:00"}, "invalid_time")]:
+                      ({"default_due_time": "9:00"}, "invalid_time"), ({"shortcuts": "Enter"}, "invalid_shortcuts"),
+                      ({"shortcuts": {"bogus": "A"}}, "invalid_shortcuts"), ({"shortcuts": {"save_task": "Ctrl+ Enter"}}, "invalid_shortcuts"),
+                      ({"shortcuts": {"save_task": "Enter"}}, "invalid_shortcuts")]:  # same keys as finish_field
         assert call("POST", "/api/settings", bad)["error"] == code, bad
+    # a partial shortcuts value keeps the other shortcut
+    assert call("POST", "/api/settings", {"shortcuts": {"save_task": "Ctrl+S"}})["shortcuts"] == {"save_task": "Ctrl+S", "finish_field": "Enter"}
     assert call("POST", "/api/settings", {"title_order": ["paid", "title", "type"], "default_priority": "Low"})["title_order"] == ["paid", "title", "type"]
     # importing a preset file: partial files are merged, unknown keys are reported and ignored
     before = saved()

@@ -1,4 +1,10 @@
 # Changelog
+## v2.0.0
+- Task window: Enter finishes the field you are in instead of creating the task; Shift+Enter creates (or saves) the task. In Other information, Enter still starts a new line.
+- Settings > Shortcuts: change both keys (click a shortcut, press the new keys). Saved in `settings.json` and checked by the server; each shortcut needs its own keys.
+- Each open task card has a Mark done button. Clicking it starts a 7-second countdown bar; the task then moves to Completed. Clicking it again during the countdown cancels.
+- Queue filters: a Show finished checkbox adds completed tasks to the list.
+
 ## v1.3.0
 - Settings reorganised: categories on the left (General, Tasks, Storage, Settings file), one group of settings on the right.
 - Every setting saves as soon as you change it; no Save button.

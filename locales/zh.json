@@ -32,6 +32,7 @@
   "file_intro": "你的设置保存在电脑上的这个文件里。可以打开查看、备份，或载入别人的设置文件来使用其中的预设。",
   "file_path": "位置", "file_view": "查看内容", "file_hide": "收起内容", "file_download": "下载", "file_upload": "上传设置文件…",
   "file_upload_help": "只会更改文件里包含的选项，文件里没有的选项保持不变。", "import_applied": "已应用", "import_ignored": "已忽略（不是设置项）",
+  "cat_shortcuts": "快捷键", "sc_save_task": "创建 / 保存任务（任务窗口）", "sc_finish_field": "完成当前输入框（任务窗口）", "sc_hint": "点击一个快捷键，然后按下新的按键。按 Escape 取消。在“其他信息”中，单独按回车始终换行。", "sc_press": "请按键…", "mark_done": "标记完成", "done_undo_hint": "7 秒后移至已完成。再次点击可取消。", "show_finished": "显示已完成", "err_invalid_shortcuts": "每个快捷键必须使用不同的按键。",
   "no_tasks": "暂无任务",
   "confirm_delete": "确定删除该任务？", "version": "版本",
   "err_title_required": "请输入标题。",
