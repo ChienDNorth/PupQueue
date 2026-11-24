@@ -63,7 +63,7 @@ def format_duration(minutes):
 
 
 def migrate():
-    """Move data from the V1 layout ('task records/', photos/) into task_records/."""
+    """Move data from the V1 layout ('task records/', photos/) into task_records/, and tidy existing photos."""
     old = ROOT / "task records"
     if old.is_dir() and not RECORDS.exists():
         old.rename(RECORDS)
@@ -73,16 +73,31 @@ def migrate():
         for f in old_photos.iterdir():
             shutil.move(str(f), PHOTOS / f.name)
         old_photos.rmdir()
+    tasks = load_tasks()  # bring existing photos in line: named after the task, full address in the CSV
+    stored = [t["photos"] for t in tasks]
+    for t in tasks:
+        organize_photos(t)
+    if [t["photos"] for t in tasks] != stored:
+        save_tasks(tasks)
+
+
+def norm_photo(rel):
+    return rel if rel.startswith(RECORDS.name + "/") else f"{RECORDS.name}/{rel}"  # early V1.2 rows held 'photos/x.png'
 
 
 def photo_list(t):
-    return [p for p in (t["photos"] if t else "").split(";") if p]
+    return [norm_photo(p) for p in (t["photos"] if t else "").split(";") if p]
 
 
 def photo_file(rel):
-    """Existing file for a stored path like 'photos/a.png'; None if missing or outside the photos folder."""
-    p = (RECORDS / rel).resolve()
+    """Existing file for a stored address like 'task_records/photos/a.png'; None if missing or outside the photos folder."""
+    p = (RECORDS.parent / norm_photo(rel)).resolve()
     return p if p.is_relative_to(PHOTOS.resolve()) and p.is_file() else None
+
+
+def photo_rel(p):
+    """The address kept in the CSV: the photo's path from the project folder, e.g. task_records/photos/Title.png."""
+    return p.relative_to(RECORDS.parent.resolve()).as_posix()
 
 
 def photo_stem(title):
@@ -111,19 +126,12 @@ def organize_photos(t):
             src.rename(dst)
             src = dst
         kept.append(src)
-    t["photos"] = ";".join("photos/" + p.relative_to(PHOTOS.resolve()).as_posix() for p in kept)
+    t["photos"] = ";".join(photo_rel(p) for p in kept)
 
 
-def discard_photo(rel, finished):
-    """Delete a photo; a finished task's photo is archived in finished_task_photos instead."""
-    src = photo_file(rel)
-    if not src:
-        return
-    if not finished:
+def discard_photo(rel):
+    if src := photo_file(rel):
         src.unlink()
-    elif src.parent != (PHOTOS / FINISHED_DIR).resolve():
-        (PHOTOS / FINISHED_DIR).mkdir(parents=True, exist_ok=True)
-        src.rename(free_path(PHOTOS / FINISHED_DIR, src.stem, src.suffix))
 
 
 def finished_photos():
@@ -134,7 +142,7 @@ def finished_photos():
 def clear_finished_photos():
     files = finished_photos()
     out = {"deleted": len(files), "bytes": sum(f.stat().st_size for f in files)}
-    gone = {f"photos/{FINISHED_DIR}/{f.name}" for f in files}
+    gone = {photo_rel(f.resolve()) for f in files}
     for f in files:
         f.unlink()
     tasks = load_tasks()
@@ -146,7 +154,7 @@ def clear_finished_photos():
 
 def delete_unsaved_photo(name):
     """Remove an uploaded photo that no task references (dialog cancelled / thumbnail removed before saving)."""
-    rel = f"photos/{name}"
+    rel = f"{RECORDS.name}/photos/{name}"
     f = photo_file(rel)
     if f and f.parent == PHOTOS.resolve() and not any(rel in photo_list(t) for t in load_tasks()):
         f.unlink()
@@ -231,7 +239,7 @@ def upsert(data):
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
     for rel in set(photo_list(old)) - set(photo_list(new)):  # photos removed from the task
-        discard_photo(rel, new["status"] == "Completed")
+        discard_photo(rel)
     organize_photos(new)
     tasks = [t for t in tasks if t["id"] != new["id"]] + [new]
     save_tasks(tasks)
@@ -241,8 +249,8 @@ def upsert(data):
 def delete_task(tid):
     tasks = load_tasks()
     gone = next((t for t in tasks if t["id"] == tid), None)
-    for rel in photo_list(gone):
-        discard_photo(rel, gone["status"] == "Completed")
+    for rel in photo_list(gone):  # finished or not, a deleted task takes its photos with it
+        discard_photo(rel)
     save_tasks([t for t in tasks if t["id"] != tid])
 
 
@@ -308,7 +316,7 @@ class Handler(BaseHTTPRequestHandler):
                 PHOTOS.mkdir(parents=True, exist_ok=True)
                 name = f"{uuid.uuid4().hex[:10]}.{ext}"
                 (PHOTOS / name).write_bytes(self._body())
-                self._send(200, {"path": f"photos/{name}"})
+                self._send(200, {"path": f"{RECORDS.name}/photos/{name}"})
             else:
                 self._send(404, {"error": "not found"})
         except (ValueError, KeyError) as e:

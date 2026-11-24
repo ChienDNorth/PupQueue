@@ -182,7 +182,7 @@ const fmtBytes=b=>b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).
 const localISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
 const photosOf=x=>x.photos?x.photos.split(";").filter(Boolean):[];
-const purl=p=>"/"+p.split("/").map(encodeURIComponent).join("/");  // photo names follow the task title: may hold spaces, # or non-ASCII
+const purl=p=>"/"+p.replace(/^task_records\//,"").split("/").map(encodeURIComponent).join("/");  // CSV address -> URL; names follow the task title: may hold spaces, # or non-ASCII
 const pr=p=>S.settings.priorities.indexOf(p);
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
 const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per priority level), the first `on` filled

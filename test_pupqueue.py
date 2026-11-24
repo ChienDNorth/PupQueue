@@ -1,4 +1,4 @@
-import http.client, json, re, tempfile, threading, urllib.parse, urllib.request, uuid
+import csv, http.client, json, re, tempfile, threading, urllib.parse, urllib.request, uuid
 from pathlib import Path
 import pupqueue as pq
 
@@ -57,9 +57,9 @@ def test_storage_and_api():
     assert ok["client_email"] == "me@example.com"
     # photos land in task_records/photos, even for a Chinese filename (sent percent-encoded)
     p = call("POST", "/api/upload", b"img", {"X-Filename": "%E5%9B%BE%E7%89%87.PNG"})["path"]
-    assert (pq.RECORDS / p).read_bytes() == b"img"
+    assert p.startswith("task_records/photos/") and (pq.RECORDS.parent / p).read_bytes() == b"img"
     assert call("POST", "/api/upload", b"x", {"X-Filename": "evil.html"})["error"] == "unsupported_image"
-    with urllib.request.urlopen(base + "/" + p) as r:
+    with urllib.request.urlopen(base + "/" + p.removeprefix("task_records/")) as r:
         assert r.read() == b"img" and r.headers["Content-Type"] == "image/png"
     state = call("GET", "/api/state")
     assert len(state["tasks"]) == 2 and "en" in state["languages"] and state["version"] == pq.VERSION
@@ -81,13 +81,17 @@ def _upload(data):  # what /api/upload does: a random-named file at the top of p
     pq.PHOTOS.mkdir(parents=True, exist_ok=True)
     name = f"{uuid.uuid4().hex[:10]}.png"
     (pq.PHOTOS / name).write_bytes(data)
-    return "photos/" + name
+    return "task_records/photos/" + name
 
 def _files(folder):
     return sorted(f.name for f in folder.iterdir() if f.is_file()) if folder.is_dir() else []
 
+def _csv_photos(name, title):
+    with (pq.RECORDS / name).open(newline="", encoding="utf-8-sig") as f:
+        return next(r["photos"] for r in csv.DictReader(f) if r["title"] == title)
+
 def test_photos():
-    _sandbox()
+    tmp = _sandbox()
     fin = pq.PHOTOS / pq.FINISHED_DIR
     title = "白梅 / Cat: fan?art;"
     stem = pq.photo_stem(title)
@@ -95,7 +99,12 @@ def test_photos():
     # named after the title; several photos get _2, _3 ...
     a = pq.upsert({"title": title, "type": "Gift", "photos": ";".join([_upload(b"1"), _upload(b"2")])})
     assert _files(pq.PHOTOS) == sorted([f"{stem}.png", f"{stem}_2.png"])
-    assert (pq.PHOTOS / f"{stem}.png").read_bytes() == b"1" and ";" not in a["photos"].replace("photos/", "", 1).split(";")[0]
+    assert (pq.PHOTOS / f"{stem}.png").read_bytes() == b"1"
+    # the CSV row holds each photo's address (from the project folder), and the file is really there
+    addr = _csv_photos("active.csv", title)
+    assert addr == f"task_records/photos/{stem}.png;task_records/photos/{stem}_2.png" == a["photos"]
+    assert all((tmp / p).is_file() for p in addr.split(";"))
+    assert pq.upsert({"title": "No pics"})["photos"] == "" and _csv_photos("active.csv", "No pics") == ""
     # changing the title renames the files
     a = pq.upsert({"id": a["id"], "title": "Dog", "photos": a["photos"]})
     assert _files(pq.PHOTOS) == ["Dog.png", "Dog_2.png"]
@@ -107,34 +116,35 @@ def test_photos():
     # finishing moves them to photos/finished_task_photos; un-finishing moves them back
     a = pq.upsert({"id": a["id"], "status": "Completed"})
     assert _files(pq.PHOTOS) == [] and _files(fin) == ["Dog.png", "Dog_2.png"]
-    assert a["photos"] == f"photos/{pq.FINISHED_DIR}/Dog.png;photos/{pq.FINISHED_DIR}/Dog_2.png"
+    assert a["photos"] == f"task_records/photos/{pq.FINISHED_DIR}/Dog.png;task_records/photos/{pq.FINISHED_DIR}/Dog_2.png"
+    assert _csv_photos("completed.csv", "Dog") == a["photos"]  # a finished task stays in the local csv with its photo addresses
     a = pq.upsert({"id": a["id"], "status": "WIP"})
     assert _files(fin) == [] and _files(pq.PHOTOS) == ["Dog.png", "Dog_2.png"]
-    # removing a photo from a finished task archives it instead of deleting
+    # finished tasks keep their photos while they exist; removing one photo from a finished task deletes that file
     a = pq.upsert({"id": a["id"], "status": "Completed"})
     a = pq.upsert({"id": a["id"], "photos": a["photos"].split(";")[0]})
-    assert _files(fin) == ["Dog.png", "Dog_2.png"] and a["photos"].count(";") == 0
-    # deleting a finished task keeps its photos; deleting an unfinished task removes them
+    assert _files(fin) == ["Dog.png"] and a["photos"].count(";") == 0
+    # deleting a task deletes its photos, finished or not
     pq.delete_task(a["id"])
-    assert _files(fin) == ["Dog.png", "Dog_2.png"] and pq.load_tasks() == []
+    assert _files(fin) == [] and [t["title"] for t in pq.load_tasks()] == ["No pics"]
     b = pq.upsert({"title": "Bee", "photos": _upload(b"b")})
     pq.delete_task(b["id"])
     assert _files(pq.PHOTOS) == []
     # same title on two tasks never clobbers a file
     c1 = pq.upsert({"title": "Same", "photos": _upload(b"c1")})
     c2 = pq.upsert({"title": "Same", "photos": _upload(b"c2")})
-    assert c1["photos"] != c2["photos"] and {(pq.RECORDS / p).read_bytes() for p in (c1["photos"], c2["photos"])} == {b"c1", b"c2"}
+    assert c1["photos"] != c2["photos"] and {(tmp / p).read_bytes() for p in (c1["photos"], c2["photos"])} == {b"c1", b"c2"}
     # an upload nobody saved can be dropped; a saved one cannot
     loose = _upload(b"loose")
-    pq.delete_unsaved_photo(loose.split("/")[1]); pq.delete_unsaved_photo(c1["photos"].split("/")[1])
-    assert not (pq.RECORDS / loose).exists() and (pq.RECORDS / c1["photos"]).exists()
-    # clear-all deletes the archive and leaves no dangling references
+    pq.delete_unsaved_photo(loose.split("/")[-1]); pq.delete_unsaved_photo(c1["photos"].split("/")[-1])
+    assert not (tmp / loose).exists() and (tmp / c1["photos"]).exists()
+    # clear-all deletes the finished tasks' photos and leaves no dangling addresses
     d = pq.upsert({"title": "Done", "status": "Completed", "photos": _upload(b"d")})
-    assert len(pq.finished_photos()) == 3
+    assert len(pq.finished_photos()) == 1
     r = pq.clear_finished_photos()
-    assert r["deleted"] == 3 and r["bytes"] > 0 and pq.finished_photos() == []
+    assert r["deleted"] == 1 and r["bytes"] > 0 and pq.finished_photos() == []
     assert next(t for t in pq.load_tasks() if t["id"] == d["id"])["photos"] == ""
-    assert (pq.RECORDS / c1["photos"]).exists()  # unfinished tasks are untouched
+    assert (tmp / c1["photos"]).exists()  # unfinished tasks are untouched
 
 def test_photo_urls():
     tmp = _sandbox()
@@ -143,28 +153,35 @@ def test_photo_urls():
     t = pq.upsert({"title": "白梅 头像", "photos": _upload(b"png!")})
     def get(path):
         c = http.client.HTTPConnection("127.0.0.1", srv.server_port); c.request("GET", path); r = c.getresponse(); return r.status, r.read()
-    assert get("/" + urllib.parse.quote(t["photos"])) == (200, b"png!")  # non-ASCII + space in the file name
+    url = lambda addr: "/" + urllib.parse.quote(addr.removeprefix("task_records/"))  # what the page does with a CSV address
+    assert get(url(t["photos"])) == (200, b"png!")  # non-ASCII + space in the file name
     (tmp / "secret.txt").write_text("s")
     for bad in ("/photos/../../secret.txt", "/photos/%2e%2e/%2e%2e/secret.txt", "/photos/..%2f..%2fsecret.txt", "/photos/nope.png"):
         assert get(bad)[0] == 404, bad
     pq.upsert({"id": t["id"], "status": "Completed"})
     state = json.load(urllib.request.urlopen(f"http://127.0.0.1:{srv.server_port}/api/state"))
-    assert state["finished_photos"]["count"] == 1 and state["tasks"][0]["photos"].startswith(f"photos/{pq.FINISHED_DIR}/")
-    assert get("/" + urllib.parse.quote(state["tasks"][0]["photos"]))[0] == 200
+    assert state["finished_photos"]["count"] == 1 and state["tasks"][0]["photos"].startswith(f"task_records/photos/{pq.FINISHED_DIR}/")
+    assert get(url(state["tasks"][0]["photos"]))[0] == 200
 
 def test_legacy_rows_and_migration():
     tmp = Path(tempfile.mkdtemp())
     root, pq.ROOT = pq.ROOT, tmp
     pq.RECORDS, pq.PHOTOS = tmp / "task_records", tmp / "task_records" / "photos"
     (tmp / "task records").mkdir()
-    (tmp / "task records" / "active.csv").write_text("id,title,status\nab12,Old,Ready\n", "utf-8-sig")  # V1 file: no currency column
+    # V1 files: no currency column; photos kept as 'photos/<random>.png' (partial address, random name)
+    (tmp / "task records" / "active.csv").write_text("id,title,status,photos\nab12,Old,Ready,photos/x.png\n", "utf-8-sig")
+    (tmp / "task records" / "completed.csv").write_text("id,title,status,photos\nzz99,Done one,Completed,photos/y.png\n", "utf-8-sig")
     (tmp / "photos").mkdir()
     (tmp / "photos" / "x.png").write_bytes(b"1")
+    (tmp / "photos" / "y.png").write_bytes(b"2")
     try: pq.migrate()
     finally: pq.ROOT = root
     assert not (tmp / "task records").exists() and not (tmp / "photos").exists()
-    assert (pq.PHOTOS / "x.png").read_bytes() == b"1"
-    [t] = pq.load_tasks()
-    assert t["title"] == "Old" and t["currency"] == ""
+    # photos are renamed after their task, finished ones filed away, and the csv holds the full address
+    assert (pq.PHOTOS / "Old.png").read_bytes() == b"1" and (pq.PHOTOS / pq.FINISHED_DIR / "Done one.png").read_bytes() == b"2"
+    assert _csv_photos("active.csv", "Old") == "task_records/photos/Old.png"
+    assert _csv_photos("completed.csv", "Done one") == f"task_records/photos/{pq.FINISHED_DIR}/Done one.png"
+    old = next(t for t in pq.load_tasks() if t["title"] == "Old")
+    assert old["currency"] == ""
     pq.upsert({"id": "ab12", "status": "WIP"})  # editing a legacy row must not fail
-    assert pq.load_tasks()[0]["status"] == "WIP"
+    assert next(t for t in pq.load_tasks() if t["id"] == "ab12")["status"] == "WIP"
