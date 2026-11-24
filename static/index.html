@@ -70,8 +70,8 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .board{display:grid;grid-template-columns:repeat(4,minmax(14rem,1fr));gap:.8rem;overflow-x:auto;align-items:start}
 .col{background:var(--bg);border:1px dashed var(--line);border-radius:.7rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
 /* each board column has its own tint so the stages are easy to tell apart */
-.col[data-s=Waitlist]{background:var(--zz-bg)}.col[data-s=Ready]{background:var(--accent-soft)}
-.col[data-s=WIP]{background:light-dark(#fff3dd,#352b17)}.col[data-s=Completed]{background:var(--ok-bg)}
+.col[data-s=Waitlist]{background:light-dark(#e2d6fd,#3a2c72)}.col[data-s=Ready]{background:light-dark(#d3deff,#1f3478)}
+.col[data-s=WIP]{background:light-dark(#ffe2ad,#4d3812)}.col[data-s=Completed]{background:light-dark(#c9efd7,#12492f)}
 .col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}
 .cnt{font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text);border-radius:1rem;padding:0 .5rem}
 .thumbs img{height:3.5rem;margin:.3rem .3rem 0 0;border-radius:.3rem}

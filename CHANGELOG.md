@@ -1,4 +1,7 @@
 # Changelog
+## v2.2.1
+- Board column colours are more vibrant, in both themes.
+
 ## v2.2.0
 - Snoozing a task moves it to Waitlist instead of hiding it from the board. When the snooze ends (or is cancelled) it goes back to the column it came from (e.g. WIP or Ready). Moving a snoozed task to another column by hand ends the snooze.
 
