@@ -1,4 +1,13 @@
 # Changelog
+## v1.2.0
+- Fix: the theme you pick is saved the moment you pick it. Before, it was only a preview until Save, so the next reload (e.g. saving a task) reverted it to the system theme.
+- Photos are saved as `task_records/photos/<task title>.png` (`_2`, `_3` for more) and renamed when the title changes.
+- Deleting a task, or removing a photo, deletes the file; an upload you cancel is removed too. Finished tasks keep their photos in `task_records/photos/finished_task_photos/` instead of deleting them.
+- Settings > Storage: delete all finished-task photos at once.
+- Task cards reorganised (title, chips, price/estimate/due, client, notes, thumbnails, actions); smaller buttons and one type scale across the pages; task counts on the toolbar and board columns.
+- Language selector moved to the top right of every page.
+- Snooze is a menu: 1 hour, 2 hours, 1 day, 2 days, 7 days, or custom; snoozed tasks get a Cancel snooze button (also in the detail panel).
+
 ## v1.1.0
 - Price currency choice: per task, with a default in Settings (USD for English, CNY for Chinese unless overridden).
 - Estimated time is normalised when you finish typing (`90min` -> `1h30min`; no unit = minutes; also `1.5h`, `1d2h`, `1h30`, `1.5小时`).

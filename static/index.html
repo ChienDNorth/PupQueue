@@ -6,36 +6,65 @@
 --bg:light-dark(#f2f6ff,#0d1224);--fg:light-dark(#16203a,#e6ebfb);--card:light-dark(#fff,#151c34);--line:light-dark(#d9e2f7,#27325a);
 --muted:light-dark(#5f6f93,#97a4cb);--accent:#4f63f0;--accent-text:light-dark(#3b4fd9,#93a4ff);--accent-soft:light-dark(#e6ebff,#222c55);
 --pc:light-dark(#5065f5,#7f93ff);--danger:light-dark(#d1344a,#ff7b8d);--shadow-c:light-dark(rgba(50,70,160,.18),rgba(0,0,0,.6));
---shadow:0 .5rem 1.5rem var(--shadow-c);--dw:27rem}
+--shadow:0 .5rem 1.5rem var(--shadow-c);--dw:27rem;
+--ok-bg:light-dark(#e2f6ea,#15372a);--ok-fg:light-dark(#18763f,#79e0a6);--bad-bg:light-dark(#fde8eb,#3d1d28);--bad-fg:light-dark(#b42a40,#ff8da0);
+--zz-bg:light-dark(#efeafc,#2b2550);--zz-fg:light-dark(#5b3fc0,#b6a6ff);
+/* type scale: page title / body / label+control / meta / caption */
+--fs-xl:1.25rem;--fs-lg:1rem;--fs-md:.9rem;--fs-sm:.82rem;--fs-xs:.72rem}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 a{color:var(--accent-text)}
 *{box-sizing:border-box}
 /* auto zoom: the root font size follows the window width, everything else is in rem */
 html{font-size:clamp(14px,calc(9px + .45vw),24px)}
-body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.45 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:var(--fs-lg)/1.45 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
 #page{min-height:100vh;display:flex;flex-direction:column;transition:margin-right .22s ease}
 @media(min-width:60rem){body.has-detail #page{margin-right:var(--dw)}}
-header{display:flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
-header h1{font-size:1.25rem;margin:0 .8rem 0 0;color:var(--accent-text)}
+header{display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
+header h1{font-size:var(--fs-xl);margin:0 .8rem 0 0;color:var(--accent-text)}
+.nav{display:flex;gap:.3rem}
+.lang{display:inline-flex;align-items:center;gap:.25rem;font-size:var(--fs-md)}
+.lang select{padding:.25rem .4rem}
 main{flex:1;padding:1rem}
-footer{padding:.8rem 1rem;text-align:center;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+footer{padding:.8rem 1rem;text-align:center;font-size:var(--fs-xs);color:var(--muted);border-top:1px solid var(--line)}
 button,select,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:.4rem;padding:.35rem .6rem}
-button{cursor:pointer}button:hover{border-color:var(--accent)}
+button{cursor:pointer;font-size:var(--fs-md);padding:.3rem .75rem}button:hover{border-color:var(--accent)}
+button.sm{font-size:var(--fs-xs);padding:.12rem .55rem;border-radius:.35rem}
+button.danger:hover{border-color:var(--danger);color:var(--danger)}
 button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .hide{display:none!important}.dim{color:var(--muted)}
 .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem}
 .wrap{max-width:72rem;margin:0 auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.9rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;font-size:var(--fs-sm)}
+.toolbar select,.toolbar input:not([type=checkbox]){font-size:var(--fs-sm);padding:.2rem .45rem}
+.toolbar .sp{flex:1}.toolbar label{display:inline-flex;align-items:center;gap:.3rem}
+.count{color:var(--muted);font-size:var(--fs-sm)}
 
-/* cards, board */
-.card{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.7rem .85rem;margin-bottom:.6rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+/* task cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:.7rem;padding:.8rem .95rem .65rem;margin-bottom:.7rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .card:hover{border-color:var(--accent)}.card.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.card.snoozed{opacity:.5}.card[draggable]{cursor:grab}
-.meta{font-size:.85rem;color:var(--muted);margin-top:.15rem}
-.tag{display:inline-block;border:1px solid var(--line);border-radius:1rem;padding:0 .55rem;font-size:.75rem;margin-right:.3rem}
-.board{display:grid;grid-template-columns:repeat(4,minmax(13rem,1fr));gap:.8rem;overflow-x:auto}
-.col{background:var(--bg);border:1px dashed var(--line);border-radius:.6rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
-.col h3{margin:0 0 .5rem;font-size:.95rem}
+.card.snoozed{opacity:.6}.card[draggable]{cursor:grab}
+.c-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.7rem}
+.c-title{font-size:var(--fs-lg);font-weight:600;line-height:1.3;word-break:break-word}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.45rem}
+.chip{display:inline-flex;align-items:center;gap:.25rem;border-radius:1rem;padding:.05rem .6rem;font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text)}
+.chip.gray{background:none;border:1px solid var(--line);color:var(--muted)}
+.chip.ok{background:var(--ok-bg);color:var(--ok-fg)}.chip.bad{background:var(--bad-bg);color:var(--bad-fg)}.chip.zz{background:var(--zz-bg);color:var(--zz-fg)}
+.facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem;margin-top:.65rem}
+.fact{display:flex;flex-direction:column;min-width:4.5rem}
+.fact small{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.fact span{font-size:var(--fs-md);font-weight:500}
+.c-line{margin-top:.55rem;font-size:var(--fs-sm);color:var(--muted);word-break:break-word}
+.c-notes{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.c-thumbs{display:flex;gap:.3rem;margin-top:.6rem;align-items:center}
+.c-thumbs img{width:2.6rem;height:2.6rem;object-fit:cover;border-radius:.35rem;border:1px solid var(--line)}
+.c-thumbs .more{font-size:var(--fs-xs);color:var(--muted)}
+.c-foot{display:flex;gap:.35rem;align-items:center;margin-top:.65rem;padding-top:.5rem;border-top:1px solid var(--line)}
+.c-foot .sp{flex:1}
+.board{display:grid;grid-template-columns:repeat(4,minmax(14rem,1fr));gap:.8rem;overflow-x:auto;align-items:start}
+.col{background:var(--bg);border:1px dashed var(--line);border-radius:.7rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
+.col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}
+.cnt{font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text);border-radius:1rem;padding:0 .5rem}
 .thumbs img{height:3.5rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
 
 /* task dialog */
@@ -43,47 +72,51 @@ dialog{padding:0;width:min(46rem,94vw);max-height:92vh;background:var(--bg);colo
 dialog::backdrop{background:rgba(8,14,40,.5)}
 #form{display:flex;flex-direction:column;max-height:92vh}
 .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap;padding:.8rem 1.1rem;border-bottom:1px solid var(--line);background:var(--card)}
-.dhead h2{margin:.3rem 0 0;font-size:1.25rem}
+.dhead h2{margin:.3rem 0 0;font-size:var(--fs-xl)}
 .dbody{overflow:auto;padding:1rem 1.1rem .4rem;flex:1;min-height:0}
 .dfoot{display:flex;gap:.5rem;align-items:center;justify-content:flex-end;padding:.7rem 1.1rem;border-top:1px solid var(--line);background:var(--card)}
 .sec{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.8rem 1rem;margin-bottom:.8rem}
-.sec>h3,.dsec>h3{margin:0 0 .6rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent-text)}
+.sec>h3,.dsec>h3,.settings>h3{margin:0 0 .6rem;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.07em;color:var(--accent-text)}
 .sec>.grid+.fld,.sec>.fld+.fld,.sec>.fld+.grid,.sec>.grid+.grid,.sec>.chk+.grid{margin-top:.7rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.7rem}
-.fld{display:block}.fld>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.2rem}
+.fld{display:block}.fld>span{display:block;font-size:var(--fs-sm);color:var(--muted);margin-bottom:.2rem}
 .fld input:not([type=checkbox]):not([type=file]):not([type=radio]),.fld select,.fld textarea{width:100%}
 .inl{display:flex;gap:.4rem}.inl input{flex:1;min-width:0}.inl select{width:6rem}
 .chk{display:flex;align-items:center;gap:.5rem;margin-top:.7rem;cursor:pointer}
-.hint{display:block;font-size:.8rem;color:var(--muted);margin-top:.2rem;min-height:1.1em}
-.ferr{display:block;color:var(--danger);font-size:.82rem;margin-top:.2rem}.ferr:empty{display:none}
+.hint{display:block;font-size:var(--fs-xs);color:var(--muted);margin-top:.2rem;min-height:1.1em}
+.ferr{display:block;color:var(--danger);font-size:var(--fs-sm);margin-top:.2rem}.ferr:empty{display:none}
 .bad input,.bad select,.bad textarea,.bad .dtbtn{border-color:var(--danger)}
 .srow{display:flex;gap:.4rem;margin-bottom:.4rem}.srow input{flex:1}.srow select{width:9rem}
 .th{position:relative;display:inline-block}.th button{position:absolute;top:.3rem;right:.4rem;padding:0 .35rem;line-height:1.2;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0}
-#perr{color:var(--danger);font-size:.82rem}
+#perr{color:var(--danger);font-size:var(--fs-sm)}
 
-/* priority: signal-bar icon + click-to-open menu */
+/* priority: signal-bar icon + click-to-open menus */
 .bars{height:1.05em;flex:none}.bars rect{fill:var(--pc)}.bars .off{opacity:.3}
-.pb,.pickp{display:inline-flex;align-items:center;gap:.4rem;border:0;background:none;padding:.15rem .4rem;border-radius:.45rem;font-weight:600;font-size:.85rem;color:var(--fg)}
-.pickp{border:1px solid var(--line);background:var(--card);padding:.35rem .6rem;font-size:1rem}
+.pb,.pickp{display:inline-flex;align-items:center;gap:.4rem;border:0;background:none;padding:.15rem .4rem;border-radius:.45rem;font-weight:600;font-size:var(--fs-sm);color:var(--fg);white-space:nowrap}
+.pickp{border:1px solid var(--line);background:var(--card);padding:.35rem .6rem;font-size:var(--fs-lg)}
 .pb:hover,.pickp:hover{background:var(--accent-soft)}
 #pmenu{position:fixed;z-index:60;min-width:11rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;box-shadow:var(--shadow);padding:.3rem}
-#pmenu button{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;border:0;background:none;padding:.45rem .7rem;border-radius:.4rem;font-size:1rem}
+#pmenu button{display:flex;align-items:center;gap:.7rem;width:100%;text-align:left;border:0;background:none;padding:.4rem .7rem;border-radius:.4rem;font-size:var(--fs-lg)}
 #pmenu button:hover{background:var(--accent-soft)}#pmenu .cur{font-weight:600}
+#pmenu .mh{padding:.35rem .7rem .1rem;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+#pmenu .cz{display:flex;gap:.3rem;padding:.2rem .5rem .4rem}
+#pmenu .cz input{width:4rem;font-size:var(--fs-md);padding:.2rem .4rem}#pmenu .cz select{font-size:var(--fs-md);padding:.2rem .3rem}
+#pmenu .cz button{width:auto;background:var(--accent);color:#fff;font-size:var(--fs-xs);padding:.12rem .6rem;justify-content:center}
 
 /* date & time picker */
 .dt{position:relative;display:flex;gap:.3rem}
-.dtbtn{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtbtn{flex:1;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-lg)}
 .dtbtn.empty{color:var(--muted)}
 .pop{position:absolute;top:calc(100% + .35rem);left:0;width:17.5rem;max-width:calc(100vw - 2rem);z-index:40;background:var(--card);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);padding:.7rem}
 .cal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;font-weight:600}
 .cal-h button{border:0;background:none;font-size:1.15rem;line-height:1;padding:.25rem .65rem;border-radius:.4rem}
 .cal-h button:hover{background:var(--accent-soft)}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:.15rem;text-align:center}
-.cal b{font-size:.75rem;color:var(--muted);font-weight:500;padding-bottom:.2rem}
-.day{border:0;background:none;aspect-ratio:1;padding:0;border-radius:50%;font-size:.85rem}
+.cal b{font-size:var(--fs-xs);color:var(--muted);font-weight:500;padding-bottom:.2rem}
+.day{border:0;background:none;aspect-ratio:1;padding:0;border-radius:50%;font-size:var(--fs-sm)}
 .day:hover{background:var(--accent-soft)}.day.today{box-shadow:inset 0 0 0 1px var(--accent)}
 .day.on,.day.on:hover{background:var(--accent);color:#fff}
-.quick{display:flex;gap:.3rem;margin:.55rem 0}.quick button{flex:1;border-radius:1rem;padding:.15rem .3rem;font-size:.8rem}
+.quick{display:flex;gap:.3rem;margin:.55rem 0}.quick button{flex:1;border-radius:1rem;padding:.15rem .3rem;font-size:var(--fs-xs)}
 .tsel{display:flex;gap:.35rem;align-items:center;border-top:1px solid var(--line);padding-top:.55rem}
 .tsel select{width:auto;padding:.25rem .3rem}.tsel .primary{margin-left:auto}
 
@@ -91,23 +124,26 @@ dialog::backdrop{background:rgba(8,14,40,.5)}
 #detail{position:fixed;top:0;right:0;bottom:0;width:min(var(--dw),100vw);background:var(--card);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;overflow-y:auto;z-index:20;padding:1rem 1.1rem}
 #detail.open{transform:none;visibility:visible;transition:transform .22s ease}
 .dd-h{display:flex;gap:.6rem;justify-content:space-between;align-items:flex-start}
-.dd-h h2{margin:0 0 .4rem;font-size:1.2rem;word-break:break-word}
+.dd-h h2{margin:0 0 .2rem;font-size:var(--fs-xl);line-height:1.3;word-break:break-word}
 .dsec{border-top:1px solid var(--line);padding-top:.7rem;margin-top:.9rem}
-dl{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0}
-dt{color:var(--muted);font-size:.85rem;padding-top:.1rem}dd{margin:0;word-break:break-word}
+dl{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;margin:0;font-size:var(--fs-md)}
+dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word-break:break-word}
 .pre{white-space:pre-wrap}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(7rem,1fr));gap:.4rem}
 .pgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:.4rem;border:1px solid var(--line)}
-.acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem}
+.acts{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.9rem}
 
 /* settings */
-.settings{max-width:34rem;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:.5rem 1.2rem 1.2rem}
-.settings label{display:block;margin:.8rem 0 .2rem;font-size:.85rem;color:var(--muted)}
+.settings{max-width:34rem;margin:0 auto .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
+.settings label{display:block;margin:.8rem 0 .2rem;font-size:var(--fs-sm);color:var(--muted)}
+.settings>h3+label{margin-top:0}
 .settings select,.settings input,.settings textarea{width:100%}
+.settings .fp{display:flex;gap:.7rem;align-items:center;font-size:var(--fs-md)}
+.settings .fp button{width:auto}
 </style></head><body>
 <div id="page">
-<header><h1 id="appname"></h1><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button>
-<span style="flex:1"></span><button class="primary" id="add"></button></header>
+<header><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
+<span style="flex:1"></span><button class="primary" id="add"></button><label class="lang">🌐<select id="lang"></select></label></header>
 <main id="main"></main>
 <footer id="foot"></footer>
 </div>
@@ -142,24 +178,41 @@ const loc=()=>L.intl||S.settings.language;
 const fmtT=(h,m)=>L.hour12?`${h%12||12}:${pad(m)} ${t(h<12?"am":"pm")}`:`${pad(h)}:${pad(m)}`;
 const fmtD=d=>d.toLocaleDateString(loc(),{year:"numeric",month:"short",day:"numeric",weekday:"short"});
 const fmtDT=v=>{if(!v)return"";const d=new Date(v);return isNaN(d)?v:`${fmtD(d)} · ${fmtT(d.getHours(),d.getMinutes())}`};
+const fmtBytes=b=>b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).toFixed(1)+" MB";
 const localISO=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
 const photosOf=x=>x.photos?x.photos.split(";").filter(Boolean):[];
+const purl=p=>"/"+p.split("/").map(encodeURIComponent).join("/");  // photo names follow the task title: may hold spaces, # or non-ASCII
 const pr=p=>S.settings.priorities.indexOf(p);
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
 const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per priority level), the first `on` filled
   return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
 const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n-i,n)};
 const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
+const chip=(txt,cls="")=>`<span class="chip ${cls}">${txt}</span>`;
+
+/* ---------- small popup menus (priority, snooze) ---------- */
 function closeMenu(){$("#pmenu")?.remove()}
-function prioMenu(anchor,cur,pick){const old=$("#pmenu");closeMenu();if(old&&old._a===anchor)return;
-  const P=S.settings.priorities,m=document.createElement("div");m.id="pmenu";m._a=anchor;m.setAttribute("role","menu");
-  m.innerHTML=P.map((p,i)=>`<button type="button" role="menuitem" data-p="${i}" class="${p==cur?"cur":""}">${bars(P.length-i,P.length)}<span>${esc(p)}</span></button>`).join("");
+function popMenu(anchor,html,onpick){const old=$("#pmenu");closeMenu();if(old&&old._a===anchor)return;  // clicking the same button again closes it
+  const m=document.createElement("div");m.id="pmenu";m._a=anchor;m.setAttribute("role","menu");m.innerHTML=html;
   (anchor.closest("dialog")||document.body).appendChild(m);  // inside the dialog, or the modal would block it
   const r=anchor.getBoundingClientRect(),h=m.offsetHeight,w=m.offsetWidth;
   m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+"px";m.style.top=(r.bottom+4+h>innerHeight?Math.max(8,r.top-h-4):r.bottom+4)+"px";
-  m.onclick=e=>{const b=e.target.closest("[data-p]");if(b){closeMenu();pick(P[+b.dataset.p])}}}
+  m.onclick=onpick}
+function prioMenu(anchor,cur,pick){const P=S.settings.priorities;
+  popMenu(anchor,P.map((p,i)=>`<button type="button" role="menuitem" data-p="${i}" class="${p==cur?"cur":""}">${bars(P.length-i,P.length)}<span>${esc(p)}</span></button>`).join(""),
+    e=>{const b=e.target.closest("[data-p]");if(b){closeMenu();pick(P[+b.dataset.p])}})}
 const pmClick=b=>{const x=T.find(y=>y.id==b.dataset.pm);prioMenu(b,x.priority,async p=>{await api("POST","/api/tasks",{id:x.id,priority:p});load()})};
+const SNOOZES=[["1h",60],["2h",120],["1d",1440],["2d",2880],["7d",10080]];
+const snooze=async(id,mins)=>{await api("POST","/api/tasks",{id,snoozed_until:localISO(new Date(Date.now()+mins*6e4))});load()};
+function snoozeMenu(anchor,id){
+  popMenu(anchor,`<div class="mh">${t("snooze_for")}</div>`+SNOOZES.map(([k,m])=>`<button type="button" role="menuitem" data-sz="${m}">${t("snooze_"+k)}</button>`).join("")+
+    `<div class="mh">${t("snooze_custom")}</div><div class="cz"><input id="czn" type="number" min="1" value="3"><select id="czu"><option value="1">${t("unit_min")}</option><option value="60" selected>${t("unit_h")}</option><option value="1440">${t("unit_d")}</option></select><button type="button" class="primary" data-cz>${t("snooze_ok")}</button></div>`,
+    e=>{let mins;const b=e.target.closest("[data-sz]");
+      if(b)mins=+b.dataset.sz;
+      else if(e.target.closest("[data-cz]")){const n=+$("#czn").value;if(!(n>0))return;mins=n*+$("#czu").value}
+      else return;  // clicks inside the custom inputs keep the menu open
+      if(isNaN(new Date(Date.now()+mins*6e4)))return;closeMenu();snooze(id,mins)})}
 const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
   const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
   return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
@@ -205,22 +258,26 @@ $("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".d
 /* ---------- list / board ---------- */
 function chrome(){document.title=$("#appname").textContent=t("app");
   document.querySelectorAll("[data-v]").forEach(b=>{b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
-  $("#add").textContent=t("add_task");$("#add").onclick=()=>edit()}
-function card(x,drag){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
-  return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${drag?'draggable="true"':""}>
-  <b>${esc(fullTitle(x))}</b><div style="margin-top:.2rem">${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
-  <div class="meta">${x.price?`💲${esc(x.price)} ${esc(cur(x))} ${x.paid?"✅":"❌"} `:""}${x.estimate?`⏱ ${x.estimate} `:""}${x.due?`📅 ${esc(fmtDT(x.due))} `:""}${snoozed(x)?`💤 ${t("snoozed_until")} ${esc(fmtDT(x.snoozed_until))}`:""}</div>
-  ${x.client_name?`<div class="meta">👤 ${esc(x.client_name)} ${esc(x.client_email)} ${soc}</div>`:""}
-  ${x.notes?`<div class="meta">${esc(x.notes)}</div>`:""}
-  <div class="thumbs">${photosOf(x).map(p=>`<img src="/${esc(p)}" alt="">`).join("")}</div>
-  <div class="row" style="margin:.5rem 0 0"><button data-a="edit" data-id="${x.id}">${t("edit")}</button>
-  <button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+  $("#add").textContent=t("add_task");$("#add").onclick=()=>edit();
+  const ls=$("#lang");ls.title=t("language");ls.innerHTML=Object.entries(S.languages).map(([c,n])=>`<option value="${c}" ${c==S.settings.language?"selected":""}>${esc(n)}</option>`).join("");
+  ls.onchange=async()=>{await api("POST","/api/settings",{language:ls.value});load()}}
+const snoozeBtns=(x,cls="sm")=>`${snoozed(x)?`<button class="${cls}" data-a="unsnz" data-id="${x.id}">${t("cancel_snooze")}</button>`:""}<button class="${cls}" data-a="snz" data-id="${x.id}">${t("snooze")} ▾</button>`;
+function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
+  const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
+  const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
+  return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${board?'draggable="true"':""}>
+  <div class="c-top"><div class="c-title">${esc(fullTitle(x))}</div>${pbadge(x)}</div>
+  <div class="chips">${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
+  ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
+  ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
+  ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}
+  <div class="c-foot"><button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
-  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>`<div class="col" data-s="${s}"><h3>${t(s)}</h3>${T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio).map(x=>card(x,1)).join("")}</div>`).join("")}</div>`;board(m)}
+  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s&&(s=="Completed"||!snoozed(x))).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
-$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id);
+$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities;
@@ -232,24 +289,25 @@ function queue(m){const P=S.settings.priorities;
     if(F.type!="all"&&x.type!=F.type)return false;
     if(F.maxEst!==""&&!(+x.estimate_min<=+F.maxEst&&x.estimate_min!==""))return false;return true}).sort(byPrio);
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
-  m.innerHTML=`<div class="wrap"><div class="row"><b>${t("filters")}</b>
+  m.innerHTML=`<div class="wrap"><div class="toolbar"><b>${t("filters")}</b>
   ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),...P.map(p=>["ge:"+p,p+" "+t("and_above")])],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
-  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:7rem">
-  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:10rem">
-  <label style="margin:0"><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label></div>
-  ${list.map(x=>card(x)).join("")||`<p class="meta">${t("no_tasks")}</p>`}</div>`;
+  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:6.5rem">
+  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:9rem">
+  <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
+  ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
   bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked)}
 function board(m){let drag;
   m.querySelectorAll(".card[draggable]").forEach(c=>c.ondragstart=()=>drag=c.dataset.id);
   m.querySelectorAll(".col").forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add("over")};c.ondragleave=()=>c.classList.remove("over");
     c.ondrop=async e=>{e.preventDefault();if(drag){await api("POST","/api/tasks",{id:drag,status:c.dataset.s});load()}}})}
-async function act(a,id){const x=T.find(y=>y.id==id);
+async function act(a,id,btn){const x=T.find(y=>y.id==id);
   if(a=="edit")edit(x);
   else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);if(sel==id)sel=null;load()}}
-  else if(a=="snz"){await api("POST","/api/tasks",{id,snoozed_until:snoozed(x)?"":localISO(new Date(Date.now()+864e5))});load()}}
+  else if(a=="snz")snoozeMenu(btn,id);
+  else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}}
 
 /* ---------- detail drawer ---------- */
 function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
@@ -257,23 +315,24 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   if(!x){d.innerHTML="";return}
   const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
   const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join("");
-  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2>${pbadge(x)}${x.type?`<span class="tag">${esc(x.type)}</span>`:""}</div>
-    <button data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
+  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2><div class="chips" style="margin:.2rem 0 0">${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
+    <button class="sm" data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
   <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
     ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time))):""}
     <dt>${t("status")}</dt><dd><select data-st>${S.statuses.map(s=>`<option value="${s}" ${s==x.status?"selected":""}>${t(s)}</option>`).join("")}</select></dd></dl></div>
   <div class="dsec"><h3>${t("sec_time")}</h3><dl>${row("estimate",esc(x.estimate))}${row("due",esc(fmtDT(x.due)))}${snoozed(x)?row("snoozed_until",esc(fmtDT(x.snoozed_until))):""}</dl></div>
   <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}
     ${row("socials",soc)}${row("notes",x.notes&&`<div class="pre">${esc(x.notes)}</div>`)}</dl></div>
-  ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="/${esc(p)}" target="_blank"><img src="/${esc(p)}" alt=""></a>`).join("")}</div></div>`:""}
+  ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="${purl(p)}" target="_blank"><img src="${purl(p)}" alt=""></a>`).join("")}</div></div>`:""}
   <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
-  <div class="acts"><button class="primary" data-a="edit" data-id="${x.id}">${t("edit")}</button><button data-a="snz" data-id="${x.id}">${t(snoozed(x)?"unsnooze":"snooze")}</button><button data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id)};
+  <div class="acts"><button class="sm primary" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
+$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id,b)};
 $("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
 
 /* ---------- add / edit dialog ---------- */
-function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve()};
+function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve(),fresh:new Set(),saved:false};
   const f=$("#form"),E=n=>f.elements[n],curP=s.priorities.includes(x.priority)?x.priority:s.default_priority;
+  const dropFresh=p=>api("DELETE","/api/photos/"+encodeURIComponent(p.split("/").pop())).catch(()=>{});  // an upload no task references yet
   f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_task_title":"new_task_title")}</h2>
     <input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button></div>
   <div class="dbody">
@@ -299,8 +358,8 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   const drawSoc=()=>{$("#soc").innerHTML=st.socials.map((r,i)=>`<div class="srow">${sel_("net"+i,s.socials,r.net)}<input name="h${i}" value="${esc(r.handle)}"><button type="button" data-rm="${i}">×</button></div>`).join("");
     $("#soc").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();st.socials.splice(+b.dataset.rm,1);drawSoc()})};
   const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
-  const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="/${esc(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
-    $("#th").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{st.photos.splice(+b.dataset.rp,1);thumbs()})};
+  const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="${purl(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
+    $("#th").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{const [p]=st.photos.splice(+b.dataset.rp,1);if(st.fresh.delete(p))dropFresh(p);thumbs()})};
   const showP=()=>$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';
   $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
@@ -311,9 +370,10 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
   est.onchange=()=>{try{normEst();setErr("estimate","");$("#esthint").textContent=t("estimate_hint")}catch{setErr("estimate",t("err_invalid_estimate"))}};
   $("#file").onchange=e=>{const fs=[...e.target.files];e.target.value="";$("#perr").textContent="";
-    st.up=st.up.then(async()=>{for(const file of fs){try{st.photos.push((await api("POST","/api/upload",file,{"X-Filename":encodeURIComponent(file.name)})).path)}
+    st.up=st.up.then(async()=>{for(const file of fs){try{const p=(await api("POST","/api/upload",file,{"X-Filename":encodeURIComponent(file.name)})).path;st.photos.push(p);st.fresh.add(p)}
       catch(er){$("#perr").textContent=`${t("err_upload")}: ${file.name} (${er.message})`}}thumbs()})};
   $("#cx").onclick=()=>$("#dlg").close();
+  $("#dlg").onclose=()=>{if(!st.saved)st.fresh.forEach(dropFresh)};  // cancelled: don't leave this session's uploads behind
   f.onsubmit=async e=>{e.preventDefault();sync();let bad=null;
     const need=(n,ok,k)=>{if(!ok){setErr(n,t(k));bad??=n}};
     need("title",E("title").value.trim(),"err_title_required");
@@ -325,24 +385,29 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
     const d=Object.fromEntries(new FormData(f));
     const body={id:x.id,title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",
       estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:em,client_socials:st.socials.filter(r=>r.handle),notes:d.notes,photos:st.photos.join(";")};
-    try{await api("POST","/api/tasks",body);$("#dlg").close();load()}catch(er){$("#perr").textContent=er.message}};
+    try{await api("POST","/api/tasks",body);st.saved=true;$("#dlg").close();load()}catch(er){$("#perr").textContent=er.message}};
   $("#dlg").showModal();E("title").focus()}
 
 /* ---------- settings ---------- */
-function settings(m){const s=S.settings,ls=Object.entries(S.languages);
+function settings(m){const s=S.settings,fp=S.finished_photos;
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
-  m.innerHTML=`<div class="settings"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>opt(c,n,s.language)).join("")}</select>
+  m.innerHTML=`<div class="settings"><h3>${t("sec_general")}</h3>
   <label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
   <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
-  <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>
+  <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select></div>
+  <div class="settings"><h3>${t("sec_lists")}</h3>
   ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6">${esc(s[k].join("\n"))}</textarea>`).join("")}
   <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5">${esc(s.title_order.join("\n"))}</textarea>
   <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>
-  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>`;
-  $("#sth").onchange=e=>document.documentElement.dataset.theme=e.target.value;  // live preview until saved
+  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>
+  <div class="settings"><h3>${t("sec_storage")}</h3><label>${t("finished_photos")}</label>
+  <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div></div>`;
+  $("#sth").onchange=async e=>{S.settings.theme=localStorage.theme=document.documentElement.dataset.theme=e.target.value;  // applies and persists at once
+    try{await api("POST","/api/settings",{theme:e.target.value})}catch(er){$("#serr").textContent=er.message}};
+  $("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
   $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
     const p=lines("priorities");
-    try{await api("POST","/api/settings",{language:$("#sl").value,theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
+    try{await api("POST","/api/settings",{theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
       title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}
     catch(er){$("#serr").textContent=er.message}}}
 load();

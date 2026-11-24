@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "1.1.0", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "1.2.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -25,6 +25,8 @@ DEFAULT_SETTINGS = {
     "default_due_time": "00:00",  # time of day filled in when a due date is picked
     "title_order": ["type", "social", "title", "price", "paid"],  # parts of the displayed title
 }
+FINISHED_DIR = "finished_task_photos"  # inside the photos folder
+RESERVED_NAME = re.compile(r"CON|PRN|AUX|NUL|COM\d|LPT\d")
 IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "heic"}
 UNITS = {**dict.fromkeys(("min", "mins", "minute", "minutes", "m", "分", "分钟"), 1),
          **dict.fromkeys(("h", "hr", "hrs", "hour", "hours", "时", "小时"), 60),
@@ -71,6 +73,83 @@ def migrate():
         for f in old_photos.iterdir():
             shutil.move(str(f), PHOTOS / f.name)
         old_photos.rmdir()
+
+
+def photo_list(t):
+    return [p for p in (t["photos"] if t else "").split(";") if p]
+
+
+def photo_file(rel):
+    """Existing file for a stored path like 'photos/a.png'; None if missing or outside the photos folder."""
+    p = (RECORDS / rel).resolve()
+    return p if p.is_relative_to(PHOTOS.resolve()) and p.is_file() else None
+
+
+def photo_stem(title):
+    s = re.sub(r'[\\/:*?"<>|;%#\x00-\x1f]', "_", title).strip(" .")[:60].strip(" .")
+    return (s or "task") + "_" if not s or RESERVED_NAME.fullmatch(s.upper()) else s
+
+
+def free_path(folder, stem, suffix):
+    n = 1
+    while (dst := folder / f"{stem}{'' if n == 1 else f'_{n}'}{suffix}").exists():
+        n += 1
+    return dst
+
+
+def organize_photos(t):
+    """Name photos after the task title (title.png, title_2.png, ...); completed tasks keep them in photos/finished_task_photos/."""
+    folder = (PHOTOS / FINISHED_DIR if t["status"] == "Completed" else PHOTOS).resolve()
+    stem, kept = photo_stem(t["title"]), []
+    for rel in photo_list(t):
+        src = photo_file(rel)
+        if not src or src in kept:
+            continue  # missing file or duplicate reference
+        if src.parent != folder or not re.fullmatch(re.escape(stem) + r"(_\d+)?", src.stem):
+            folder.mkdir(parents=True, exist_ok=True)
+            dst = free_path(folder, stem, src.suffix)
+            src.rename(dst)
+            src = dst
+        kept.append(src)
+    t["photos"] = ";".join("photos/" + p.relative_to(PHOTOS.resolve()).as_posix() for p in kept)
+
+
+def discard_photo(rel, finished):
+    """Delete a photo; a finished task's photo is archived in finished_task_photos instead."""
+    src = photo_file(rel)
+    if not src:
+        return
+    if not finished:
+        src.unlink()
+    elif src.parent != (PHOTOS / FINISHED_DIR).resolve():
+        (PHOTOS / FINISHED_DIR).mkdir(parents=True, exist_ok=True)
+        src.rename(free_path(PHOTOS / FINISHED_DIR, src.stem, src.suffix))
+
+
+def finished_photos():
+    d = PHOTOS / FINISHED_DIR
+    return [f for f in d.iterdir() if f.is_file()] if d.is_dir() else []
+
+
+def clear_finished_photos():
+    files = finished_photos()
+    out = {"deleted": len(files), "bytes": sum(f.stat().st_size for f in files)}
+    gone = {f"photos/{FINISHED_DIR}/{f.name}" for f in files}
+    for f in files:
+        f.unlink()
+    tasks = load_tasks()
+    for t in tasks:  # leave no dangling references in the completed tasks
+        t["photos"] = ";".join(p for p in photo_list(t) if p not in gone)
+    save_tasks(tasks)
+    return out
+
+
+def delete_unsaved_photo(name):
+    """Remove an uploaded photo that no task references (dialog cancelled / thumbnail removed before saving)."""
+    rel = f"photos/{name}"
+    f = photo_file(rel)
+    if f and f.parent == PHOTOS.resolve() and not any(rel in photo_list(t) for t in load_tasks()):
+        f.unlink()
 
 
 def load_settings():
@@ -151,9 +230,20 @@ def upsert(data):
     tasks = load_tasks()
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
+    for rel in set(photo_list(old)) - set(photo_list(new)):  # photos removed from the task
+        discard_photo(rel, new["status"] == "Completed")
+    organize_photos(new)
     tasks = [t for t in tasks if t["id"] != new["id"]] + [new]
     save_tasks(tasks)
     return new
+
+
+def delete_task(tid):
+    tasks = load_tasks()
+    gone = next((t for t in tasks if t["id"] == tid), None)
+    for rel in photo_list(gone):
+        discard_photo(rel, gone["status"] == "Completed")
+    save_tasks([t for t in tasks if t["id"] != tid])
 
 
 def view(t):
@@ -187,13 +277,16 @@ class Handler(BaseHTTPRequestHandler):
             self._file(ROOT / "static" / "index.html", "text/html")
         elif p == "/api/state":
             self._send(200, {"tasks": [view(t) for t in load_tasks()], "settings": load_settings(),
-                             "statuses": STATUSES, "version": VERSION, "author": AUTHOR, "year": YEAR,
+                             "statuses": STATUSES, "version": VERSION,
+                             "finished_photos": {"count": len(finished_photos()),
+                                                 "bytes": sum(f.stat().st_size for f in finished_photos())}, "author": AUTHOR, "year": YEAR,
                              "languages": {f.stem: json.loads(f.read_text(encoding="utf-8"))["name"]
                                            for f in sorted((ROOT / "locales").glob("*.json"))}})
         elif m := re.fullmatch(r"/locales/([a-z\-]+)\.json", p):
             self._file(ROOT / "locales" / f"{m[1]}.json", "application/json")
-        elif m := re.fullmatch(r"/photos/([\w.\-]+)", p):  # regex blocks path traversal
-            self._file(PHOTOS / m[1])
+        elif p.startswith("/photos/"):
+            f = photo_file("photos/" + unquote(p[8:]))  # resolves inside photos/ only: blocks path traversal
+            self._file(f) if f else self._send(404, {"error": "not found"})
         else:
             self._send(404, {"error": "not found"})
 
@@ -205,6 +298,8 @@ class Handler(BaseHTTPRequestHandler):
                 s = {**load_settings(), **json.loads(self._body())}
                 save_settings(s)
                 self._send(200, s)
+            elif self.path == "/api/photos/clear-finished":
+                self._send(200, clear_finished_photos())
             elif self.path == "/api/upload":
                 # the browser sends the name percent-encoded: HTTP headers can't carry raw non-ASCII (e.g. Chinese) names
                 ext = Path(unquote(self.headers.get("X-Filename", ""))).suffix.lstrip(".").lower()
@@ -221,7 +316,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         if m := re.fullmatch(r"/api/tasks/(\w+)", self.path):
-            save_tasks([t for t in load_tasks() if t["id"] != m[1]])
+            delete_task(m[1])
+            self._send(200, {"ok": True})
+        elif m := re.fullmatch(r"/api/photos/([^/]+)", self.path):
+            delete_unsaved_photo(unquote(m[1]))
             self._send(200, {"ok": True})
         else:
             self._send(404, {"error": "not found"})
