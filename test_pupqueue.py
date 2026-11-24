@@ -66,6 +66,8 @@ def test_storage_and_api():
     assert state["settings"]["default_due_time"] == "00:00" and state["settings"]["currency"] == ""
     assert call("POST", "/api/settings", {"default_due_time": "25:00"})["error"] == "invalid_time"
     assert call("POST", "/api/settings", {"currency": "euro"})["error"] == "invalid_currency"
+    assert state["settings"]["theme"] == "auto" and call("POST", "/api/settings", {"theme": "neon"})["error"] == "invalid_theme"
+    assert call("POST", "/api/settings", {"theme": "dark"})["theme"] == "dark"
     assert call("POST", "/api/settings", {"currency": "EUR", "default_due_time": "18:00"})["currency"] == "EUR"
     call("DELETE", f"/api/tasks/{b['id']}")
     assert len(call("GET", "/api/state")["tasks"]) == 1

@@ -19,7 +19,7 @@
   "min_price": "最低价格", "max_est": "最长用时（分钟）", "any": "不限", "yes": "已付款", "no": "未付款",
   "show_snoozed": "显示已推迟", "snoozed_until": "推迟至",
   "Waitlist": "候补", "Ready": "待开始", "WIP": "进行中", "Completed": "已完成",
-  "language": "语言", "currency_auto": "跟随语言", "default_due_time": "默认截止时间（选择日期时自动填入）",
+  "language": "语言", "theme": "主题", "theme_auto": "跟随系统", "theme_light": "浅色（蓝白）", "theme_dark": "深色（蓝）", "currency_auto": "跟随语言", "default_due_time": "默认截止时间（选择日期时自动填入）",
   "title_order_list": "标题排序（每行一个，可选：type, social, title, price, paid）", "default_priority": "默认优先级",
   "types_list": "绘画类型（每行一个）", "priorities_list": "优先级（从高到低，每行一个）",
   "socials_list": "社交媒体选项（每行一个）", "no_tasks": "暂无任务",
@@ -28,7 +28,7 @@
   "err_invalid_email": "请输入有效的邮箱地址，例如 name@example.com。",
   "err_invalid_estimate": "无法识别该时间，请尝试 90min、1h30min、1.5h 或 2d。",
   "err_invalid_price": "请输入有效的价格（不小于 0）。",
-  "err_invalid_time": "请输入有效的时间。", "err_invalid_currency": "货币必须是 3 个字母的代码。",
+  "err_invalid_time": "请输入有效的时间。", "err_invalid_theme": "未知主题。", "err_invalid_currency": "货币必须是 3 个字母的代码。",
   "err_unsupported_image": "只能上传图片文件（png、jpg、gif、webp 等）。",
   "err_upload": "上传失败"
 }

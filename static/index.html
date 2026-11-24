@@ -2,16 +2,21 @@
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PupQueue</title>
 <style>
-:root{color-scheme:light dark;--bg:#f6f4f1;--fg:#262320;--card:#fff;--line:#e2ddd6;--accent:#d2691e;--accent-soft:#fbeadd;--muted:#7a736b;--shadow:0 .5rem 1.5rem rgba(60,40,20,.18);--dw:27rem}
-@media(prefers-color-scheme:dark){:root{--bg:#1d1b19;--fg:#eee;--card:#2a2725;--line:#47423d;--accent-soft:#4a3322;--muted:#a39b92;--shadow:0 .5rem 1.5rem rgba(0,0,0,.55)}}
+:root{color-scheme:light dark;
+--bg:light-dark(#f2f6ff,#0d1224);--fg:light-dark(#16203a,#e6ebfb);--card:light-dark(#fff,#151c34);--line:light-dark(#d9e2f7,#27325a);
+--muted:light-dark(#5f6f93,#97a4cb);--accent:#4f63f0;--accent-text:light-dark(#3b4fd9,#93a4ff);--accent-soft:light-dark(#e6ebff,#222c55);
+--pc:light-dark(#5065f5,#7f93ff);--danger:light-dark(#d1344a,#ff7b8d);--shadow-c:light-dark(rgba(50,70,160,.18),rgba(0,0,0,.6));
+--shadow:0 .5rem 1.5rem var(--shadow-c);--dw:27rem}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+a{color:var(--accent-text)}
 *{box-sizing:border-box}
 /* auto zoom: the root font size follows the window width, everything else is in rem */
 html{font-size:clamp(14px,calc(9px + .45vw),24px)}
 body{margin:0;background:var(--bg);color:var(--fg);font:1rem/1.45 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
 #page{min-height:100vh;display:flex;flex-direction:column;transition:margin-right .22s ease}
 @media(min-width:60rem){body.has-detail #page{margin-right:var(--dw)}}
-header{display:flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap}
-header h1{font-size:1.25rem;margin:0 .8rem 0 0}
+header{display:flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
+header h1{font-size:1.25rem;margin:0 .8rem 0 0;color:var(--accent-text)}
 main{flex:1;padding:1rem}
 footer{padding:.8rem 1rem;text-align:center;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
 button,select,input,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:.4rem;padding:.35rem .6rem}
@@ -35,14 +40,14 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 
 /* task dialog */
 dialog{padding:0;width:min(46rem,94vw);max-height:92vh;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);overflow:hidden}
-dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(8,14,40,.5)}
 #form{display:flex;flex-direction:column;max-height:92vh}
 .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap;padding:.8rem 1.1rem;border-bottom:1px solid var(--line);background:var(--card)}
 .dhead h2{margin:.3rem 0 0;font-size:1.25rem}
 .dbody{overflow:auto;padding:1rem 1.1rem .4rem;flex:1;min-height:0}
 .dfoot{display:flex;gap:.5rem;align-items:center;justify-content:flex-end;padding:.7rem 1.1rem;border-top:1px solid var(--line);background:var(--card)}
 .sec{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.8rem 1rem;margin-bottom:.8rem}
-.sec>h3,.dsec>h3{margin:0 0 .6rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent)}
+.sec>h3,.dsec>h3{margin:0 0 .6rem;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent-text)}
 .sec>.grid+.fld,.sec>.fld+.fld,.sec>.fld+.grid,.sec>.grid+.grid,.sec>.chk+.grid{margin-top:.7rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.7rem}
 .fld{display:block}.fld>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.2rem}
@@ -50,15 +55,13 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 .inl{display:flex;gap:.4rem}.inl input{flex:1;min-width:0}.inl select{width:6rem}
 .chk{display:flex;align-items:center;gap:.5rem;margin-top:.7rem;cursor:pointer}
 .hint{display:block;font-size:.8rem;color:var(--muted);margin-top:.2rem;min-height:1.1em}
-.ferr{display:block;color:#d33;font-size:.82rem;margin-top:.2rem}.ferr:empty{display:none}
-.bad input,.bad select,.bad textarea,.bad .dtbtn{border-color:#d33}
+.ferr{display:block;color:var(--danger);font-size:.82rem;margin-top:.2rem}.ferr:empty{display:none}
+.bad input,.bad select,.bad textarea,.bad .dtbtn{border-color:var(--danger)}
 .srow{display:flex;gap:.4rem;margin-bottom:.4rem}.srow input{flex:1}.srow select{width:9rem}
 .th{position:relative;display:inline-block}.th button{position:absolute;top:.3rem;right:.4rem;padding:0 .35rem;line-height:1.2;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0}
-#perr{color:#d33;font-size:.82rem}
+#perr{color:var(--danger);font-size:.82rem}
 
 /* priority: signal-bar icon + click-to-open menu */
-:root{--pc:#5065f5}
-@media(prefers-color-scheme:dark){:root{--pc:#7b8cff}}
 .bars{height:1.05em;flex:none}.bars rect{fill:var(--pc)}.bars .off{opacity:.3}
 .pb,.pickp{display:inline-flex;align-items:center;gap:.4rem;border:0;background:none;padding:.15rem .4rem;border-radius:.45rem;font-weight:600;font-size:.85rem;color:var(--fg)}
 .pickp{border:1px solid var(--line);background:var(--card);padding:.35rem .6rem;font-size:1rem}
@@ -113,11 +116,13 @@ dt{color:var(--muted);font-size:.85rem;padding-top:.1rem}dd{margin:0;word-break:
 <script>
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
+document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
 let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
 async function load(){S=await api("GET","/api/state");T=S.tasks;
+  localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;
   L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
 
 /* ---------- helpers ---------- */
@@ -327,15 +332,17 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
 function settings(m){const s=S.settings,ls=Object.entries(S.languages);
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
   m.innerHTML=`<div class="settings"><label>${t("language")}</label><select id="sl">${ls.map(([c,n])=>opt(c,n,s.language)).join("")}</select>
+  <label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
   <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
   <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>
   ${[["types","types_list"],["priorities","priorities_list"],["socials","socials_list"]].map(([k,l])=>`<label>${t(l)}</label><textarea id="s_${k}" rows="6">${esc(s[k].join("\n"))}</textarea>`).join("")}
   <label>${t("title_order_list")}</label><textarea id="s_title_order" rows="5">${esc(s.title_order.join("\n"))}</textarea>
   <label>${t("default_priority")}</label><select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>
-  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:#d33"></span></p></div>`;
+  <p><button class="primary" id="ssave">${t("save")}</button> <span id="serr" style="color:var(--danger)"></span></p></div>`;
+  $("#sth").onchange=e=>document.documentElement.dataset.theme=e.target.value;  // live preview until saved
   $("#ssave").onclick=async()=>{const lines=k=>$("#s_"+k).value.split("\n").map(x=>x.trim()).filter(Boolean);
     const p=lines("priorities");
-    try{await api("POST","/api/settings",{language:$("#sl").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
+    try{await api("POST","/api/settings",{language:$("#sl").value,theme:$("#sth").value,types:lines("types"),priorities:p,socials:lines("socials"),currency:$("#scur").value,default_due_time:$("#sdt").value,
       title_order:lines("title_order").filter(k=>["type","social","title","price","paid"].includes(k)),default_priority:p.includes($("#sdp").value)?$("#sdp").value:p[0]});load()}
     catch(er){$("#serr").textContent=er.message}}}
 load();

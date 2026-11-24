@@ -17,10 +17,11 @@ STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
 DEFAULT_SETTINGS = {
     "language": "en",
     "types": ["Gift", "Self Project", "Drawing Swap", "Commission", "Else"],
-    "priorities": ["Critical", "High", "Medium", "Low", "Extra Low"],  # highest first; bars shown = list length
+    "priorities": ["Critical", "High", "Medium", "Low", "Lowest"],  # highest first; bars shown = list length
     "default_priority": "Medium",
     "socials": ["QQ", "Twitter", "Vgen", "Mihuashi"],
     "currency": "",  # "" = follow the language (en -> USD, zh -> CNY, see locales/*.json)
+    "theme": "auto",  # auto = follow the system, or light / dark
     "default_due_time": "00:00",  # time of day filled in when a due date is picked
     "title_order": ["type", "social", "title", "price", "paid"],  # parts of the displayed title
 }
@@ -84,6 +85,8 @@ def save_settings(s):
         raise ValueError("invalid_time")
     if not re.fullmatch(r"([A-Z]{3})?", s["currency"]):
         raise ValueError("invalid_currency")
+    if s["theme"] not in ("auto", "light", "dark"):
+        raise ValueError("invalid_theme")
     SETTINGS_FILE.write_text(json.dumps({k: s[k] for k in DEFAULT_SETTINGS if k in s},
                                         ensure_ascii=False, indent=2), encoding="utf-8")
 

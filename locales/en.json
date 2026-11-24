@@ -19,7 +19,7 @@
   "min_price": "Min price", "max_est": "Max estimate (min)", "any": "Any", "yes": "Paid", "no": "Unpaid",
   "show_snoozed": "Show snoozed", "snoozed_until": "Snoozed until",
   "Waitlist": "Waitlist", "Ready": "Ready", "WIP": "WIP", "Completed": "Completed",
-  "language": "Language", "currency_auto": "Follow language", "default_due_time": "Default due time (when a date is picked)",
+  "language": "Language", "theme": "Theme", "theme_auto": "Follow system", "theme_light": "Light (blue & white)", "theme_dark": "Dark (blue)", "currency_auto": "Follow language", "default_due_time": "Default due time (when a date is picked)",
   "title_order_list": "Title order (one per line; any of: type, social, title, price, paid)", "default_priority": "Default priority",
   "types_list": "Drawing types (one per line)", "priorities_list": "Priorities (highest first, one per line)",
   "socials_list": "Social media choices (one per line)", "no_tasks": "No tasks",
@@ -28,7 +28,7 @@
   "err_invalid_email": "Enter a valid email address, like name@example.com.",
   "err_invalid_estimate": "Can't read that time. Try 90min, 1h30min, 1.5h or 2d.",
   "err_invalid_price": "Enter a valid price (0 or more).",
-  "err_invalid_time": "Enter a valid time.", "err_invalid_currency": "Currency must be a 3-letter code.",
+  "err_invalid_time": "Enter a valid time.", "err_invalid_theme": "Unknown theme.", "err_invalid_currency": "Currency must be a 3-letter code.",
   "err_unsupported_image": "Only image files can be uploaded (png, jpg, gif, webp, ...).",
   "err_upload": "Upload failed"
 }
