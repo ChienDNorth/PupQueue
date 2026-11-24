@@ -1,4 +1,7 @@
 __pycache__/
+*.pyc
+# user data: tasks, uploaded reference photos, personal settings
+task_records/
 task records/
 photos/
 settings.json
