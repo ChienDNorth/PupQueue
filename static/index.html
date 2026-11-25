@@ -43,8 +43,9 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .toolbar button{font-size:var(--fs-sm);padding:.2rem .55rem}
 .toolbar .adv{flex-basis:100%;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding-top:.4rem;border-top:1px solid var(--line)}
 .srow{display:flex;justify-content:flex-end;margin-bottom:.6rem}.srch{position:relative}
-.srch svg{position:absolute;left:.6rem;top:50%;width:1rem;height:1rem;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-.srch input{width:16rem;max-width:70vw;padding-left:2rem;border-radius:999px}
+.srch svg{position:absolute;left:.6rem;top:.55rem;width:1rem;height:1rem;color:var(--muted);pointer-events:none}
+.srch textarea{display:block;width:16rem;max-width:90vw;padding-left:2rem;border-radius:1rem;resize:none;overflow:hidden;transition:width .25s}
+.srch textarea:focus,.srch.wide textarea{width:32rem}
 /* icon-only buttons (settings gear, info) */
 .ib{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;padding:.2rem;border-radius:50%;color:var(--muted);vertical-align:middle}
 .ib:hover{color:var(--accent-text);background:var(--accent-soft)}.ib svg{width:1.1em;height:1.1em}
@@ -395,10 +396,13 @@ function render(){closeMenu();chrome();const m=$("#main");
 $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 // one search text for queue and board, so it stays when switching views
-const searchBox=()=>`<div class="srow"><div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}"></div></div>`;
+const searchBox=()=>`<div class="srow"><div class="srch ${document.activeElement?.id=="fq"?"wide":""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><textarea id="fq" rows="1" role="searchbox" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}">${esc(F.q)}</textarea></div></div>`;
 function bindSearch(){
-  const fq=$("#fq");fq.oninput=()=>{F.q=fq.value;const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
-  fq.onkeydown=e=>{if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
+  const fq=$("#fq"),fit=()=>{fq.style.height="auto";fq.style.height=fq.scrollHeight+"px"};  // a textarea so long text wraps; grow to show every line
+  // "wide": a redraw while typing starts the new box wide, so it doesn't grow again on every key
+  fit();fq.onfocus=fq.ontransitionend=fit;fq.onblur=()=>fq.parentNode.classList.remove("wide");
+  fq.oninput=()=>{F.q=fq.value.replace(/\n/g," ");const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
+  fq.onkeydown=e=>{if(e.key=="Enter")e.preventDefault();else if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
 }
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&&+v<=r[1],est=x=>x.estimate_min===""?null:+x.estimate_min;

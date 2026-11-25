@@ -1,6 +1,6 @@
 # Changelog
 ## v2.4.0
-- Task search moved to its own spot at the top right, above the filters, with a magnifier icon. It sits in the same place on the board.
+- Task search moved to its own spot at the top right, above the filters, with a magnifier icon. Clicking it makes the box wider, and long text wraps onto more lines instead of scrolling out of view. It sits in the same place on the board.
 - Advanced filters: the filter bar now shows only priority, drawing type and paid. Price range, estimate time, show snoozed and show finished are under the "Advanced filters" button; click it to show or hide them. The button stays highlighted while any of those filters is in use.
 ## v2.3.1
 - Task search: a search box above the queue and the board finds tasks by what you type. Matching is loose, so each word only needs its letters in order inside one word of the task (title, type, priority, status, client, email, social handles, payment method, notes): "comm sket" finds "Commission - Sketch". Escape clears it, and in the queue it works together with the other filters. The search stays when you switch between queue and board.
