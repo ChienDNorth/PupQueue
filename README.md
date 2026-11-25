@@ -6,7 +6,7 @@ Commission queue tracker. Python stdlib only, no install.
 
 - Data (all git-ignored): `task_records/active.csv`, `task_records/completed.csv`, reference photos in `task_records/photos/` (named after the task title; finished tasks' photos in `task_records/photos/finished_task_photos/`), settings in `settings.json` (view, download or upload it under Settings > Settings file).
 - Languages: add `locales/<code>.json` (copy `en.json`); it shows up in Settings automatically.
-- Pages: Queue (filters), Board (drag between Waitlist/Ready/WIP/Completed), Settings.
+- Pages: Queue (filters, a side list of projects), Board (drag between Waitlist/Ready/WIP/Completed), Projects (projects > tasks > todos as a tree), Settings.
 
 ## Branches / versions
 - `main` – released; `dev` – work in progress; features on `feature/<name>`. Tags `vX.Y.Z`.

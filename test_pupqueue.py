@@ -341,3 +341,57 @@ def test_start_status_payment_and_completed_time():
     names = [f"M{i}" for i in range(pq.LIST_MAX)]
     data = json.dumps({**pq.load_settings(), "payment_methods": names, "payment_icons": dict.fromkeys(names, big)}).encode()
     assert len(data) <= pq.SETTINGS_FILE_MAX and len(pq.import_settings(json.loads(data))["applied"]) > 0
+
+def test_projects_tasks_todos():
+    _sandbox()
+    assert pq.upsert({"title": "old"})["kind"] == "task"  # no kind given: a task, like rows from before v3.0
+    p = pq.upsert({"title": "P", "kind": "project", "status": "Waitlist"})
+    t = pq.upsert({"title": "T", "kind": "task", "parent": p["id"], "status": "Waitlist"})
+    d = pq.upsert({"title": "D", "kind": "todo", "parent": t["id"], "status": "Waitlist"})
+    for bad, code in [({"title": "x", "kind": "epic"}, "invalid_kind"), ({"title": "x", "kind": "todo", "parent": p["id"]}, "invalid_parent"),
+                      ({"title": "x", "kind": "task", "parent": "nope"}, "invalid_parent"), ({"id": t["id"], "kind": "project"}, "invalid_kind")]:
+        try: pq.upsert(bad); assert False, bad
+        except ValueError as e: assert str(e) == code, (bad, e)
+    status = lambda x: next(r["status"] for r in pq.load_tasks() if r["id"] == x["id"])
+    # a todo moved to Ready pulls its task and the task's project along; WIP too
+    pq.upsert({"id": d["id"], "status": "Ready"})
+    assert (status(t), status(p)) == ("Ready", "Ready")
+    pq.upsert({"id": d["id"], "status": "WIP"})
+    assert (status(t), status(p)) == ("WIP", "WIP")
+    # parents never move back, and finishing a child doesn't finish the parent
+    pq.upsert({"id": d["id"], "status": "Ready"})
+    pq.upsert({"id": d["id"], "status": "Completed"})
+    assert (status(t), status(p)) == ("WIP", "WIP")
+    # a snoozed parent that gets pulled along is no longer snoozed
+    pq.upsert({"id": t["id"], "snoozed_until": "2999-01-01T00:00"})
+    pq.upsert({"id": d["id"], "status": "WIP"})
+    assert next((r["status"], r["snoozed_until"]) for r in pq.load_tasks() if r["id"] == t["id"]) == ("WIP", "")
+    # deleting: "keep" detaches the direct children, "delete" removes everything inside
+    pq.delete_task(p["id"], "keep")
+    assert next(r["parent"] for r in pq.load_tasks() if r["id"] == t["id"]) == "" and status(d) == "WIP"
+    pq.delete_task(t["id"], "delete")
+    assert [r["title"] for r in pq.load_tasks()] == ["old"]
+    try: pq.save_settings({**pq.load_settings(), "delete_children": "maybe"}); assert False
+    except ValueError as e: assert str(e) == "invalid_delete_children"
+    # type icon colours and the emoji setting are validated; an item's emoji is trimmed and kept
+    s = pq.save_settings({**pq.load_settings(), "kind_colors": {"task": "#ABCDEF"}, "emoji": True})
+    assert s["kind_colors"] == {**pq.DEFAULT_SETTINGS["kind_colors"], "task": "#abcdef"} and s["emoji"] is True
+    for bad, code in [({"kind_colors": {"task": "red"}}, "invalid_color"), ({"kind_colors": {"epic": "#000000"}}, "invalid_color"), ({"emoji": "yes"}, "invalid_bool")]:
+        try: pq.save_settings({**pq.load_settings(), **bad}); assert False, bad
+        except ValueError as e: assert str(e) == code, (bad, e)
+    e = pq.upsert({"title": "E", "emoji": " 🐶 "})
+    assert next(r["emoji"] for r in pq.load_tasks() if r["id"] == e["id"]) == "🐶"
+    # a crossed-out todo is finished; reopening it clears the cross
+    x = pq.upsert({"title": "X", "kind": "todo", "status": "Completed", "crossed": True})
+    assert (x["status"], x["crossed"]) == ("Completed", "1")
+    x = pq.upsert({"id": x["id"], "status": "Waitlist"})
+    assert (x["status"], x["crossed"]) == ("Waitlist", "")
+    # new items sort after older ones; reorder() sets a hand-made order and checks its input
+    a, b = pq.upsert({"title": "A", "kind": "todo"}), pq.upsert({"title": "B", "kind": "todo"})
+    assert int(a["sort"]) <= int(b["sort"])
+    pq.reorder([b["id"], a["id"]])
+    assert [r["sort"] for r in pq.load_tasks() if r["id"] in (b["id"], a["id"])] == ["1", "0"]
+    for bad in (None, "x", [1]):
+        try: pq.reorder(bad); assert False, bad
+        except ValueError as e: assert str(e) == "invalid_order"
+    assert pq.load_settings()["todo_done_last"] is True

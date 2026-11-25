@@ -1,4 +1,29 @@
 # Changelog
+## v3.0.3
+- A crossed-out todo's mark is gray instead of red.
+- Done and crossed-out todos move to the bottom of their list. To keep them where they are, turn off "Move done and crossed-out todos to the bottom" in Settings > Projects, or with the gear at the right of any todo list's add box.
+- Drag a todo up or down its list to change the order (or press Alt+↑/↓ on it). The order is kept on the card and in the task's details.
+## v3.0.2
+- Wording: items are now called parents and children. The details panel shows "Parent" and "Children", the edit window says "Parent (Project)" or "Parent (Task)", and delete questions talk about children.
+- The "Advanced filters" button has a + icon on its left.
+- Every project, task and todo has a round coloured icon before its title (cards, todos on a card, the side list, the Projects page and the details panel) showing which kind it is. Pick the colours in Settings > Projects > Type icon colours.
+- Emoji (Settings > Projects, off by default): when on, the edit window has an emoji button before the title. Pick one from the list, type any emoji, or choose "No emoji". Turning the setting off hides the emojis but keeps them.
+- Todos are a plain checklist: click one to mark it done, hold it (or press X) to cross it out, click it again to undo either. Done and crossed-out todos leave the cards on the queue and board but stay under Children in their task's details.
+- A task's details have a text box under Children: type a todo and press Enter to add it. Each todo there has an Edit button for the full window.
+- "+ Create > Todo" opens a small window with only the title, its task, due date and priority. Editing a todo later shows every field.
+## v3.0.1
+- Projects page redone as a list: each project is a row you open (›) to see its tasks, and each task opens to show its todos. Every row shows a coloured type icon, status, priority, progress (finished items inside, as a bar and a count), due date (red when late), estimate and paid. Click a row to see its details on the right. Expand all / Collapse all buttons, and a count of projects, tasks and todos at the top.
+## v3.0.0
+- Projects, tasks and todos: a project holds tasks, and a task holds todos. Every item has its own card, status and details. Tasks from earlier versions stay tasks.
+- "+ Add task" is now "+ Create": click it to pick Project, Task or Todo. In the window that opens, pick which project (or task) it belongs to; the info icon at the top right explains what the chosen kind is.
+- Todos: tick them off on their task's card, or type in the box under the list and press Enter to add one. Ticking finishes the todo; unticking puts it back in Waitlist.
+- Moving a todo to Ready or WIP moves its task there too, and the task's project with it. Items only move forward (Waitlist, then Ready, then WIP); finishing a todo or task never finishes the item above it.
+- Board: projects and tasks are shown; todos are hidden unless you turn on "Show todos on the board" (Settings > Projects).
+- New Projects page: every project with its tasks and their todos, like folders. Click an item to open it and show its details; items without a project are listed at the end.
+- Queue: the ☰ button opens a side list of projects. Click a project to see its tasks, a task to see its todos, and the queue scrolls to that card.
+- The details panel shows the item's parent and what is inside it, with a button to add a task (to a project) or a todo (to a task).
+- Deleting a project or task that has items inside asks whether to delete them too or keep them (kept items lose their parent). Tick "Don't ask again" to remember the answer; change it in Settings > Projects.
+- New setting "Agile project management" (Settings > Projects, off by default): projects, tasks and todos are called initiatives, epics and stories.
 ## v2.4.1
 - Search box: clicking it makes the box wider, and long text wraps onto more lines instead of scrolling out of view.
 ## v2.4.0

@@ -40,7 +40,7 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .toolbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.9rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;font-size:var(--fs-sm)}
 .toolbar select,.toolbar input:not([type=checkbox]){font-size:var(--fs-sm);padding:.2rem .45rem}
 .toolbar .sp{flex:1}.toolbar label{display:inline-flex;align-items:center;gap:.3rem}
-.toolbar button{font-size:var(--fs-sm);padding:.2rem .55rem}
+.toolbar button{font-size:var(--fs-sm);padding:.2rem .55rem}#fadv{display:inline-flex;align-items:center;gap:.3rem}#fadv svg{width:.95em;height:.95em}
 .toolbar .adv{flex-basis:100%;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding-top:.4rem;border-top:1px solid var(--line)}
 .srow{display:flex;justify-content:flex-end;margin-bottom:.6rem}.srch{position:relative}
 .srch svg{position:absolute;left:.6rem;top:.55rem;width:1rem;height:1rem;color:var(--muted);pointer-events:none}
@@ -100,8 +100,8 @@ img.picon{border-radius:.25em;object-fit:contain}
 .board{display:grid;grid-template-columns:repeat(4,minmax(14rem,1fr));gap:.8rem;overflow-x:auto;align-items:start}
 .col{background:var(--bg);border:1px dashed var(--line);border-radius:.7rem;padding:.6rem;min-height:12rem}.col.over{border-color:var(--accent)}
 /* each board column has its own tint so the stages are easy to tell apart */
-.col[data-s=Waitlist]{background:light-dark(#e2d6fd,#3a2c72)}.col[data-s=Ready]{background:light-dark(#d3deff,#1f3478)}
-.col[data-s=WIP]{background:light-dark(#ffe2ad,#4d3812)}.col[data-s=Completed]{background:light-dark(#c9efd7,#12492f)}
+.col[data-s=Waitlist],.st[data-s=Waitlist]{background:light-dark(#e2d6fd,#3a2c72)}.col[data-s=Ready],.st[data-s=Ready]{background:light-dark(#d3deff,#1f3478)}
+.col[data-s=WIP],.st[data-s=WIP]{background:light-dark(#ffe2ad,#4d3812)}.col[data-s=Completed],.st[data-s=Completed]{background:light-dark(#c9efd7,#12492f)}
 .col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}.col h3 .sp{flex:1}.col>.count{margin:-.3rem 0 .6rem;font-size:var(--fs-xs)}
 .cnt{font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text);border-radius:1rem;padding:0 .5rem}
 .thumbs img{height:9rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
@@ -140,6 +140,7 @@ dialog::backdrop{background:rgba(8,14,40,.5)}
 #pmenu .mh{padding:.35rem .7rem .1rem;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #pmenu .cz{display:flex;gap:.3rem;padding:.2rem .5rem .4rem}
 #pmenu .cz input{width:4rem;font-size:var(--fs-md);padding:.2rem .4rem}#pmenu .cz select{font-size:var(--fs-md);padding:.2rem .3rem}
+.emob{flex:none;width:2.4rem;font-size:1.2rem;padding:0}#pmenu .emog{display:grid;grid-template-columns:repeat(6,2.2rem);gap:.1rem}#pmenu .emog button{justify-content:center;padding:.3rem 0}
 #pmenu .cz button{width:auto;background:var(--accent);color:#fff;font-size:var(--fs-xs);padding:.12rem .6rem;justify-content:center}
 
 /* date & time picker */
@@ -213,17 +214,61 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .settings .tags input,.settings .tags select{width:auto}.tgin{flex:1;min-width:9rem;border:0;background:transparent;padding:.25rem .3rem;font-size:var(--fs-md);outline:none}
 .tgedit{flex:none;min-width:5rem;padding:.1rem .6rem;border:1px solid var(--accent);border-radius:2rem;font-size:var(--fs-md)}
 .tgsel{padding:.15rem .5rem;border-radius:2rem;font-size:var(--fs-sm)}
+/* projects tree (Projects page and the queue's side list) */
+.tree summary,.tree .leaf{list-style:none;display:flex;align-items:center;gap:.4rem;padding:.25rem .4rem;border-radius:.4rem;cursor:pointer}
+.tree summary::-webkit-details-marker{display:none}
+.tree summary::before{content:"▸";width:1em;flex:none;color:var(--muted);transition:transform .15s}.tree details[open]>summary::before{transform:rotate(90deg)}
+.tree .leaf::before{content:"";width:1em;flex:none}
+.tree summary:hover,.tree .leaf:hover,.tree .on{background:var(--accent-soft)}.tree .on{font-weight:600}
+.tree details>div{margin-left:.9rem;padding-left:.4rem;border-left:1px solid var(--line)}
+.kd{font-size:var(--fs-xs);color:var(--muted)}.done{text-decoration:line-through;color:var(--muted)}
+/* Projects page: one list, each row opens to show what is inside it */
+.ph{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem}.ph h2{margin:0;font-size:var(--fs-xl)}.ph .sp{flex:1}
+.ptab{background:var(--card);border:1px solid var(--line);border-radius:.8rem;overflow-x:auto}
+.pr{display:grid;grid-template-columns:minmax(18rem,1fr) 7.5rem 7.5rem 9rem 5.5rem 5.5rem 6.5rem;gap:.8rem;align-items:center;min-width:62rem;padding:.5rem .9rem;border-top:1px solid var(--line);font-size:var(--fs-sm);cursor:pointer}
+.pr:hover{background:var(--accent-soft)}.pr.on{background:var(--accent-soft);box-shadow:inset 3px 0 var(--accent)}
+.pr.top{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}.pr.top:hover,.pr.top.on{background:var(--accent-soft)}
+.pr.hd{border-top:0;cursor:default;background:none;font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.psec{min-width:62rem;padding:.45rem .9rem;border-top:1px solid var(--line);background:var(--bg);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pt{display:flex;align-items:center;gap:.45rem;min-width:0;padding-left:calc(var(--lv)*1.6rem)}
+.pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-md);font-weight:500}.pr.top .pn{font-weight:700}
+.pr.fin .pn{text-decoration:line-through;color:var(--muted)}
+.chev{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.3rem;height:1.3rem;padding:0;border:0;border-radius:.3rem;background:none;color:var(--muted);font-size:1.1rem;transition:transform .15s}
+.chev.open{transform:rotate(90deg)}button.chev:hover{background:var(--line);color:var(--fg)}
+.ki{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;border-radius:50%}.emo{flex:none}
+.ttl{display:flex;align-items:center;gap:.4rem}.ki svg{width:.8rem;height:.8rem}
+.st{display:inline-block;padding:.08rem .55rem;border-radius:.3rem;font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.pp,.pgc{display:flex;align-items:center;gap:.4rem}.pgc small{min-width:2.2rem;font-size:var(--fs-xs);color:var(--muted)}
+.pg{flex:1;height:.4rem;border-radius:1rem;background:var(--line);overflow:hidden}.pg i{display:block;height:100%;background:#22a06b}
+.late{color:var(--danger);font-weight:600}
+.qlay{display:flex;gap:1rem;align-items:flex-start}.qlay>.wrap{flex:1;min-width:0}
+.side{position:sticky;top:1rem;width:16rem;flex:none;max-height:calc(100vh - 2rem);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:.7rem;padding:.5rem;font-size:var(--fs-sm)}
+@media(max-width:45rem){.qlay{flex-direction:column}.side{position:static;width:100%}}
+/* todos on a task card, parent line, links */
+.todos{margin-top:.55rem;font-size:var(--fs-sm)}
+.tdo{display:flex;gap:.45rem;align-items:center;width:100%;padding:.15rem 0;border:0;background:none;text-align:left;font-size:inherit;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.tdm{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1rem;height:1rem;border:1.5px solid var(--muted);border-radius:.25rem;font-size:.7rem;font-weight:700;color:#fff}
+.tdo.done .tdm{background:#22a06b;border-color:#22a06b}.tdo.x .tdm{background:var(--muted);border-color:var(--muted)}.tdo.done .tdt,.tdo.x .tdt{text-decoration:line-through;color:var(--muted)}
+#detail .tdin{width:100%;font-size:var(--fs-sm);padding:.2rem .45rem}
+.tdrow{display:flex;gap:.3rem;align-items:center;margin-top:.25rem}.tdrow .tdin{flex:1;margin-top:0}.tdrow .ib{flex:none}
+.tdo.dropb{box-shadow:inset 0 2px var(--accent)}.tdo.dropa{box-shadow:inset 0 -2px var(--accent)}
+.todos .tdin{width:100%;margin-top:.25rem;font-size:var(--fs-sm);padding:.2rem .45rem}
+.c-par{font-size:var(--fs-xs);color:var(--muted);margin-bottom:.15rem}
+.lnk{border:0;background:none;padding:0;color:var(--accent-text);text-align:left;font-size:inherit}.lnk:hover{text-decoration:underline}
+.kids{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.5rem;font-size:var(--fs-md)}.kids div{display:flex;gap:.4rem;align-items:center}
+#ask{width:min(30rem,94vw)}#ask form{padding:1rem 1.1rem}#ask .dfoot{padding:.8rem 0 0;border:0;background:none}
 .toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,.6rem);padding:.4rem .95rem;border-radius:1.5rem;background:var(--fg);color:var(--bg);font-size:var(--fs-sm);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80}
 .toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--danger);color:#fff}
 </style></head><body>
 <div id="page">
-<header><img src="/logo.png" alt="" class="logo"><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button></nav>
-<span style="flex:1"></span><button class="primary" id="add"></button><label class="lang">🌐<select id="lang"></select></label><button class="ib big" id="gear" data-v="settings"></button></header>
+<header><img src="/logo.png" alt="" class="logo"><h1 id="appname"></h1><nav class="nav"><button data-v="projects"></button><button data-v="queue"></button><button data-v="board"></button></nav>
+<span style="flex:1"></span><button class="primary" id="add" aria-haspopup="menu"></button><label class="lang">🌐<select id="lang"></select></label><button class="ib big" id="gear" data-v="settings"></button></header>
 <main id="main"></main>
 <footer id="foot"></footer>
 </div>
 <aside id="detail"></aside>
 <dialog id="dlg"><form id="form" novalidate></form></dialog>
+<dialog id="ask"></dialog>
 <div id="toast" class="toast" role="status"></div>
 <script>
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -263,6 +308,16 @@ const safe=s=>{try{return JSON.parse(s||"[]")}catch{return[]}};
 const photosOf=x=>x.photos?x.photos.split(";").filter(Boolean):[];
 const purl=p=>"/"+p.replace(/^task_records\//,"").split("/").map(encodeURIComponent).join("/");  // CSV address -> URL; names follow the task title: may hold spaces, # or non-ASCII
 const pr=p=>S.settings.priorities.indexOf(p);
+const KINDS=["project","task","todo"],PK={task:"project",todo:"task"},CK={project:"task",task:"todo"};  // parent kind / child kind
+const kname=(k,pl)=>t(`kind_${k}${pl?"_pl":""}${S.settings.agile?"_agile":""}`);
+const kt=k=>t(k).replace(/\{(project|task|todo)(s?)\}/g,(_,k,pl)=>kname(k,pl));  // fills in the current names (agile or not)
+const kidsOf=id=>T.filter(y=>y.parent==id),allKids=id=>kidsOf(id).flatMap(y=>[y,...allKids(y.id)]);
+const KICON={project:"M13 2 4 14h7l-1 8 9-12h-7z",task:"M5 12l5 5L20 7",todo:"M6 3h12v18l-6-4-6 4z"};
+const kicon=k=>`<span class="ki" style="background:${S.settings.kind_colors[k]}" title="${esc(kname(k))}" role="img" aria-label="${esc(kname(k))}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${KICON[k]}"/></svg></span>`;
+const emo=x=>S.settings.emoji&&x.emoji?`<span class="emo" aria-hidden="true">${esc(x.emoji)}</span>`:"";  // hidden while the setting is off, but kept
+const EMOJIS="⭐ 🔥 ❤️ ✅ 📌 🎨 ✏️ 🖌️ 🖼️ 📷 🎁 💰 💡 📅 ⏰ 🐶 🐱 🦊 🐰 🌸 🌈 🎉 🚀 ⚠️".split(" ");
+const PLUS=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+const MENU=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`;
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
 const bars=(on,n)=>{const w=80,g=38,H=495,W=n*w+(n-1)*g;  // n bars (one per priority level), the first `on` filled
   return `<svg class="bars" viewBox="0 0 ${W} ${H}" width="${(W/H*1.05).toFixed(2)}em" height="1.05em" aria-hidden="true">${[...Array(n)].map((_,i)=>`<rect class="${i<on?"on":"off"}" x="${i*(w+g)}" y="${n>1?H-(100+i*(H-100)/(n-1)):0}" width="${w}" height="${n>1?100+i*(H-100)/(n-1):H}" rx="40"/>`).join("")}</svg>`};
@@ -358,13 +413,15 @@ function bindDt(el){const inp=$("input",el),btn=$(".dtbtn",el),clr=$(".dtx",el),
 document.addEventListener("click",e=>{const path=e.composedPath();  // composedPath: the clicked node may already be re-rendered away
   const pm=$("#pmenu");if(pm&&!path.includes(pm)&&!path.includes(pm._a))closeMenu();
   document.querySelectorAll(".dt .pop:not(.hide)").forEach(p=>{if(!path.includes(p.parentElement))p.classList.add("hide")})});
-document.addEventListener("keydown",e=>{if(e.key!="Escape"||$("#dlg").open)return;if($("#pmenu"))closeMenu();else if(sel){sel=null;render()}});
+document.addEventListener("keydown",e=>{if(e.key!="Escape"||$("#dlg").open||$("#ask").open)return;if($("#pmenu"))closeMenu();else if(sel){sel=null;render()}});
 $("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".dt .pop:not(.hide)");if(open.length||$("#pmenu")){e.preventDefault();open.forEach(p=>p.classList.add("hide"));closeMenu()}});
 
 /* ---------- list / board ---------- */
 function chrome(){document.title=$("#appname").textContent=t("app");
-  document.querySelectorAll("[data-v]").forEach(b=>{if(b.id=="gear"){b.innerHTML=GEAR;b.title=t("settings");b.setAttribute("aria-label",t("settings"))}else b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
-  $("#add").textContent=t("add_task");$("#add").onclick=()=>edit();
+  document.querySelectorAll("[data-v]").forEach(b=>{if(b.id=="gear"){b.innerHTML=GEAR;b.title=t("settings");b.setAttribute("aria-label",t("settings"))}else b.textContent=b.dataset.v=="projects"?kname("project",1):t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
+  $("#add").textContent=t("create");
+  $("#add").onclick=e=>popMenu(e.currentTarget,KINDS.map(k=>`<button type="button" role="menuitem" data-k="${k}">${esc(kname(k))}</button>`).join(""),
+    e=>{const b=e.target.closest("[data-k]");if(b){closeMenu();edit({kind:b.dataset.k})}});
   const ls=$("#lang");ls.title=t("language");ls.innerHTML=Object.entries(S.languages).map(([c,n])=>`<option value="${c}" ${c==S.settings.language?"selected":""}>${esc(n)}</option>`).join("");
   ls.onchange=async()=>{await api("POST","/api/settings",{language:ls.value});load()}}
 const DONE_MS=7000,pending={};  // task id -> {start, timer} while a Mark done countdown runs
@@ -374,27 +431,97 @@ const doneIcon=on=>on?`<svg viewBox="0 0 550 550" aria-hidden="true"><circle cx=
 const doneBtn=x=>{const p=pending[x.id];return x.status=="Completed"?"":`<button class="sm mdone" data-a="done" data-id="${x.id}" aria-pressed="${!!p}" title="${p?t("done_undo_hint"):""}">${doneIcon(p)}${t("mark_done")}</button>`};
 const doneBar=x=>{const p=pending[x.id];return p?`<div class="cd"><i style="animation-duration:${DONE_MS}ms;animation-delay:-${Date.now()-p.start}ms"></i></div>`:""};
 const snoozeBtns=(x,cls="sm")=>`${snoozed(x)?`<button class="${cls}" data-a="unsnz" data-id="${x.id}">${t("cancel_snooze")}</button>`:""}<button class="${cls}" data-a="snz" data-id="${x.id}">${t("snooze")} ▾</button>`;
-function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
+const todoBtn=d=>{const c=d.crossed?"x":d.status=="Completed"?"done":"";
+  return `<button type="button" draggable="true" class="tdo ${c}" data-todo="${d.id}" aria-pressed="${!!c}" title="${t("todo_hint")}"><span class="tdm" aria-hidden="true">${{x:"✕",done:"✓"}[c]||""}</span>${kicon("todo")}${emo(d)}<span class="tdt">${esc(d.title)}</span></button>`};
+const addTodo=p=>`<div class="tdrow"><input class="tdin" data-addto="${p}" placeholder="${esc(kt("add_todo"))}" aria-label="${esc(kt("add_todo"))}"><button type="button" class="ib" data-go="structure:set-todo-order" title="${esc(kt("todo_settings"))}" aria-label="${esc(kt("todo_settings"))}">${GEAR}</button></div>`;
+const bySort=(a,b)=>(+a.sort||0)-(+b.sort||0);
+const todosOf=id=>{const k=kidsOf(id).sort(bySort);return S.settings.todo_done_last?[...k.filter(d=>d.status!="Completed"),...k.filter(d=>d.status=="Completed")]:k};
+const todoList=x=>x.kind!="task"?"":`<div class="todos">${todosOf(x.id).filter(d=>d.status!="Completed").map(todoBtn).join("")}${addTodo(x.id)}</div>`;  // finished todos leave the card; the details panel still lists them
+function card(x,board){const par=T.find(y=>y.id==x.parent),soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
   const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
   return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${board?'draggable="true"':""}>
-  <div class="c-top"><div class="c-title">${esc(fullTitle(x))}</div>${pbadge(x)}</div>
-  <div class="chips">${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
+  ${par?`<div class="c-par">↳ ${esc(par.title)}</div>`:""}<div class="c-top"><div class="c-title ttl">${kicon(x.kind)}${emo(x)}<span>${esc(fullTitle(x))}</span></div>${pbadge(x)}</div>
+  <div class="chips">${chip(esc(kname(x.kind)))}${x.kind=="project"?chip(`${kidsOf(x.id).length} ${esc(kname("task",kidsOf(x.id).length!=1))}`,"gray"):""}${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
   ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
   ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
-  ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}
+  ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}${todoList(x)}
   <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
   else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at||x.created;  // tasks finished before v2.3 have no completed_at
-    m.innerHTML=`${searchBox()}<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&findTask(F.q,x));const n=l.length,done=s=="Completed";
+    m.innerHTML=`${searchBox()}<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&(x.kind!="todo"||S.settings.todos_on_board)&&findTask(F.q,x));const n=l.length,done=s=="Completed";
       l=done?l.sort((a,b)=>when(b).localeCompare(when(a))).slice(0,lim):l.sort(byPrio);
       return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${n}</span>${done?`<span class="sp"></span><button class="ib" data-go="display:set-completed" title="${t("completed_settings")}" aria-label="${t("completed_settings")}">${GEAR}</button>`:""}</h3>
       ${done&&n>lim?`<p class="count">${t("completed_showing").replace("{n}",lim).replace("{total}",n)}</p>`:""}${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;bindSearch();board(m)}
+  else if(view=="projects")projects(m);
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
-$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
+$("#main").onclick=e=>{const tg=e.target.closest("[data-tog]");if(tg){const id=tg.dataset.tog;openT.has(id)?openT.delete(id):openT.add(id);localStorage.openT=JSON.stringify([...openT]);return render()}
+  const rw=e.target.closest("[data-row]");if(rw)return pick(rw.dataset.row);
+  const ex=e.target.closest("[data-all]");if(ex){openT.clear();if(ex.dataset.all=="1")T.forEach(x=>kidsOf(x.id).length&&openT.add(x.id));localStorage.openT=JSON.stringify([...openT]);return render()}
+  const pk=e.target.closest("[data-pick]");if(pk)return pickClick(e,pk);if(e.target.closest(".todos")&&!e.target.closest("[data-go]"))return;
+  if(e.target.closest("#side")){localStorage.side=localStorage.side=="1"?"0":"1";return render()}const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
+// todos on cards and in the details panel: click = done, hold = crossed out, either one again = open
+async function setTodo(id,cross){const d=T.find(y=>y.id==id),open=d.status!="Completed",where=$("#detail").contains(document.activeElement)?"#detail":"#main";
+  const body=open||cross&&!d.crossed?{id,status:"Completed",crossed:!!cross}:{id,status:"Waitlist"};
+  try{await api("POST","/api/tasks",body)}catch(er){flash(er.message,true)}await load();$(`${where} [data-todo="${id}"]`)?.focus()}
+let holdT,held=false;
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("[data-todo]");held=false;clearTimeout(holdT);if(b)holdT=setTimeout(()=>{held=true;setTodo(b.dataset.todo,1)},500)});
+["pointerup","pointercancel","dragstart"].forEach(n=>document.addEventListener(n,()=>clearTimeout(holdT)));
+document.addEventListener("click",e=>{const b=e.target.closest("[data-todo]");if(!b)return;if(held){held=false;return}setTodo(b.dataset.todo,0)});  // a hold already crossed it
+async function moveTodo(id,to,after){const d=T.find(y=>y.id==id),o=T.find(y=>y.id==to),where=$("#detail").contains(document.activeElement)?"#detail":"#main";
+  if(!o||id==to||!d.parent||o.parent!=d.parent)return;  // only within one task's list
+  const ids=kidsOf(d.parent).sort(bySort).map(y=>y.id).filter(i=>i!=id);ids.splice(ids.indexOf(to)+(after?1:0),0,id);
+  try{await api("POST","/api/tasks/order",{ids})}catch(er){flash(er.message,true)}await load();$(`${where} [data-todo="${id}"]`)?.focus()}
+// capture phase: a todo dragged inside a board card must not drag the card or drop it on a column
+// Limitation: HTML drag and drop needs a mouse; on touch screens use Alt+Up/Down with a keyboard, or add a touch drag if needed
+let dragTodo=null;const clearDrop=()=>document.querySelectorAll(".dropb,.dropa").forEach(x=>x.classList.remove("dropb","dropa"));
+const dropAt=e=>{const o=e.target.closest?.("[data-todo]");if(!o||o.dataset.todo==dragTodo||T.find(y=>y.id==o.dataset.todo)?.parent!=T.find(y=>y.id==dragTodo)?.parent)return null;
+  const r=o.getBoundingClientRect();return{o,after:e.clientY>r.top+r.height/2}};
+document.addEventListener("dragstart",e=>{const b=e.target.closest?.("[data-todo]");if(!b)return;e.stopPropagation();clearTimeout(holdT);dragTodo=b.dataset.todo;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","")},true);
+document.addEventListener("dragover",e=>{if(!dragTodo)return;e.stopPropagation();clearDrop();const d=dropAt(e);if(d){e.preventDefault();d.o.classList.add(d.after?"dropa":"dropb")}},true);
+document.addEventListener("drop",e=>{if(!dragTodo)return;e.stopPropagation();e.preventDefault();clearDrop();const d=dropAt(e),id=dragTodo;dragTodo=null;if(d)moveTodo(id,d.o.dataset.todo,d.after)},true);
+document.addEventListener("dragend",()=>{dragTodo=null;clearDrop()},true);
+document.addEventListener("pointermove",e=>{if(holdT&&e.buttons&&(Math.abs(e.movementX)+Math.abs(e.movementY)>3))clearTimeout(holdT)});  // moving = dragging, not holding
+document.addEventListener("contextmenu",e=>{if(e.target.closest("[data-todo]"))e.preventDefault()});  // touch: a hold opens no menu
+document.addEventListener("keydown",async e=>{const b=e.target.closest?.("[data-todo]");
+  if(b&&e.key.toLowerCase()=="x"){e.preventDefault();return setTodo(b.dataset.todo,1)}  // keyboard way to cross out
+  if(b&&e.altKey&&(e.key=="ArrowUp"||e.key=="ArrowDown")){e.preventDefault();const l=[...b.closest(".todos,.kids").querySelectorAll("[data-todo]")],n=l[l.indexOf(b)+(e.key=="ArrowUp"?-1:1)];
+    return n&&moveTodo(b.dataset.todo,n.dataset.todo,e.key=="ArrowDown")}
+  const p=e.target.dataset?.addto;if(!p||e.key!="Enter")return;e.preventDefault();const title=e.target.value.trim();if(!title)return;
+  const where=e.target.closest("#detail")?"#detail":"#main";
+  try{await api("POST","/api/tasks",{kind:"todo",parent:p,title});await load();$(`${where} [data-addto="${p}"]`)?.focus()}catch(er){flash(er.message,true)}});  // stay in the box to add the next one
+$("#main").addEventListener("keydown",e=>{if(e.target.matches(".leaf,[data-row]")&&(e.key=="Enter"||e.key==" ")){e.preventDefault();return pick(e.target.dataset.pick||e.target.dataset.row)}});
+/* ---------- projects tree ---------- */
+const openT=new Set(JSON.parse(localStorage.openT||"[]"));  // expanded items, kept across redraws
+function tree(){const node=x=>{const kids=kidsOf(x.id),lab=`${kicon(x.kind)}${emo(x)}<span class="${x.status=="Completed"?"done":""}">${esc(x.title)}</span>`;
+    return kids.length?`<details ${openT.has(x.id)?"open":""}><summary data-pick="${x.id}" class="${sel==x.id?"on":""}">${lab}</summary><div>${kids.map(node).join("")}</div></details>`
+      :`<div class="leaf ${sel==x.id?"on":""}" data-pick="${x.id}" tabindex="0" role="button">${lab}</div>`};
+  const loose=T.filter(x=>x.kind!="project"&&!T.some(p=>p.id==x.parent));
+  return `<div class="tree">${T.filter(x=>x.kind=="project").map(node).join("")}${loose.length?`<div class="kd" style="margin:.6rem .4rem .2rem">${esc(kt("no_parent"))}</div>${loose.map(node).join("")}`:""}${T.length?"":`<p class="count">${t("no_tasks")}</p>`}</div>`}
+function projects(m){const ord=l=>[...l].sort((a,b)=>(a.status=="Completed")-(b.status=="Completed")||byPrio(a,b));  // unfinished first
+  const prog=x=>{const k=kidsOf(x.id),d=k.filter(y=>y.status=="Completed").length;  // share of the items inside that are finished
+    return k.length?`<div class="pg"><i style="width:${d/k.length*100}%"></i></div><small>${d}/${k.length}</small>`:`<span class="dim">—</span>`};
+  const due=x=>{if(!x.due)return"";const d=new Date(x.due);return `<span class="${d<new Date()&&x.status!="Completed"?"late":""}" title="${esc(fmtDT(x.due))}">${esc(d.toLocaleDateString(loc(),{month:"short",day:"numeric"}))}</span>`};
+  const row=(x,lv)=>{const kids=kidsOf(x.id),open=openT.has(x.id);
+    return `<div class="pr ${lv?"":"top"} ${sel==x.id?"on":""} ${x.status=="Completed"?"fin":""}" data-row="${x.id}" style="--lv:${lv}" tabindex="0">
+      <div class="pt">${kids.length?`<button class="chev ${open?"open":""}" data-tog="${x.id}" aria-expanded="${open}" title="${t("toggle_children")}" aria-label="${t("toggle_children")}">›</button>`:`<span class="chev"></span>`}${kicon(x.kind)}${emo(x)}<span class="pn" title="${esc(fullTitle(x))}">${esc(x.title)}</span>${x.type?`<span class="kd">${esc(x.type)}</span>`:""}${snoozed(x)?"💤":""}</div>
+      <div><span class="st" data-s="${x.status}">${t(x.status)}</span></div>
+      <div class="pp">${pbars(x.priority)}<small>${esc(x.priority)}</small></div><div class="pgc">${prog(x)}</div><div>${due(x)}</div><div>${esc(x.estimate)}</div>
+      <div>${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}</div></div>${open?ord(kids).map(k=>row(k,lv+1)).join(""):""}`};
+  const loose=T.filter(x=>x.kind!="project"&&!T.some(p=>p.id==x.parent));
+  m.innerHTML=`<div class="wrap"><div class="ph"><h2>${esc(kname("project",1))}</h2><span class="count">${KINDS.map(k=>{const n=T.filter(x=>x.kind==k).length;return `${n} ${esc(kname(k,n!=1))}`}).join(" · ")}</span>
+    <span class="sp"></span><button class="sm" data-all="1">${t("expand_all")}</button><button class="sm" data-all="0">${t("collapse_all")}</button></div>
+    <div class="ptab"><div class="pr hd"><div>${t("title")}</div><div>${t("status")}</div><div>${t("priority")}</div><div>${t("progress")}</div><div>${t("due_short")}</div><div>${t("estimate_short")}</div><div>${t("paid")}</div></div>
+    ${ord(T.filter(x=>x.kind=="project")).map(x=>row(x,0)).join("")}${loose.length?`<div class="psec">${esc(kt("no_parent"))}</div>${ord(loose).map(x=>row(x,0)).join("")}`:""}
+    ${T.length?"":`<p class="count" style="padding:1rem">${t("no_tasks")}</p>`}</div></div>`}
+// clicking an item with children also opens or closes it; the open state is ours, since the redraw replaces the element
+function pickClick(e,el){if(el.tagName=="SUMMARY"){e.preventDefault();const id=el.dataset.pick;openT.has(id)?openT.delete(id):openT.add(id);localStorage.openT=JSON.stringify([...openT])}pick(el.dataset.pick)}
+function pick(id){sel=id;render();if(view!="queue")return;
+  for(let y=T.find(z=>z.id==id);y;y=T.find(z=>z.id==y.parent)){const c=$(`.wrap .card[data-id="${y.id}"]`);  // a todo has no card of its own: go to its task
+    if(c){c.scrollIntoView({block:"center",behavior:S.settings.animations?"smooth":"auto"});c.classList.add("flashset");return}}}
 // one search text for queue and board, so it stays when switching views
 const searchBox=()=>`<div class="srow"><div class="srch ${document.activeElement?.id=="fq"?"wide":""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><textarea id="fq" rows="1" role="searchbox" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}">${esc(F.q)}</textarea></div></div>`;
 function bindSearch(){
@@ -406,7 +533,7 @@ function bindSearch(){
 }
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&&+v<=r[1],est=x=>x.estimate_min===""?null:+x.estimate_min;
-  const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
+  const list=T.filter(x=>(F.done||x.status!="Completed")&&(x.kind!="todo"||!x.parent)).filter(x=>{
     if(!F.snoozed&&snoozed(x))return false;
     if(!findTask(F.q,x))return false;
     if(F.prio.startsWith("eq:")&&x.priority!=F.prio.slice(3))return false;
@@ -421,17 +548,18 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   const rng=(r,f)=>r?`: ${f(r[0])}–${r[1]===Infinity?"∞":f(r[1])}`:"";
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
   const advOn=F.price||F.est||F.estSort||F.snoozed||F.done;  // highlight the button so hidden filters aren't forgotten
-  m.innerHTML=`<div class="wrap">${searchBox()}<div class="toolbar"><b>${t("filters")}</b>
+  const side=localStorage.side=="1";
+  m.innerHTML=`<div class="qlay">${side?`<aside class="side">${tree()}</aside>`:""}<div class="wrap">${searchBox()}<div class="toolbar"><button class="ib" id="side" aria-expanded="${side}" title="${esc(kt("side_toggle"))}" aria-label="${esc(kt("side_toggle"))}">${MENU}</button><b>${t("filters")}</b>
   ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),["sort:desc",t("prio_high_low")],["sort:asc",t("prio_low_high")]],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
-  <button id="fadv" class="${advOn?"on":""}" aria-expanded="${F.adv}">${t("adv_filters")} ${F.adv?"▴":"▾"}</button>
+  <button id="fadv" class="${advOn?"on":""}" aria-expanded="${F.adv}">${PLUS}${t("adv_filters")}</button>
   <span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span>
   ${F.adv?`<div class="adv"><button id="fpr" class="${F.price?"on":""}">${t("price_range")}${rng(F.price,String)} ▾</button>
   <button id="fes" class="${F.est||F.estSort?"on":""}">${t("est_range")}${rng(F.est,fmtDur)}${{asc:" ↑",desc:" ↓"}[F.estSort]||""} ▾</button>
   <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label>
   <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label></div>`:""}</div>
-  ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
+  ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div></div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
   bindSearch();
   bind("fp","prio");bind("ft","type");bind("fd","paid");$("#fadv").onclick=()=>{F.adv=!F.adv;render()};
@@ -448,7 +576,11 @@ function board(m){let drag;
     c.ondrop=async e=>{e.preventDefault();if(drag){await api("POST","/api/tasks",{id:drag,status:c.dataset.s});load()}}})}
 async function act(a,id,btn){const x=T.find(y=>y.id==id);
   if(a=="edit")edit(x);
-  else if(a=="del"){if(confirm(t("confirm_delete"))){await api("DELETE","/api/tasks/"+id);if(sel==id)sel=null;load()}}
+  else if(a=="del"){const n=allKids(id).length,k=kname(x.kind),txt=key=>t(key).replace("{x}",k).replace("{n}",n);let ch="keep";
+    if(!n){if(!confirm(txt("confirm_delete")))return}
+    else if((ch=S.settings.delete_children)=="ask"){const r=await askChildren(txt("del_children_q"));if(!r.choice)return;ch=r.choice;if(r.save)await saveSettings({delete_children:ch})}
+    else if(!confirm(txt(ch=="delete"?"confirm_delete_all":"confirm_delete_keep")))return;
+    await api("DELETE",`/api/tasks/${id}?children=${ch}`);if(sel==id)sel=null;load()}
   else if(a=="snz")snoozeMenu(btn,id);
   else if(a=="unsnz"){await api("POST","/api/tasks",{id,snoozed_until:""});load()}
   else if(a=="done"){  // first click starts the countdown, a second click within it cancels
@@ -457,36 +589,47 @@ async function act(a,id,btn){const x=T.find(y=>y.id==id);
       try{await api("POST","/api/tasks",{id,status:"Completed"})}catch(er){flash(er.message,true)}load()},DONE_MS)};
     render()}}
 
+function askChildren(msg){const d=$("#ask");d.returnValue="";  // resolves to {choice:"delete"|"keep"|"" (cancelled), save}
+  d.innerHTML=`<form method="dialog"><p style="margin-top:0">${esc(msg)}</p><label class="chk"><input type="checkbox" id="askno"> ${t("dont_ask")}</label>
+    <div class="dfoot"><button value="">${t("cancel")}</button><button value="keep">${t("del_keep")}</button><button value="delete" class="primary">${t("del_all")}</button></div></form>`;
+  d.showModal();return new Promise(r=>{$("form",d).onsubmit=e=>r({choice:e.submitter?.value||"",save:$("#askno").checked});d.oncancel=()=>r({choice:""})})}  // Escape cancels
+
 /* ---------- detail drawer ---------- */
 function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   document.body.classList.toggle("has-detail",!!x);d.classList.toggle("open",!!x);
   if(!x){d.innerHTML="";return}
   const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
-  const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join("");
-  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2><div class="chips" style="margin:.2rem 0 0">${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
+  const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join(""),par=T.find(y=>y.id==x.parent);
+  d.innerHTML=`<div class="dd-h"><div><h2 class="ttl">${kicon(x.kind)}${emo(x)}<span>${esc(fullTitle(x))}</span></h2><div class="chips" style="margin:.2rem 0 0">${chip(esc(kname(x.kind)))}${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
     <button class="sm" data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
-  <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
+  <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${PK[x.kind]?`<dt>${t("parent")}</dt><dd>${par?`<button class="lnk" data-pick="${par.id}">${esc(par.title)}</button>`:`<span class="dim">${t("parent_none")}</span>`}</dd>`:""}${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
     ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time)))+row("payment_method",x.payment_method&&payIcon(x.payment_method)+" "+esc(x.payment_method)):""}
     <dt>${t("status")}</dt><dd><select data-st>${S.statuses.map(s=>`<option value="${s}" ${s==x.status?"selected":""}>${t(s)}</option>`).join("")}</select></dd></dl></div>
+  ${CK[x.kind]?`<div class="dsec"><h3>${t("children")}</h3><div class="kids">${(x.kind=="task"?todosOf(x.id):kidsOf(x.id)).map(k=>k.kind=="todo"?`<div>${todoBtn(k)}<button class="sm" data-a="edit" data-id="${k.id}">${t("edit")}</button></div>`:`<div>${kicon(k.kind)}${emo(k)}<button class="lnk ${k.status=="Completed"?"done":""}" data-pick="${k.id}">${esc(k.title)}</button>${chip(t(k.status),"gray")}</div>`).join("")}</div>
+    ${x.kind=="task"?addTodo(x.id):`<button class="sm" data-addkid="${x.id}">+ ${esc(kname(CK[x.kind]))}</button>`}</div>`:""}
   <div class="dsec"><h3>${t("sec_time")}</h3><dl>${row("estimate",esc(x.estimate))}${row("due",esc(fmtDT(x.due)))}${snoozed(x)?row("snoozed_until",esc(fmtDT(x.snoozed_until))):""}</dl></div>
   <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}
     ${row("socials",soc)}${row("notes",x.notes&&`<div class="pre">${esc(x.notes)}</div>`)}</dl></div>
   ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="${purl(p)}" target="_blank"><img src="${purl(p)}" alt=""></a>`).join("")}</div></div>`:""}
   <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
   <div class="acts"><button class="sm primary" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id,b)};
+$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const pk=e.target.closest("[data-pick]");if(pk)return pick(pk.dataset.pick);
+  const ak=e.target.closest("[data-addkid]");if(ak){const x=T.find(y=>y.id==ak.dataset.addkid);return edit({kind:CK[x.kind],parent:x.id})}if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id,b)};
 $("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
 
 /* ---------- add / edit dialog ---------- */
-function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve(),fresh:new Set(),saved:false,dirty:false};
+function edit(x={}){const kind=x.kind||"task",lite=kind=="todo"&&!x.id?"hide":"",s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve(),fresh:new Set(),saved:false,dirty:false};
   const startable=!x.id||x.status=="Waitlist"||x.status=="Ready";  // tasks already in WIP or Completed move on the board
   const f=$("#form"),E=n=>f.elements[n],curP=s.priorities.includes(x.priority)?x.priority:s.default_priority;
   const dropFresh=p=>api("DELETE","/api/photos/"+encodeURIComponent(p.split("/").pop())).catch(()=>{});  // an upload no task references yet
-  f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_task_title":"new_task_title")}</h2>
-    <input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button></div>
+  f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_item":"new_item").replace("{x}",esc(kname(kind)))}</h2>
+    <span><input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button>
+    <button type="button" class="ib" id="kinfo" title="${esc(t("kind_info"))}" aria-label="${esc(t("kind_info"))}" aria-expanded="false" aria-controls="khelp">${INFO}</button></span>
+    <p class="note hide" id="khelp" style="flex-basis:100%;margin:0">${esc(kt("kind_info_"+kind))}</p></div>
   <div class="dbody">
-  <section class="sec"><h3>${t("sec_title")}</h3><label class="fld"><input name="title" value="${esc(x.title)}" autocomplete="off"><em class="ferr"></em></label></section>
-  <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
+  <section class="sec"><h3>${t("sec_title")}</h3><div class="fld"><div class="inl">${s.emoji?`<input type="hidden" name="emoji" value="${esc(x.emoji)}"><button type="button" id="pickemo" class="emob" title="${t("emoji_pick")}" aria-label="${t("emoji_pick")}"></button>`:""}<input name="title" value="${esc(x.title)}" autocomplete="off" aria-label="${t("title")}"></div><em class="ferr"></em></div>
+    ${PK[kind]?`<label class="fld"><span>${t("parent")} (${esc(kname(PK[kind]))})</span><select name="parent"><option value="">${t("parent_none")}</option>${T.filter(y=>y.kind==PK[kind]).map(y=>`<option value="${y.id}" ${y.id==x.parent?"selected":""}>${esc(y.title)}</option>`).join("")}</select></label>`:""}</section>
+  <section class="sec ${lite}"><h3>${t("sec_basic")}</h3><div class="grid">
     <label class="fld"><span>${t("type")}</span>${sel_("type",withVal(s.types,x.type),x.type,1)}</label>
     <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
     ${startable?`<div class="fld" style="margin-top:.7rem"><span>${t("start_in")} <button type="button" class="ib" id="sinfo" title="${t("start_info")}" aria-label="${t("start_info")}" aria-expanded="false" aria-controls="shelp">${INFO}</button><button type="button" class="ib" data-go="newtask:set-ready" title="${t("open_setting")}" aria-label="${t("open_setting")}">${GEAR}</button></span>
@@ -496,9 +639,9 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
     <div class="fld"><span>${t("paid_time")}</span>${dtField("paid_time",x.paid_time,"now")}</div>
     <label class="fld"><span>${t("payment_method")}</span><div class="psel"><span id="picon"></span>${sel_("payment_method",withVal(s.payment_methods,x.payment_method),x.payment_method,1)}</div></label></div></section>
   <section class="sec"><h3>${t("sec_time")}</h3><div class="grid">
-    <label class="fld"><span>${t("estimate")}</span><input name="estimate" value="${esc(x.estimate)}" placeholder="${esc(t("estimate_hint"))}" autocomplete="off"><small class="hint" id="esthint">${t("estimate_hint")}</small><em class="ferr"></em></label>
+    <label class="fld ${lite}"><span>${t("estimate")}</span><input name="estimate" value="${esc(x.estimate)}" placeholder="${esc(t("estimate_hint"))}" autocomplete="off"><small class="hint" id="esthint">${t("estimate_hint")}</small><em class="ferr"></em></label>
     <div class="fld"><span>${t("due")}</span>${dtField("due",x.due,"due")}</div></div></section>
-  <section class="sec"><h3>${t("sec_client")}</h3><div class="grid">
+  <section class="sec ${lite}"><h3>${t("sec_client")}</h3><div class="grid">
     <label class="fld"><span>${t("client_name")}</span><input name="client_name" value="${esc(x.client_name)}"></label>
     <label class="fld"><span>${t("client_email")}</span><input name="client_email" type="email" inputmode="email" placeholder="${t("email_placeholder")}" value="${esc(x.client_email)}"><em class="ferr"></em></label></div>
     <div class="fld"><span>${t("socials")}</span><div id="soc"></div><button type="button" id="addsoc">${t("add_social")}</button></div>
@@ -515,8 +658,14 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   const showAuto=()=>{const o=f.querySelector('select[name=status] option[value=""]');if(o)o.textContent=`${t("start_auto")} (${t(s.ready_priorities.includes(E("priority").value)||s.paid_ready&&E("paid").checked?"Ready":"Waitlist")})`};
   const showP=()=>{$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';showAuto()};
   const showPay=()=>$("#picon").innerHTML=payIcon(E("payment_method").value);E("payment_method").onchange=showPay;showPay();
+  $("#kinfo").onclick=e=>{const h=$("#khelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
   if(startable)$("#sinfo").onclick=e=>{const h=$("#shelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
   f.onclick=e=>{const g=e.target.closest("[data-go]");if(!g||st.dirty&&!confirm(t("confirm_leave_task")))return;$("#dlg").close();goSetting(...g.dataset.go.split(":"))};
+  const showEmo=()=>$("#pickemo").innerHTML=E("emoji").value?esc(E("emoji").value):'<span class="dim">☺</span>';
+  if(s.emoji){showEmo();$("#pickemo").onclick=()=>popMenu($("#pickemo"),`<div class="emog">${EMOJIS.map(c=>`<button type="button" data-emo="${c}">${c}</button>`).join("")}</div>
+    <div class="cz"><input id="emoin" maxlength="16" placeholder="${t("emoji_custom")}" aria-label="${t("emoji_custom")}" value="${esc(E("emoji").value)}"><button type="button" data-emo-ok>${t("apply")}</button></div><button type="button" data-emo="">${t("emoji_none")}</button>`,
+    e=>{const b=e.target.closest("[data-emo]");let v;if(b)v=b.dataset.emo;else if(e.target.closest("[data-emo-ok]"))v=$("#emoin").value.trim();else return;  // clicks in the text box keep the menu open
+      E("emoji").value=v;st.dirty=true;closeMenu();showEmo()})}
   $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
@@ -543,8 +692,9 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
     if(bad)return E(bad).focus();
     await st.up;  // don't save while a photo is still uploading
     const d=Object.fromEntries(new FormData(f));
-    const body={id:x.id,title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",payment_method:d.paid?d.payment_method:"",
+    const body={id:x.id,kind,parent:d.parent||"",title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",payment_method:d.paid?d.payment_method:"",
       estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:em,client_socials:st.socials.filter(r=>r.handle),notes:d.notes,photos:st.photos.join(";")};
+    if(s.emoji)body.emoji=d.emoji;  // setting off: the field isn't shown, so the saved emoji stays
     if(d.status&&d.status!=x.status)body.status=d.status;  // left on Automatic: the server picks by priority; unchanged: a snoozed task stays snoozed
     try{await api("POST","/api/tasks",body);st.saved=true;$("#dlg").close();load()}catch(er){$("#perr").textContent=er.message}};
   $("#dlg").showModal();E("title").focus()}
@@ -604,6 +754,12 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
     display:()=>card(t("theme"),`<select id="sth" aria-label="${t("theme")}">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>`)+
       card(t("animations"),`<label class="chk"><input type="checkbox" id="set-anim" ${s.animations?"checked":""}> ${t("animations_on")}</label><p class="note">${t("animations_hint")}</p>`)+
       card(t("completed_limit"),`<input id="set-completed" type="number" min="1" max="500" step="1" value="${s.completed_limit}" aria-label="${t("completed_limit")}"><p class="note">${t("completed_limit_hint")}</p>`),
+    structure:()=>card(t("agile"),`<label class="chk"><input type="checkbox" id="set-agile" ${s.agile?"checked":""}> ${t("agile_on")}</label><p class="note">${t("agile_hint")}</p>`)+
+      card(kt("todos_on_board"),`<label class="chk"><input type="checkbox" id="set-todos" ${s.todos_on_board?"checked":""}> ${kt("todos_on_board_on")}</label><p class="note">${kt("todos_on_board_hint")}</p>`)+
+      card(kt("todo_done_last"),`<label class="chk"><input type="checkbox" id="set-todo-order" ${s.todo_done_last?"checked":""}> ${kt("todo_done_last_on")}</label><p class="note">${kt("todo_done_last_hint")}</p>`)+
+      card(t("kind_colors"),`<div id="set-kcol">${KINDS.map(k=>`<label class="chk">${kicon(k)} <input type="color" data-kc="${k}" value="${s.kind_colors[k]}"> ${esc(kname(k))}</label>`).join("")}</div><p class="note">${kt("kind_colors_hint")}</p>`)+
+      card(t("emoji"),`<label class="chk"><input type="checkbox" id="set-emoji" ${s.emoji?"checked":""}> ${t("emoji_on")}</label><p class="note">${t("emoji_hint")}</p>`)+
+      card(t("delete_children"),`<select id="set-delch" aria-label="${t("delete_children")}">${["ask","delete","keep"].map(v=>opt(v,t("delete_children_"+v),s.delete_children)).join("")}</select>`),
     newtask:()=>card(t("default_priority"),`<select id="sdp" aria-label="${t("default_priority")}">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
       card(t("default_due_time"),`<select id="sdt" aria-label="${t("default_due_time")}">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`)+
       card(t("ready_priorities"),`<div id="set-ready">${s.priorities.map(p=>`<label class="chk"><input type="checkbox" data-rdy="${esc(p)}" ${s.ready_priorities.includes(p)?"checked":""}> ${pbars(p)} ${esc(p)}</label>`).join("")}</div><p class="note">${t("ready_priorities_hint")}</p>
@@ -623,13 +779,13 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
       ${importNote?`<div class="fres ${importNote.ok?"":"bad"}">${importNote.html}</div>`:""}`)};
   if(!pane[stab])stab="display";
   // [category, element id to jump to, label]; the open category lists its items under it, and search looks through all of them
-  const items=[["display","sth","theme"],["display","set-anim","animations"],["display","set-completed","completed_limit"],["newtask","sdp","default_priority"],["newtask","sdt","default_due_time"],
+  const items=[["display","sth","theme"],["display","set-anim","animations"],["display","set-completed","completed_limit"],["structure","set-agile","agile"],["structure","set-todos","todos_on_board"],["structure","set-todo-order","todo_done_last"],["structure","set-kcol","kind_colors"],["structure","set-emoji","emoji"],["structure","set-delch","delete_children"],["newtask","sdp","default_priority"],["newtask","sdt","default_due_time"],
     ["newtask","set-ready","ready_priorities"],["newtask","set-paid-ready","paid_ready"],["fields","tg-types","types_label"],["fields","tg-socials","socials_label"],
     ["fields","tg-title","title_format"],["payments","scur","currency"],["payments","tg-pay","payment_methods_label"],...Object.keys(s.shortcuts).map(k=>["shortcuts","sc-"+k,"sc_"+k]),
     ["data","set-fp","finished_photos"],["data","set-fpath","cat_file"]];
-  const sub=([c,id,k],cat,i)=>`<button class="sub" style="--i:${i}" data-go="${c}:${id}">${cat?`<small>${t("cat_"+c)}</small>`:""}${t(k)}</button>`;
-  const drawNav=()=>{const q=sq.trim(),rank=it=>t(it[2]).toLowerCase().includes(q.toLowerCase())?0:1;  // whole-word hits before spread-out ones
-    const hits=q&&items.filter(it=>fuzzy(q,t("cat_"+it[0])+" "+t(it[2]))).sort((a,b)=>rank(a)-rank(b));
+  const sub=([c,id,k],cat,i)=>`<button class="sub" style="--i:${i}" data-go="${c}:${id}">${cat?`<small>${t("cat_"+c)}</small>`:""}${kt(k)}</button>`;
+  const drawNav=()=>{const q=sq.trim(),rank=it=>kt(it[2]).toLowerCase().includes(q.toLowerCase())?0:1;  // whole-word hits before spread-out ones
+    const hits=q&&items.filter(it=>fuzzy(q,t("cat_"+it[0])+" "+kt(it[2]))).sort((a,b)=>rank(a)-rank(b));
     $("#snavl").innerHTML=q?hits.map(it=>sub(it,true)).join("")||`<p class="note">${t("no_results")}</p>`:
       Object.keys(pane).map(k=>{const own=items.filter(it=>it[0]==k),open=k==stab,roll=open&&rolled!=k?"roll":"";  // only a newly opened category rolls open, not every redraw
         return `<button data-tab="${k}" class="${open?"on":""} ${roll}" aria-expanded="${open}">${t("cat_"+k)}<span class="car" aria-hidden="true">›</span></button>`+
@@ -646,6 +802,13 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
     $("#sth").onchange=e=>{localStorage.theme=document.documentElement.dataset.theme=e.target.value;saveSettings({theme:e.target.value})};  // applies at once
     $("#set-anim").onchange=e=>{document.documentElement.dataset.anim=e.target.checked?"on":"off";saveSettings({animations:e.target.checked})};
     $("#set-completed").onchange=e=>{const v=+e.target.value;if(Number.isInteger(v)&&v>=1&&v<=500)saveSettings({completed_limit:v});else{flash(t("err_invalid_completed_limit"),true);e.target.value=S.settings.completed_limit}}}
+  if(stab=="structure"){
+    $("#set-agile").onchange=e=>saveSettings({agile:e.target.checked}).then(render);  // the names change everywhere
+    $("#set-todos").onchange=e=>saveSettings({todos_on_board:e.target.checked});
+    m.querySelectorAll("[data-kc]").forEach(c=>c.onchange=()=>saveSettings(cur_=>({kind_colors:{...cur_.kind_colors,[c.dataset.kc]:c.value}})).then(render));
+    $("#set-todo-order").onchange=e=>saveSettings({todo_done_last:e.target.checked});
+    $("#set-emoji").onchange=e=>saveSettings({emoji:e.target.checked});
+    $("#set-delch").onchange=e=>saveSettings({delete_children:e.target.value})}
   if(stab=="newtask"){
     $("#sdp").onchange=e=>saveSettings({default_priority:e.target.value});
     $("#sdt").onchange=e=>saveSettings({default_due_time:e.target.value});

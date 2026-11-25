@@ -5,15 +5,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "2.4.1", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "3.0.3", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
 SETTINGS_FILE = ROOT / "settings.json"
 FIELDS = ["id", "title", "type", "priority", "price", "currency", "paid", "paid_amount", "paid_time", "payment_method",
           "estimate_min", "due", "client_name", "client_email", "client_socials",
-          "notes", "photos", "status", "snoozed_until", "snoozed_from", "created", "completed_at"]  # snoozed_from: status to return to when the snooze ends
+          "notes", "photos", "status", "snoozed_until", "snoozed_from", "created", "completed_at", "kind", "parent", "emoji", "crossed", "sort"]  # snoozed_from: status to return to when the snooze ends
 STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
+PARENT_KIND = {"project": "", "task": "project", "todo": "task"}  # a project holds tasks, a task holds todos
+DELETE_CHILDREN = ("ask", "delete", "keep")  # what deleting a project or task does to the items inside it
 PRIORITIES = ["Critical", "High", "Medium", "Low", "Lowest"]  # fixed, highest first; the icon shows one bar per level
 TITLE_PARTS = ["type", "social", "title", "price", "paid"]
 DEFAULT_SETTINGS = {
@@ -32,6 +34,12 @@ DEFAULT_SETTINGS = {
     "animations": True,  # off = the page shows no animations (the Mark done countdown bar still runs)
     "payment_methods": ["Wechat", "Alipay", "Paypal", "Stripe", "Zelle", "Venmo", "Vgen"],
     "payment_icons": {},  # method -> small image as a data URL; a method without one shows a letter badge
+    "agile": False,  # on = projects, tasks and todos are called initiatives, epics and stories
+    "todos_on_board": False,
+    "delete_children": "ask",
+    "kind_colors": {"project": "#8b5cf6", "task": "#3b82f6", "todo": "#22a06b"},  # colour of the round type icon before each title
+    "emoji": False,  # on = each item can show an emoji before its title
+    "todo_done_last": True,  # done and crossed-out todos move to the bottom of their list
 }
 SHORTCUT_RE = re.compile(r"((Ctrl|Alt|Shift|Meta)\+)*[^\s+]{1,20}")
 FINISHED_DIR = "finished_task_photos"  # inside the photos folder
@@ -217,6 +225,11 @@ def clean_settings(s):
     out["ready_priorities"] = [p for p in PRIORITIES if p in v]
     need(type(out["paid_ready"]) is bool, "invalid_paid_ready")
     need(type(out["animations"]) is bool, "invalid_animations")
+    need(all(type(out[k]) is bool for k in ("agile", "todos_on_board", "emoji", "todo_done_last")), "invalid_bool")
+    v = out["kind_colors"]
+    need(isinstance(v, dict) and set(v) <= set(PARENT_KIND) and all(isinstance(x, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", x) for x in v.values()), "invalid_color")
+    out["kind_colors"] = {**DEFAULT_SETTINGS["kind_colors"], **{k: x.lower() for k, x in v.items()}}
+    need(out["delete_children"] in DELETE_CHILDREN, "invalid_delete_children")
     v = out["payment_icons"]
     need(isinstance(v, dict) and all(isinstance(x, str) and len(x) <= ICON_MAX and ICON_RE.fullmatch(x) for x in v.values()), "invalid_icon")
     out["payment_icons"] = {k: x for k, x in v.items() if k in out["payment_methods"]}  # a removed method takes its icon with it
@@ -252,6 +265,8 @@ def load_tasks():
         if p.exists():
             with p.open(newline="", encoding="utf-8-sig") as f:
                 tasks += [{k: row.get(k) or "" for k in FIELDS} for row in csv.DictReader(f)]
+    for t in tasks:
+        t["kind"] = t["kind"] or "task"  # rows from before v3.0 are tasks
     return tasks
 
 
@@ -276,6 +291,9 @@ def clean_task(data, old=None):
                 if k == "client_socials" else str(data[k])
     if not t["title"].strip():
         raise ValueError("title_required")
+    t["kind"] = t["kind"] or "task"
+    if t["kind"] not in PARENT_KIND or old and t["kind"] != old["kind"]:  # an item can't change kind: its children would break
+        raise ValueError("invalid_kind")
     if t["status"] not in STATUSES:  # a new task with no status chosen: its priority decides
         s = load_settings()
         t["status"] = "Ready" if (t["priority"] or s["default_priority"]) in s["ready_priorities"] else "Waitlist"
@@ -297,8 +315,11 @@ def clean_task(data, old=None):
         raise ValueError("invalid_currency")
     t["paid"] = "1" if str(t["paid"]) in ("1", "true", "True") else ""
     t["payment_method"] = t["payment_method"].strip()[:40] if t["paid"] else ""
+    t["crossed"] = "1" if str(t["crossed"]) in ("1", "true", "True") else ""
+    t["emoji"] = t["emoji"].strip()[:16]  # room for one emoji built from several characters (skin tone, joined emoji)
     if not t["id"]:
         t["id"], t["created"] = uuid.uuid4().hex[:8], datetime.now().isoformat(timespec="minutes")
+        t["sort"] = str(int(datetime.now().timestamp() * 1000))  # new items go to the end; reorder() numbers from 0
     return t
 
 
@@ -306,6 +327,8 @@ def upsert(data):
     tasks = load_tasks()
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
+    if new["parent"] and not any(t["id"] == new["parent"] and t["kind"] == PARENT_KIND[new["kind"]] for t in tasks):
+        raise ValueError("invalid_parent")
     if (new["paid"] and not (old and old["paid"]) and new["status"] == "Waitlist" and "status" not in data
             and not new["snoozed_from"] and load_settings()["paid_ready"]):  # Waitlist picked by hand, or a snooze, still wins
         new["status"] = "Ready"
@@ -317,23 +340,54 @@ def upsert(data):
     elif "status" in data and new["snoozed_from"]:  # moved by hand while snoozed: that ends the snooze
         new["snoozed_until"] = new["snoozed_from"] = ""
     if new["status"] != "Completed":
-        new["completed_at"] = ""
+        new["completed_at"] = new["crossed"] = ""  # crossed out = finished as dropped; reopening clears it
     elif not old or old["status"] != "Completed":
         new["completed_at"] = datetime.now().isoformat(timespec="minutes")
     for rel in set(photo_list(old)) - set(photo_list(new)):  # photos removed from the task
         discard_photo(rel)
     organize_photos(new)
     tasks = [t for t in tasks if t["id"] != new["id"]] + [new]
+    if old and old["status"] != new["status"]:
+        pull_parents(tasks, new)
     save_tasks(tasks)
     return new
 
 
-def delete_task(tid):
+def pull_parents(tasks, child):
+    """A child moved to Ready or WIP takes its parent (and that one's parent) along. Parents never move back, and a finished child moves nothing."""
+    rank = {"Waitlist": 0, "Ready": 1, "WIP": 2, "Completed": 3}
+    while child["status"] in ("Ready", "WIP"):
+        p = next((t for t in tasks if child["parent"] and t["id"] == child["parent"]), None)
+        if not p or rank[p["status"]] >= rank[child["status"]]:
+            return
+        p["status"], p["snoozed_until"], p["snoozed_from"] = child["status"], "", ""  # like a move by hand, this ends a snooze
+        child = p
+
+
+def reorder(ids):
+    """Hand-made order (dragged todos): each listed item gets its position as its sort key."""
+    if not isinstance(ids, list) or len(ids) > 1000 or not all(isinstance(i, str) for i in ids):
+        raise ValueError("invalid_order")
+    pos = {i: n for n, i in enumerate(ids)}
     tasks = load_tasks()
-    gone = next((t for t in tasks if t["id"] == tid), None)
-    for rel in photo_list(gone):  # finished or not, a deleted task takes its photos with it
-        discard_photo(rel)
-    save_tasks([t for t in tasks if t["id"] != tid])
+    for t in tasks:
+        if t["id"] in pos:
+            t["sort"] = str(pos[t["id"]])
+    save_tasks(tasks)
+
+
+def delete_task(tid, children="keep"):
+    """children="delete" also deletes everything inside the item; "keep" leaves its direct children without a parent."""
+    tasks, ids = load_tasks(), {tid}
+    while children == "delete" and (more := {t["id"] for t in tasks if t["parent"] in ids} - ids):
+        ids |= more
+    for t in tasks:
+        if t["id"] in ids:
+            for rel in photo_list(t):  # finished or not, a deleted task takes its photos with it
+                discard_photo(rel)
+        elif t["parent"] in ids:
+            t["parent"] = ""
+    save_tasks([t for t in tasks if t["id"] not in ids])
 
 
 def wake_snoozed():
@@ -418,6 +472,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if self.path == "/api/tasks":
                 self._send(200, view(upsert(json.loads(self._body()))))
+            elif self.path == "/api/tasks/order":
+                body = json.loads(self._body())
+                reorder(body.get("ids") if isinstance(body, dict) else None)
+                self._send(200, {"ok": True})
             elif self.path == "/api/settings":
                 body = json.loads(self._body())
                 if not isinstance(body, dict):
@@ -450,8 +508,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": str(e)})
 
     def _delete(self):
-        if m := re.fullmatch(r"/api/tasks/(\w+)", self.path):
-            delete_task(m[1])
+        if m := re.fullmatch(r"/api/tasks/(\w+)(\?children=(delete|keep))?", self.path):
+            delete_task(m[1], m[3] or "keep")
             self._send(200, {"ok": True})
         elif m := re.fullmatch(r"/api/photos/([^/]+)", self.path):
             delete_unsaved_photo(unquote(m[1]))
