@@ -1,4 +1,8 @@
 # Changelog
+## v3.0.4
+- Custom emoji (renamed from "Emoji" in Settings > Projects): when on, every project, task and todo gets a small emoji button before its title, on cards, the Projects page and the details panel. Click it to pick an emoji, or type or paste your own and press Enter; "Remove emoji" clears it. Items without one show a faint dashed smiley button. The edit window uses the same picker.
+- The emoji picker is bigger and tidier: 32 emojis in a grid, the current one highlighted.
+- Settings > Projects > Type icon colours: the colour pickers are all the same short width.
 ## v3.0.3
 - A crossed-out todo's mark is gray instead of red.
 - Done and crossed-out todos move to the bottom of their list. To keep them where they are, turn off "Move done and crossed-out todos to the bottom" in Settings > Projects, or with the gear at the right of any todo list's add box.

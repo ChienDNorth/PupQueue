@@ -140,7 +140,12 @@ dialog::backdrop{background:rgba(8,14,40,.5)}
 #pmenu .mh{padding:.35rem .7rem .1rem;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 #pmenu .cz{display:flex;gap:.3rem;padding:.2rem .5rem .4rem}
 #pmenu .cz input{width:4rem;font-size:var(--fs-md);padding:.2rem .4rem}#pmenu .cz select{font-size:var(--fs-md);padding:.2rem .3rem}
-.emob{flex:none;width:2.4rem;font-size:1.2rem;padding:0}#pmenu .emog{display:grid;grid-template-columns:repeat(6,2.2rem);gap:.1rem}#pmenu .emog button{justify-content:center;padding:.3rem 0}
+.emob{flex:none;width:2.6rem;font-size:1.25rem;padding:0;display:inline-flex;align-items:center;justify-content:center}.emob.empty{color:var(--muted);border-style:dashed}.emob svg{width:1.1rem;height:1.1rem}
+#pmenu .emp{width:17.5rem}#pmenu .emog{display:grid;grid-template-columns:repeat(8,1fr);gap:.15rem;padding:.2rem .3rem}
+#pmenu .emog button{justify-content:center;padding:0;aspect-ratio:1;font-size:1.2rem;border-radius:.5rem;transition:transform .1s,background .1s}#pmenu .emog button:hover{transform:scale(1.18)}#pmenu .emog .cur{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+#pmenu .emc{display:flex;gap:.35rem;padding:.45rem .3rem .2rem;margin-top:.25rem;border-top:1px solid var(--line)}#pmenu .emc input{flex:1;min-width:0;font-size:var(--fs-md);padding:.25rem .5rem}
+#pmenu .emc button{width:auto;justify-content:center;padding:.2rem .75rem;font-size:var(--fs-sm);background:var(--accent);color:#fff}#pmenu .emc button:hover{background:var(--accent)}
+#pmenu .emrm{justify-content:center;margin-top:.2rem;font-size:var(--fs-sm);color:var(--danger)}
 #pmenu .cz button{width:auto;background:var(--accent);color:#fff;font-size:var(--fs-xs);padding:.12rem .6rem;justify-content:center}
 
 /* date & time picker */
@@ -194,6 +199,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .settings>h3+label{margin-top:0}
 .settings select,.settings input:not([type=file]):not([type=checkbox]){width:100%}
 .settings label.chk{display:flex;margin:.35rem 0;font-size:var(--fs-md);color:var(--fg)}
+#set-kcol input[type=color]{flex:none;width:3rem;height:1.8rem;padding:.1rem}
 .settings .fp{display:flex;gap:.7rem;align-items:center;font-size:var(--fs-md)}
 .settings .fp button{width:auto}
 .note{margin:.6rem 0 0;font-size:var(--fs-xs);color:var(--muted)}
@@ -235,7 +241,9 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .pr.fin .pn{text-decoration:line-through;color:var(--muted)}
 .chev{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.3rem;height:1.3rem;padding:0;border:0;border-radius:.3rem;background:none;color:var(--muted);font-size:1.1rem;transition:transform .15s}
 .chev.open{transform:rotate(90deg)}button.chev:hover{background:var(--line);color:var(--fg)}
-.ki{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;border-radius:50%}.emo{flex:none}
+.ki{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;border-radius:50%}.emo{flex:none;line-height:1}
+button.emo{display:inline-flex;align-items:center;justify-content:center;width:1.7em;height:1.7em;padding:0;border:1px solid transparent;border-radius:.45rem;background:none;font-size:1em;transition:background .15s,border-color .15s}
+button.emo:hover{background:var(--accent-soft);border-color:var(--line)}button.emo.empty{color:var(--muted);border:1px dashed var(--line);opacity:.75}button.emo.empty:hover{opacity:1;color:var(--accent-text);border-color:var(--accent)}button.emo svg{width:.95em;height:.95em}
 .ttl{display:flex;align-items:center;gap:.4rem}.ki svg{width:.8rem;height:.8rem}
 .st{display:inline-block;padding:.08rem .55rem;border-radius:.3rem;font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
 .pp,.pgc{display:flex;align-items:center;gap:.4rem}.pgc small{min-width:2.2rem;font-size:var(--fs-xs);color:var(--muted)}
@@ -314,8 +322,19 @@ const kt=k=>t(k).replace(/\{(project|task|todo)(s?)\}/g,(_,k,pl)=>kname(k,pl)); 
 const kidsOf=id=>T.filter(y=>y.parent==id),allKids=id=>kidsOf(id).flatMap(y=>[y,...allKids(y.id)]);
 const KICON={project:"M13 2 4 14h7l-1 8 9-12h-7z",task:"M5 12l5 5L20 7",todo:"M6 3h12v18l-6-4-6 4z"};
 const kicon=k=>`<span class="ki" style="background:${S.settings.kind_colors[k]}" title="${esc(kname(k))}" role="img" aria-label="${esc(kname(k))}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${KICON[k]}"/></svg></span>`;
-const emo=x=>S.settings.emoji&&x.emoji?`<span class="emo" aria-hidden="true">${esc(x.emoji)}</span>`:"";  // hidden while the setting is off, but kept
-const EMOJIS="⭐ 🔥 ❤️ ✅ 📌 🎨 ✏️ 🖌️ 🖼️ 📷 🎁 💰 💡 📅 ⏰ 🐶 🐱 🦊 🐰 🌸 🌈 🎉 🚀 ⚠️".split(" ");
+const SMILE=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20.5 12A8.5 8.5 0 1 1 12 3.5"/><path d="M8.5 14.5s1.3 1.8 3.5 1.8 3.5-1.8 3.5-1.8M9 9.5h.01M15 9.5h.01M19 2v5M16.5 4.5h5"/></svg>`;
+// the custom emoji before a title (setting off: hidden, but kept). btn = a button that opens the picker; inside other buttons only the emoji shows
+const emo=(x,btn)=>!S.settings.emoji?"":btn?`<button type="button" class="emo ${x.emoji?"":"empty"}" data-emo-of="${x.id}" title="${t("emoji_pick")}" aria-label="${t("emoji_pick")}">${x.emoji?esc(x.emoji):SMILE}</button>`
+  :x.emoji?`<span class="emo" aria-hidden="true">${esc(x.emoji)}</span>`:"";
+const EMOJIS="⭐ 🔥 ❤️ ✅ 📌 🎨 ✏️ 🖌️ 🖼️ 📷 🎁 💰 💡 📅 ⏰ 🎯 🐶 🐱 🦊 🐰 🐻 🐼 🌸 🌈 🍀 🌙 ☀️ 🎉 🎵 🚀 💎 ⚠️".split(" ");
+function emojiMenu(anchor,cur,pick){
+  popMenu(anchor,`<div class="emp"><div class="mh">${t("emoji")}</div><div class="emog">${EMOJIS.map(c=>`<button type="button" data-emo="${c}" class="${c==cur?"cur":""}" aria-label="${c}">${c}</button>`).join("")}</div>
+    <div class="emc"><input id="emoin" maxlength="16" placeholder="${t("emoji_custom")}" aria-label="${t("emoji_custom")}" value="${esc(cur)}"><button type="button" class="primary" data-emo-ok>${t("apply")}</button></div>
+    ${cur?`<button type="button" class="emrm" data-emo="">${t("emoji_none")}</button>`:""}</div>`,
+    e=>{const b=e.target.closest("[data-emo]");let v;if(b)v=b.dataset.emo;else if(e.target.closest("[data-emo-ok]"))v=$("#emoin").value.trim();else return;  // clicks in the text box keep the menu open
+      closeMenu();pick(v)});
+  $("#emoin").onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();e.stopPropagation();closeMenu();pick(e.target.value.trim())}}}
+const emoClick=b=>{const x=T.find(y=>y.id==b.dataset.emoOf);emojiMenu(b,x.emoji,async v=>{try{await api("POST","/api/tasks",{id:x.id,emoji:v})}catch(er){flash(er.message,true)}load()})};
 const PLUS=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
 const MENU=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`;
 const snoozed=x=>x.snoozed_until&&new Date(x.snoozed_until)>new Date();
@@ -441,7 +460,7 @@ function card(x,board){const par=T.find(y=>y.id==x.parent),soc=safe(x.client_soc
   const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
   const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
   return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${board?'draggable="true"':""}>
-  ${par?`<div class="c-par">↳ ${esc(par.title)}</div>`:""}<div class="c-top"><div class="c-title ttl">${kicon(x.kind)}${emo(x)}<span>${esc(fullTitle(x))}</span></div>${pbadge(x)}</div>
+  ${par?`<div class="c-par">↳ ${esc(par.title)}</div>`:""}<div class="c-top"><div class="c-title ttl">${kicon(x.kind)}${emo(x,1)}<span>${esc(fullTitle(x))}</span></div>${pbadge(x)}</div>
   <div class="chips">${chip(esc(kname(x.kind)))}${x.kind=="project"?chip(`${kidsOf(x.id).length} ${esc(kname("task",kidsOf(x.id).length!=1))}`,"gray"):""}${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
   ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
   ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
@@ -457,7 +476,7 @@ function render(){closeMenu();chrome();const m=$("#main");
   else if(view=="projects")projects(m);
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
-$("#main").onclick=e=>{const tg=e.target.closest("[data-tog]");if(tg){const id=tg.dataset.tog;openT.has(id)?openT.delete(id):openT.add(id);localStorage.openT=JSON.stringify([...openT]);return render()}
+$("#main").onclick=e=>{const eo=e.target.closest("[data-emo-of]");if(eo)return emoClick(eo);const tg=e.target.closest("[data-tog]");if(tg){const id=tg.dataset.tog;openT.has(id)?openT.delete(id):openT.add(id);localStorage.openT=JSON.stringify([...openT]);return render()}
   const rw=e.target.closest("[data-row]");if(rw)return pick(rw.dataset.row);
   const ex=e.target.closest("[data-all]");if(ex){openT.clear();if(ex.dataset.all=="1")T.forEach(x=>kidsOf(x.id).length&&openT.add(x.id));localStorage.openT=JSON.stringify([...openT]);return render()}
   const pk=e.target.closest("[data-pick]");if(pk)return pickClick(e,pk);if(e.target.closest(".todos")&&!e.target.closest("[data-go]"))return;
@@ -507,7 +526,7 @@ function projects(m){const ord=l=>[...l].sort((a,b)=>(a.status=="Completed")-(b.
   const due=x=>{if(!x.due)return"";const d=new Date(x.due);return `<span class="${d<new Date()&&x.status!="Completed"?"late":""}" title="${esc(fmtDT(x.due))}">${esc(d.toLocaleDateString(loc(),{month:"short",day:"numeric"}))}</span>`};
   const row=(x,lv)=>{const kids=kidsOf(x.id),open=openT.has(x.id);
     return `<div class="pr ${lv?"":"top"} ${sel==x.id?"on":""} ${x.status=="Completed"?"fin":""}" data-row="${x.id}" style="--lv:${lv}" tabindex="0">
-      <div class="pt">${kids.length?`<button class="chev ${open?"open":""}" data-tog="${x.id}" aria-expanded="${open}" title="${t("toggle_children")}" aria-label="${t("toggle_children")}">›</button>`:`<span class="chev"></span>`}${kicon(x.kind)}${emo(x)}<span class="pn" title="${esc(fullTitle(x))}">${esc(x.title)}</span>${x.type?`<span class="kd">${esc(x.type)}</span>`:""}${snoozed(x)?"💤":""}</div>
+      <div class="pt">${kids.length?`<button class="chev ${open?"open":""}" data-tog="${x.id}" aria-expanded="${open}" title="${t("toggle_children")}" aria-label="${t("toggle_children")}">›</button>`:`<span class="chev"></span>`}${kicon(x.kind)}${emo(x,1)}<span class="pn" title="${esc(fullTitle(x))}">${esc(x.title)}</span>${x.type?`<span class="kd">${esc(x.type)}</span>`:""}${snoozed(x)?"💤":""}</div>
       <div><span class="st" data-s="${x.status}">${t(x.status)}</span></div>
       <div class="pp">${pbars(x.priority)}<small>${esc(x.priority)}</small></div><div class="pgc">${prog(x)}</div><div>${due(x)}</div><div>${esc(x.estimate)}</div>
       <div>${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}</div></div>${open?ord(kids).map(k=>row(k,lv+1)).join(""):""}`};
@@ -600,7 +619,7 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   if(!x){d.innerHTML="";return}
   const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
   const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join(""),par=T.find(y=>y.id==x.parent);
-  d.innerHTML=`<div class="dd-h"><div><h2 class="ttl">${kicon(x.kind)}${emo(x)}<span>${esc(fullTitle(x))}</span></h2><div class="chips" style="margin:.2rem 0 0">${chip(esc(kname(x.kind)))}${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
+  d.innerHTML=`<div class="dd-h"><div><h2 class="ttl">${kicon(x.kind)}${emo(x,1)}<span>${esc(fullTitle(x))}</span></h2><div class="chips" style="margin:.2rem 0 0">${chip(esc(kname(x.kind)))}${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
     <button class="sm" data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
   <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${PK[x.kind]?`<dt>${t("parent")}</dt><dd>${par?`<button class="lnk" data-pick="${par.id}">${esc(par.title)}</button>`:`<span class="dim">${t("parent_none")}</span>`}</dd>`:""}${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
     ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time)))+row("payment_method",x.payment_method&&payIcon(x.payment_method)+" "+esc(x.payment_method)):""}
@@ -613,7 +632,7 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="${purl(p)}" target="_blank"><img src="${purl(p)}" alt=""></a>`).join("")}</div></div>`:""}
   <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
   <div class="acts"><button class="sm primary" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`}
-$("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const pk=e.target.closest("[data-pick]");if(pk)return pick(pk.dataset.pick);
+$("#detail").onclick=e=>{const eo=e.target.closest("[data-emo-of]");if(eo)return emoClick(eo);const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const pk=e.target.closest("[data-pick]");if(pk)return pick(pk.dataset.pick);
   const ak=e.target.closest("[data-addkid]");if(ak){const x=T.find(y=>y.id==ak.dataset.addkid);return edit({kind:CK[x.kind],parent:x.id})}if(e.target.closest("[data-dx]")){sel=null;render();return}const b=e.target.closest("[data-a]");if(b)act(b.dataset.a,b.dataset.id,b)};
 $("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
 
@@ -661,11 +680,8 @@ function edit(x={}){const kind=x.kind||"task",lite=kind=="todo"&&!x.id?"hide":""
   $("#kinfo").onclick=e=>{const h=$("#khelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
   if(startable)$("#sinfo").onclick=e=>{const h=$("#shelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
   f.onclick=e=>{const g=e.target.closest("[data-go]");if(!g||st.dirty&&!confirm(t("confirm_leave_task")))return;$("#dlg").close();goSetting(...g.dataset.go.split(":"))};
-  const showEmo=()=>$("#pickemo").innerHTML=E("emoji").value?esc(E("emoji").value):'<span class="dim">☺</span>';
-  if(s.emoji){showEmo();$("#pickemo").onclick=()=>popMenu($("#pickemo"),`<div class="emog">${EMOJIS.map(c=>`<button type="button" data-emo="${c}">${c}</button>`).join("")}</div>
-    <div class="cz"><input id="emoin" maxlength="16" placeholder="${t("emoji_custom")}" aria-label="${t("emoji_custom")}" value="${esc(E("emoji").value)}"><button type="button" data-emo-ok>${t("apply")}</button></div><button type="button" data-emo="">${t("emoji_none")}</button>`,
-    e=>{const b=e.target.closest("[data-emo]");let v;if(b)v=b.dataset.emo;else if(e.target.closest("[data-emo-ok]"))v=$("#emoin").value.trim();else return;  // clicks in the text box keep the menu open
-      E("emoji").value=v;st.dirty=true;closeMenu();showEmo()})}
+  const showEmo=()=>{const v=E("emoji").value;$("#pickemo").innerHTML=v?esc(v):SMILE;$("#pickemo").classList.toggle("empty",!v)};
+  if(s.emoji){showEmo();$("#pickemo").onclick=()=>emojiMenu($("#pickemo"),E("emoji").value,v=>{E("emoji").value=v;st.dirty=true;showEmo()})}
   $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
