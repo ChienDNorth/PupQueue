@@ -79,7 +79,7 @@
   "start_help_paid": "已付款的任务也会进待开始（设置 > 新任务）。",
   "err_invalid_paid_ready": "这个设置只能开或关。",
   "search_settings": "搜索设置",
-  "search_tasks": "搜索任务",
+  "search_tasks": "搜索任务", "adv_filters": "高级筛选",
   "no_results": "没有匹配的设置",
   "animations": "动画",
   "animations_on": "显示动画",

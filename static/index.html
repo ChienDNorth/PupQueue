@@ -41,6 +41,10 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .toolbar select,.toolbar input:not([type=checkbox]){font-size:var(--fs-sm);padding:.2rem .45rem}
 .toolbar .sp{flex:1}.toolbar label{display:inline-flex;align-items:center;gap:.3rem}
 .toolbar button{font-size:var(--fs-sm);padding:.2rem .55rem}
+.toolbar .adv{flex-basis:100%;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding-top:.4rem;border-top:1px solid var(--line)}
+.srow{display:flex;justify-content:flex-end;margin-bottom:.6rem}.srch{position:relative}
+.srch svg{position:absolute;left:.6rem;top:50%;width:1rem;height:1rem;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.srch input{width:16rem;max-width:70vw;padding-left:2rem;border-radius:999px}
 /* icon-only buttons (settings gear, info) */
 .ib{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;padding:.2rem;border-radius:50%;color:var(--muted);vertical-align:middle}
 .ib:hover{color:var(--accent-text);background:var(--accent-soft)}.ib svg{width:1.1em;height:1.1em}
@@ -224,7 +228,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
-let S,T,L={},view=localStorage.view||"queue",F={q:"",prio:"all",price:null,paid:"any",type:"all",est:null,estSort:"",snoozed:false,done:false},sel=null;
+let S,T,L={},view=localStorage.view||"queue",F={q:"",adv:false,prio:"all",price:null,paid:"any",type:"all",est:null,estSort:"",snoozed:false,done:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
@@ -382,7 +386,7 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
   else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at||x.created;  // tasks finished before v2.3 have no completed_at
-    m.innerHTML=`<div class="toolbar">${searchBox()}</div><div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&findTask(F.q,x));const n=l.length,done=s=="Completed";
+    m.innerHTML=`${searchBox()}<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&findTask(F.q,x));const n=l.length,done=s=="Completed";
       l=done?l.sort((a,b)=>when(b).localeCompare(when(a))).slice(0,lim):l.sort(byPrio);
       return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${n}</span>${done?`<span class="sp"></span><button class="ib" data-go="display:set-completed" title="${t("completed_settings")}" aria-label="${t("completed_settings")}">${GEAR}</button>`:""}</h3>
       ${done&&n>lim?`<p class="count">${t("completed_showing").replace("{n}",lim).replace("{total}",n)}</p>`:""}${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;bindSearch();board(m)}
@@ -391,7 +395,7 @@ function render(){closeMenu();chrome();const m=$("#main");
 $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 // one search text for queue and board, so it stays when switching views
-const searchBox=()=>`<input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}">`;
+const searchBox=()=>`<div class="srow"><div class="srch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}"></div></div>`;
 function bindSearch(){
   const fq=$("#fq");fq.oninput=()=>{F.q=fq.value;const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
   fq.onkeydown=e=>{if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
@@ -412,19 +416,23 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   const emax=Math.ceil(Math.max(0,...T.filter(x=>x.estimate_min!=="").map(x=>+x.estimate_min))/5)*5||480;
   const rng=(r,f)=>r?`: ${f(r[0])}–${r[1]===Infinity?"∞":f(r[1])}`:"";
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
-  m.innerHTML=`<div class="wrap"><div class="toolbar"><b>${t("filters")}</b>
-  ${searchBox()}
+  const advOn=F.price||F.est||F.estSort||F.snoozed||F.done;  // highlight the button so hidden filters aren't forgotten
+  m.innerHTML=`<div class="wrap">${searchBox()}<div class="toolbar"><b>${t("filters")}</b>
   ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),["sort:desc",t("prio_high_low")],["sort:asc",t("prio_low_high")]],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
-  <button id="fpr" class="${F.price?"on":""}">${t("price_range")}${rng(F.price,String)} ▾</button>
+  <button id="fadv" class="${advOn?"on":""}" aria-expanded="${F.adv}">${t("adv_filters")} ${F.adv?"▴":"▾"}</button>
+  <span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span>
+  ${F.adv?`<div class="adv"><button id="fpr" class="${F.price?"on":""}">${t("price_range")}${rng(F.price,String)} ▾</button>
   <button id="fes" class="${F.est||F.estSort?"on":""}">${t("est_range")}${rng(F.est,fmtDur)}${{asc:" ↑",desc:" ↓"}[F.estSort]||""} ▾</button>
   <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label>
-  <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
+  <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label></div>`:""}</div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
   bindSearch();
-  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked);
+  bind("fp","prio");bind("ft","type");bind("fd","paid");$("#fadv").onclick=()=>{F.adv=!F.adv;render()};
+  if(!F.adv)return;
+  bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked);
   $("#fpr").onclick=e=>rangeMenu(e.currentTarget,{max:pmax,step:1,val:F.price||lastPrice()||[0,pmax],show:n=>n===Infinity?"":String(n),read:numRead,
     apply:r=>{F.price=r;if(r)localStorage.priceRange=JSON.stringify(r);render()}});  // the last range used is offered again next time
   $("#fes").onclick=e=>rangeMenu(e.currentTarget,{max:emax,step:5,val:F.est||[0,emax],show:n=>n===Infinity?"":fmtDur(n),read:parseDur,

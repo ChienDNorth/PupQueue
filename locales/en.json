@@ -79,7 +79,7 @@
   "start_help_paid": "Paid tasks go to Ready too (Settings > New tasks).",
   "err_invalid_paid_ready": "That setting must be on or off.",
   "search_settings": "Search settings",
-  "search_tasks": "Search tasks",
+  "search_tasks": "Search tasks", "adv_filters": "Advanced filters",
   "no_results": "No matching settings",
   "animations": "Animations",
   "animations_on": "Show animations",
