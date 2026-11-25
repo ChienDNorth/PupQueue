@@ -1,6 +1,7 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PupQueue</title>
+<link rel="icon" type="image/png" href="/logo.png">
 <style>
 :root{color-scheme:light dark;
 --bg:light-dark(#f2f6ff,#0d1224);--fg:light-dark(#16203a,#e6ebfb);--card:light-dark(#fff,#151c34);--line:light-dark(#d9e2f7,#27325a);
@@ -21,6 +22,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:var(--fs-lg)/1.45 system
 @media(min-width:60rem){body.has-detail #page{margin-right:var(--dw)}}
 header{display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
 header h1{font-size:var(--fs-xl);margin:0 .8rem 0 0;color:var(--accent-text)}
+header .logo{height:2.2rem;width:auto}
 .nav{display:flex;gap:.3rem}
 .lang{display:inline-flex;align-items:center;gap:.25rem;font-size:var(--fs-md)}
 .lang select{padding:.25rem .4rem}
@@ -38,6 +40,29 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .toolbar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.5rem .7rem;margin-bottom:.9rem;background:var(--card);border:1px solid var(--line);border-radius:.7rem;font-size:var(--fs-sm)}
 .toolbar select,.toolbar input:not([type=checkbox]){font-size:var(--fs-sm);padding:.2rem .45rem}
 .toolbar .sp{flex:1}.toolbar label{display:inline-flex;align-items:center;gap:.3rem}
+.toolbar button{font-size:var(--fs-sm);padding:.2rem .55rem}
+/* icon-only buttons (settings gear, info) */
+.ib{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;padding:.2rem;border-radius:50%;color:var(--muted);vertical-align:middle}
+.ib:hover{color:var(--accent-text);background:var(--accent-soft)}.ib svg{width:1.1em;height:1.1em}
+.ib.big{padding:.35rem;color:var(--fg)}.ib.big svg{width:1.35rem;height:1.35rem}.ib.on{color:#fff}
+.flashset{animation:flashset 1.8s ease-out}@keyframes flashset{from{box-shadow:0 0 0 3px var(--accent)}to{box-shadow:0 0 0 3px transparent}}
+/* range popup: two sliders on one track, plus boxes to type the numbers */
+.rpop{padding:.5rem .6rem;width:17rem}
+.dual{position:relative;height:1.6rem;margin:.3rem .1rem .5rem}
+.dual::before,.dual i{content:"";position:absolute;top:50%;height:.3rem;margin-top:-.15rem;border-radius:1rem}
+.dual::before{left:0;right:0;background:var(--line)}.dual i{background:var(--accent)}
+.dual input{position:absolute;inset:0;width:100%;margin:0;padding:0;border:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dual input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:1.05rem;height:1.05rem;border-radius:50%;background:var(--accent);border:2px solid var(--card);cursor:pointer}
+.dual input::-moz-range-thumb{pointer-events:auto;width:1.05rem;height:1.05rem;border-radius:50%;background:var(--accent);border:2px solid var(--card);cursor:pointer}
+.rin{display:flex;gap:.4rem;align-items:center}.rin input{flex:1;min-width:0;font-size:var(--fs-md);padding:.2rem .4rem}.rin input.bad{border-color:var(--danger)}
+.rsort{margin-top:.5rem;font-size:var(--fs-md)}.rsort label{display:flex;align-items:center;gap:.4rem;padding:.1rem 0}
+#pmenu .racts{display:flex;gap:.4rem;justify-content:flex-end;margin-top:.6rem}#pmenu .racts button{width:auto;padding:.2rem .7rem;font-size:var(--fs-sm)}
+#pmenu .racts .primary,#pmenu .racts .primary:hover{background:var(--accent);color:#fff}
+/* payment method icons: an uploaded image, or a letter badge */
+.picon{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;border-radius:50%;color:#fff;font-size:.8em;font-weight:700;flex:none;vertical-align:middle}
+img.picon{border-radius:.25em;object-fit:contain}
+.psel{display:flex;gap:.4rem;align-items:center}.psel select{flex:1}.psel span:empty{display:none}.psel .picon{font-size:1.2rem}
+.prow{display:flex;align-items:center;gap:.6rem;margin:.35rem 0;font-size:var(--fs-md)}.prow .picon{font-size:1.2rem}.prow .pn{flex:1}
 .count{color:var(--muted);font-size:var(--fs-sm)}
 
 /* task cards */
@@ -57,7 +82,7 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 .c-line{margin-top:.55rem;font-size:var(--fs-sm);color:var(--muted);word-break:break-word}
 .c-notes{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
 .c-thumbs{display:flex;gap:.3rem;margin-top:.6rem;align-items:center}
-.c-thumbs img{width:2.6rem;height:2.6rem;object-fit:cover;border-radius:.35rem;border:1px solid var(--line)}
+.c-thumbs img{width:4rem;height:4rem;object-fit:cover;border-radius:.35rem;border:1px solid var(--line)}
 .c-thumbs .more{font-size:var(--fs-xs);color:var(--muted)}
 .c-foot{display:flex;gap:.35rem;align-items:center;margin-top:.65rem;padding-top:.5rem;border-top:1px solid var(--line)}
 .c-foot .sp{flex:1}
@@ -72,9 +97,9 @@ button.on,button.primary{background:var(--accent);color:#fff;border-color:var(--
 /* each board column has its own tint so the stages are easy to tell apart */
 .col[data-s=Waitlist]{background:light-dark(#e2d6fd,#3a2c72)}.col[data-s=Ready]{background:light-dark(#d3deff,#1f3478)}
 .col[data-s=WIP]{background:light-dark(#ffe2ad,#4d3812)}.col[data-s=Completed]{background:light-dark(#c9efd7,#12492f)}
-.col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}
+.col h3{display:flex;align-items:center;gap:.4rem;margin:0 0 .6rem;font-size:var(--fs-md)}.col h3 .sp{flex:1}.col>.count{margin:-.3rem 0 .6rem;font-size:var(--fs-xs)}
 .cnt{font-size:var(--fs-xs);font-weight:500;background:var(--accent-soft);color:var(--accent-text);border-radius:1rem;padding:0 .5rem}
-.thumbs img{height:3.5rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
+.thumbs img{height:9rem;margin:.3rem .3rem 0 0;border-radius:.3rem}
 
 /* task dialog */
 dialog{padding:0;width:min(46rem,94vw);max-height:92vh;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:.8rem;box-shadow:var(--shadow);overflow:hidden}
@@ -147,11 +172,22 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .snav{position:sticky;top:1rem;display:flex;flex-direction:column;gap:.2rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:.4rem}
 .snav button{text-align:left;border:0;background:none;padding:.5rem .8rem;border-radius:.5rem}
 .snav button:hover{background:var(--accent-soft)}.snav button.on{background:var(--accent);color:#fff}
-@media(max-width:45rem){.slayout{grid-template-columns:1fr}.snav{position:static;flex-direction:row;overflow-x:auto}.snav button{white-space:nowrap}}
+#snavl{display:flex;flex-direction:column;gap:.2rem}.snav input{margin:.2rem .2rem .3rem}
+.snav .sub{padding:.3rem .8rem .3rem 1.6rem;font-size:var(--fs-sm);color:var(--muted)}
+.subs{display:flex;flex-direction:column;gap:.2rem;overflow:hidden}
+.snav .car{float:right;opacity:.6;transition:transform .2s}.snav button.on .car{transform:rotate(90deg)}
+/* a newly opened category rolls its list down, items dropping in one after another */
+.subs.roll .sub{animation:subin .3s ease-out backwards;animation-delay:calc(var(--i)*35ms)}.snav button.roll .car{animation:car .25s ease-out}
+@keyframes subin{from{opacity:0;transform:translateY(-.4rem)}}@keyframes car{from{transform:rotate(0)}}
+@media(prefers-reduced-motion:reduce){.subs.roll .sub{animation:none}}
+/* Animations setting off: nothing moves, except the Mark done countdown bar, which shows the time left to cancel */
+[data-anim=off] :not(.cd>i),[data-anim=off] ::before,[data-anim=off] ::after{animation:none!important;transition:none!important}.snav .sub small{display:block;font-size:var(--fs-xs)}
+@media(max-width:45rem){.slayout{grid-template-columns:1fr}.snav{position:static}#snavl{flex-direction:row;overflow-x:auto}.subs{display:contents}.snav .car{display:none}.snav button{white-space:nowrap}}
 .settings{margin:0 0 .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
 .settings label{display:block;margin:.8rem 0 .2rem;font-size:var(--fs-sm);color:var(--muted)}
 .settings>h3+label{margin-top:0}
-.settings select,.settings input:not([type=file]){width:100%}
+.settings select,.settings input:not([type=file]):not([type=checkbox]){width:100%}
+.settings label.chk{display:flex;margin:.35rem 0;font-size:var(--fs-md);color:var(--fg)}
 .settings .fp{display:flex;gap:.7rem;align-items:center;font-size:var(--fs-md)}
 .settings .fp button{width:auto}
 .note{margin:.6rem 0 0;font-size:var(--fs-xs);color:var(--muted)}
@@ -176,8 +212,8 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--danger);color:#fff}
 </style></head><body>
 <div id="page">
-<header><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
-<span style="flex:1"></span><button class="primary" id="add"></button><label class="lang">🌐<select id="lang"></select></label></header>
+<header><img src="/logo.png" alt="" class="logo"><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button></nav>
+<span style="flex:1"></span><button class="primary" id="add"></button><label class="lang">🌐<select id="lang"></select></label><button class="ib big" id="gear" data-v="settings"></button></header>
 <main id="main"></main>
 <footer id="foot"></footer>
 </div>
@@ -188,7 +224,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
-let S,T,L={},view=localStorage.view||"queue",F={prio:"all",minPrice:"",paid:"any",type:"all",maxEst:"",snoozed:false,done:false},sel=null;
+let S,T,L={},view=localStorage.view||"queue",F={prio:"all",price:null,paid:"any",type:"all",est:null,estSort:"",snoozed:false,done:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
@@ -196,7 +232,7 @@ let wakeTimer;
 async function load(){S=await api("GET","/api/state");T=S.tasks;
   const next=Math.min(...T.filter(snoozed).map(x=>new Date(x.snoozed_until)-Date.now()));  // reload when the next snooze ends, so the task moves back
   clearTimeout(wakeTimer);if(isFinite(next))wakeTimer=setTimeout(load,Math.min(next+1000,864e5));
-  localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;
+  localStorage.theme=document.documentElement.dataset.theme=S.settings.theme;document.documentElement.dataset.anim=S.settings.animations?"on":"off";
   L=await fetch(`/locales/${S.settings.language}.json`).then(r=>r.json());render()}
 
 /* ---------- helpers ---------- */
@@ -229,6 +265,14 @@ const pbars=p=>{const n=S.settings.priorities.length,i=pr(p);return bars(i<0?0:n
 const pbadge=x=>`<button type="button" class="pb" data-pm="${x.id}" title="${t("priority")}">${pbars(x.priority)}${esc(x.priority)}</button>`;
 const combo=e=>[e.ctrlKey&&"Ctrl",e.altKey&&"Alt",e.shiftKey&&"Shift",e.metaKey&&"Meta",e.key==" "?"Space":e.key?.length==1?e.key.toUpperCase():e.key].filter(Boolean).join("+");  // e.g. "Shift+Enter", "Ctrl+S"
 const chip=(txt,cls="")=>`<span class="chip ${cls}">${txt}</span>`;
+const GEAR=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+const INFO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
+const PAY_COLORS={Wechat:"#07c160",Alipay:"#1677ff",Paypal:"#003087",Stripe:"#635bff",Zelle:"#6d1ed4",Venmo:"#008cff",Vgen:"#ff5c38"};
+const payIcon=n=>{if(!n)return"";const u=S.settings.payment_icons[n];if(u)return `<img class="picon" src="${esc(u)}" alt="">`;
+  const c=PAY_COLORS[n]||`hsl(${[...n].reduce((h,ch)=>(h*31+ch.codePointAt(0))>>>0,7)%360} 55% 42%)`;  // other methods: a steady colour from the name
+  return `<span class="picon" style="background:${c}" aria-hidden="true">${esc([...n][0].toUpperCase())}</span>`};
+function goSetting(tab,id){view=localStorage.view="settings";stab=localStorage.stab=tab;sel=null;render();
+  const el=$("#"+id);if(el){el.scrollIntoView({block:"center"});(el.closest(".settings")||el).classList.add("flashset")}}
 
 /* ---------- small popup menus (priority, snooze) ---------- */
 function closeMenu(){$("#pmenu")?.remove()}
@@ -252,6 +296,23 @@ function snoozeMenu(anchor,id){
       else if(e.target.closest("[data-cz]")){const n=+$("#czn").value;if(!(n>0))return;mins=n*+$("#czu").value}
       else return;  // clicks inside the custom inputs keep the menu open
       if(isNaN(new Date(Date.now()+mins*6e4)))return;closeMenu();snooze(id,mins)})}
+/* a range picked with two sliders or typed in; apply(null) = no range. read() turns typed text into a number ("" = open end) and throws if it can't */
+function rangeMenu(anchor,{max,step,val,show,read,extra="",apply}){
+  const sv=v=>Math.min(v,max),lab=[t("range_min"),t("range_max")];
+  popMenu(anchor,`<div class="rpop"><div class="dual"><i></i>${val.map((v,i)=>`<input type="range" min="0" max="${max}" step="${step}" value="${sv(v)}" aria-label="${lab[i]}">`).join("")}</div>
+    <div class="rin">${val.map((v,i)=>`<input value="${esc(show(v))}" aria-label="${lab[i]}">`).join("–")}</div>${extra}
+    <div class="racts"><button type="button" data-rc>${t("clear")}</button><button type="button" class="primary" data-ra>${t("apply")}</button></div></div>`,
+    e=>{if(e.target.closest("[data-rc]")){apply(null,null);closeMenu()}else if(e.target.closest("[data-ra]"))go()});
+  const m=$("#pmenu"),rs=[...m.querySelectorAll(".dual input")],ts=[...m.querySelectorAll(".rin input")],fill=$(".dual i",m);
+  const paint=()=>{const[a,b]=rs.map(r=>+r.value).sort((x,y)=>x-y);fill.style.left=a/max*100+"%";fill.style.width=(b-a)/max*100+"%"};
+  rs.forEach(r=>r.oninput=()=>{const v=rs.map(r=>+r.value).sort((x,y)=>x-y);ts.forEach((x,i)=>{x.value=show(v[i]);x.classList.remove("bad")});paint()});
+  ts.forEach((x,i)=>x.onchange=()=>{try{const v=read(x.value);rs[i].value=v===""?(i?max:0):sv(v);x.classList.remove("bad")}catch{x.classList.add("bad")}paint()});
+  function go(){let lo,hi;try{lo=read(ts[0].value);hi=read(ts[1].value)}catch{return ts.forEach(x=>{try{read(x.value)}catch{x.classList.add("bad")}})}
+    lo=lo===""?0:lo;hi=hi===""?Infinity:hi;if(lo>hi)[lo,hi]=[hi,lo];
+    apply(lo<=0&&hi>=max?null:[lo,hi],m);closeMenu()}  // a range covering everything is no range
+  m.onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();go()}};paint()}
+const numRead=v=>{v=v.trim();if(!v)return"";const n=+v;if(!(n>=0&&isFinite(n)))throw 0;return n};
+const lastPrice=()=>{try{const[a,b]=JSON.parse(localStorage.priceRange);return[a,b??Infinity]}catch{return null}};  // JSON keeps an open end as null
 const fullTitle=x=>{const nets=[...new Set(safe(x.client_socials).map(r=>r.net))].join("/");
   const parts={type:x.type,social:nets,title:x.title,price:x.price&&x.price+cur(x),paid:x.paid&&t("yes")};
   return S.settings.title_order.map(k=>parts[k]).filter(Boolean).join(" - ")};
@@ -297,7 +358,7 @@ $("#dlg").addEventListener("cancel",e=>{const open=document.querySelectorAll(".d
 
 /* ---------- list / board ---------- */
 function chrome(){document.title=$("#appname").textContent=t("app");
-  document.querySelectorAll("[data-v]").forEach(b=>{b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
+  document.querySelectorAll("[data-v]").forEach(b=>{if(b.id=="gear"){b.innerHTML=GEAR;b.title=t("settings");b.setAttribute("aria-label",t("settings"))}else b.textContent=t(b.dataset.v);b.classList.toggle("on",b.dataset.v==view);b.onclick=()=>{view=b.dataset.v;localStorage.view=view;render()}});
   $("#add").textContent=t("add_task");$("#add").onclick=()=>edit();
   const ls=$("#lang");ls.title=t("language");ls.innerHTML=Object.entries(S.languages).map(([c,n])=>`<option value="${c}" ${c==S.settings.language?"selected":""}>${esc(n)}</option>`).join("");
   ls.onchange=async()=>{await api("POST","/api/settings",{language:ls.value});load()}}
@@ -313,39 +374,53 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
   const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
   return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${board?'draggable="true"':""}>
   <div class="c-top"><div class="c-title">${esc(fullTitle(x))}</div>${pbadge(x)}</div>
-  <div class="chips">${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
+  <div class="chips">${x.type?chip(esc(x.type),"gray"):""}${board?"":chip(t(x.status),"gray")}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div>
   ${facts.length?`<div class="facts">${facts.map(([k,v])=>`<div class="fact"><small>${t(k)}</small><span>${v}</span></div>`).join("")}</div>`:""}
   ${client?`<div class="c-line">👤 ${client}</div>`:""}${x.notes?`<div class="c-line c-notes">${esc(x.notes)}</div>`:""}
   ${ph.length?`<div class="c-thumbs">${ph.slice(0,4).map(p=>`<img src="${purl(p)}" alt="">`).join("")}${ph.length>4?`<span class="more">+${ph.length-4}</span>`:""}</div>`:""}
   <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
-  else if(view=="board"){m.innerHTML=`<div class="board">${S.statuses.map(s=>{const l=T.filter(x=>x.status==s).sort(byPrio);return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${l.length}</span></h3>${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
+  else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at||x.created;  // tasks finished before v2.3 have no completed_at
+    m.innerHTML=`<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s);const n=l.length,done=s=="Completed";
+      l=done?l.sort((a,b)=>when(b).localeCompare(when(a))).slice(0,lim):l.sort(byPrio);
+      return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${n}</span>${done?`<span class="sp"></span><button class="ib" data-go="display:set-completed" title="${t("completed_settings")}" aria-label="${t("completed_settings")}">${GEAR}</button>`:""}</h3>
+      ${done&&n>lim?`<p class="count">${t("completed_showing").replace("{n}",lim).replace("{total}",n)}</p>`:""}${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
-$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
+$("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
-function queue(m){const P=S.settings.priorities;
+function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&&+v<=r[1],est=x=>x.estimate_min===""?null:+x.estimate_min;
   const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
     if(!F.snoozed&&snoozed(x))return false;
-    if(F.prio!="all"){const[k,p]=F.prio.split(":");const i=pr(x.priority),j=P.indexOf(p);if(k=="eq"?i!=j:i>j)return false}
-    if(F.minPrice!==""&&!(parseFloat(x.price)>=+F.minPrice))return false;
+    if(F.prio.startsWith("eq:")&&x.priority!=F.prio.slice(3))return false;
+    if(!inR(x.price.trim(),F.price))return false;
     if(F.paid!="any"&&!!x.paid!=(F.paid=="yes"))return false;
     if(F.type!="all"&&x.type!=F.type)return false;
-    if(F.maxEst!==""&&!(+x.estimate_min<=+F.maxEst&&x.estimate_min!==""))return false;return true}).sort(byPrio);
+    return inR(x.estimate_min,F.est)});
+  list.sort(F.estSort?(a,b)=>{const x=est(a),y=est(b);return(x===null)-(y===null)||(F.estSort=="asc"?x-y:y-x)||byPrio(a,b)}  // no estimate: last
+    :F.prio=="sort:asc"?(a,b)=>pr(b.priority)-pr(a.priority)||(a.due||"~").localeCompare(b.due||"~"):byPrio);
+  const pmax=Math.ceil(Math.max(0,...T.map(x=>parseFloat(x.price)).filter(isFinite)))||100;
+  const emax=Math.ceil(Math.max(0,...T.filter(x=>x.estimate_min!=="").map(x=>+x.estimate_min))/5)*5||480;
+  const rng=(r,f)=>r?`: ${f(r[0])}–${r[1]===Infinity?"∞":f(r[1])}`:"";
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
   m.innerHTML=`<div class="wrap"><div class="toolbar"><b>${t("filters")}</b>
-  ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),...P.map(p=>["ge:"+p,p+" "+t("and_above")])],F.prio)}
+  ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),["sort:desc",t("prio_high_low")],["sort:asc",t("prio_low_high")]],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
-  <input id="fm" type="number" placeholder="${t("min_price")}" value="${F.minPrice}" style="width:6.5rem">
-  <input id="fe" type="number" placeholder="${t("max_est")}" value="${F.maxEst}" style="width:9rem">
+  <button id="fpr" class="${F.price?"on":""}">${t("price_range")}${rng(F.price,String)} ▾</button>
+  <button id="fes" class="${F.est||F.estSort?"on":""}">${t("est_range")}${rng(F.est,fmtDur)}${{asc:" ↑",desc:" ↓"}[F.estSort]||""} ▾</button>
   <label><input type="checkbox" id="fs" ${F.snoozed?"checked":""}> ${t("show_snoozed")}</label>
   <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
-  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fm","minPrice");bind("fe","maxEst");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked)}
+  bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked);
+  $("#fpr").onclick=e=>rangeMenu(e.currentTarget,{max:pmax,step:1,val:F.price||lastPrice()||[0,pmax],show:n=>n===Infinity?"":String(n),read:numRead,
+    apply:r=>{F.price=r;if(r)localStorage.priceRange=JSON.stringify(r);render()}});  // the last range used is offered again next time
+  $("#fes").onclick=e=>rangeMenu(e.currentTarget,{max:emax,step:5,val:F.est||[0,emax],show:n=>n===Infinity?"":fmtDur(n),read:parseDur,
+    extra:`<div class="rsort">${[["",t("sort_none")],["asc",t("sort_short_long")],["desc",t("sort_long_short")]].map(([v,l])=>`<label><input type="radio" name="esort" value="${v}" ${F.estSort==v?"checked":""}> ${l}</label>`).join("")}</div>`,
+    apply:(r,menu)=>{F.est=r;F.estSort=menu?$("input[name=esort]:checked",menu)?.value||"":"";render()}})}
 function board(m){let drag;
   m.querySelectorAll(".card[draggable]").forEach(c=>c.ondragstart=()=>drag=c.dataset.id);
   m.querySelectorAll(".col").forEach(c=>{c.ondragover=e=>{e.preventDefault();c.classList.add("over")};c.ondragleave=()=>c.classList.remove("over");
@@ -367,10 +442,10 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   if(!x){d.innerHTML="";return}
   const row=(k,v)=>`<dt>${t(k)}</dt><dd>${v||`<span class="dim">${t("none")}</span>`}</dd>`;
   const soc=safe(x.client_socials).map(s=>`<div>${esc(s.net)}: ${esc(s.handle)}</div>`).join("");
-  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2><div class="chips" style="margin:.2rem 0 0">${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
+  d.innerHTML=`<div class="dd-h"><div><h2>${esc(fullTitle(x))}</h2><div class="chips" style="margin:.2rem 0 0">${pbadge(x)}${x.type?chip(esc(x.type),"gray"):""}${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}${snoozed(x)?chip("💤 "+esc(fmtDT(x.snoozed_until)),"zz"):""}</div></div>
     <button class="sm" data-dx title="${t("close")}" aria-label="${t("close")}">✕</button></div>
   <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
-    ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time))):""}
+    ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time)))+row("payment_method",x.payment_method&&payIcon(x.payment_method)+" "+esc(x.payment_method)):""}
     <dt>${t("status")}</dt><dd><select data-st>${S.statuses.map(s=>`<option value="${s}" ${s==x.status?"selected":""}>${t(s)}</option>`).join("")}</select></dd></dl></div>
   <div class="dsec"><h3>${t("sec_time")}</h3><dl>${row("estimate",esc(x.estimate))}${row("due",esc(fmtDT(x.due)))}${snoozed(x)?row("snoozed_until",esc(fmtDT(x.snoozed_until))):""}</dl></div>
   <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}
@@ -382,7 +457,8 @@ $("#detail").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmC
 $("#detail").onchange=async e=>{if(e.target.matches("[data-st]")){await api("POST","/api/tasks",{id:sel,status:e.target.value});load()}};
 
 /* ---------- add / edit dialog ---------- */
-function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve(),fresh:new Set(),saved:false};
+function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.client_socials),up:Promise.resolve(),fresh:new Set(),saved:false,dirty:false};
+  const startable=!x.id||x.status=="Waitlist"||x.status=="Ready";  // tasks already in WIP or Completed move on the board
   const f=$("#form"),E=n=>f.elements[n],curP=s.priorities.includes(x.priority)?x.priority:s.default_priority;
   const dropFresh=p=>api("DELETE","/api/photos/"+encodeURIComponent(p.split("/").pop())).catch(()=>{});  // an upload no task references yet
   f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_task_title":"new_task_title")}</h2>
@@ -392,9 +468,12 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   <section class="sec"><h3>${t("sec_basic")}</h3><div class="grid">
     <label class="fld"><span>${t("type")}</span>${sel_("type",withVal(s.types,x.type),x.type,1)}</label>
     <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
+    ${startable?`<div class="fld" style="margin-top:.7rem"><span>${t("start_in")} <button type="button" class="ib" id="sinfo" title="${t("start_info")}" aria-label="${t("start_info")}" aria-expanded="false" aria-controls="shelp">${INFO}</button><button type="button" class="ib" data-go="newtask:set-ready" title="${t("open_setting")}" aria-label="${t("open_setting")}">${GEAR}</button></span>
+      <select name="status" aria-label="${t("start_in")}">${x.id?"":`<option value=""></option>`}${["Waitlist","Ready"].map(v=>`<option value="${v}" ${v==x.status?"selected":""}>${t(v)}</option>`).join("")}</select><p class="note hide" id="shelp">${t("start_help")}${s.paid_ready?" "+t("start_help_paid"):""}</p></div>`:""}
     <label class="chk"><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
     <div id="pbox" class="grid ${x.paid?"":"hide"}"><label class="fld"><span>${t("paid_amount")}</span><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}"></label>
-    <div class="fld"><span>${t("paid_time")}</span>${dtField("paid_time",x.paid_time,"now")}</div></div></section>
+    <div class="fld"><span>${t("paid_time")}</span>${dtField("paid_time",x.paid_time,"now")}</div>
+    <label class="fld"><span>${t("payment_method")}</span><div class="psel"><span id="picon"></span>${sel_("payment_method",withVal(s.payment_methods,x.payment_method),x.payment_method,1)}</div></label></div></section>
   <section class="sec"><h3>${t("sec_time")}</h3><div class="grid">
     <label class="fld"><span>${t("estimate")}</span><input name="estimate" value="${esc(x.estimate)}" placeholder="${esc(t("estimate_hint"))}" autocomplete="off"><small class="hint" id="esthint">${t("estimate_hint")}</small><em class="ferr"></em></label>
     <div class="fld"><span>${t("due")}</span>${dtField("due",x.due,"due")}</div></div></section>
@@ -412,16 +491,20 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
   const sync=()=>st.socials=st.socials.map((_,i)=>({net:E("net"+i).value,handle:E("h"+i).value}));
   const thumbs=()=>{$("#th").innerHTML=st.photos.map((p,i)=>`<span class="th"><img src="${purl(p)}" alt=""><button type="button" data-rp="${i}" title="${t("remove")}">×</button></span>`).join("");
     $("#th").querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{const [p]=st.photos.splice(+b.dataset.rp,1);if(st.fresh.delete(p))dropFresh(p);thumbs()})};
-  const showP=()=>$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';
+  const showAuto=()=>{const o=f.querySelector('select[name=status] option[value=""]');if(o)o.textContent=`${t("start_auto")} (${t(s.ready_priorities.includes(E("priority").value)||s.paid_ready&&E("paid").checked?"Ready":"Waitlist")})`};
+  const showP=()=>{$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';showAuto()};
+  const showPay=()=>$("#picon").innerHTML=payIcon(E("payment_method").value);E("payment_method").onchange=showPay;showPay();
+  if(startable)$("#sinfo").onclick=e=>{const h=$("#shelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
+  f.onclick=e=>{const g=e.target.closest("[data-go]");if(!g||st.dirty&&!confirm(t("confirm_leave_task")))return;$("#dlg").close();goSetting(...g.dataset.go.split(":"))};
   $("#pickp").onclick=()=>prioMenu($("#pickp"),E("priority").value,p=>{E("priority").value=p;showP()});showP();
   drawSoc();thumbs();f.querySelectorAll(".dt").forEach(bindDt);
   $("#addsoc").onclick=()=>{sync();st.socials.push({net:s.socials[0]||"",handle:""});drawSoc()};
-  E("paid").onchange=()=>$("#pbox").classList.toggle("hide",!E("paid").checked);
+  E("paid").onchange=()=>{$("#pbox").classList.toggle("hide",!E("paid").checked);showAuto()};
   f.onkeydown=e=>{const c=combo(e),k=s.shortcuts,el=e.target;
     if(c==k.save_task){e.preventDefault();el.blur?.();f.requestSubmit();return}  // blur first so the field's change (e.g. estimate) is applied
     const field=el.matches("input,select")||el.matches("textarea")&&c!="Enter";  // plain Enter in notes is a new line
     if(field&&(c==k.finish_field||e.key=="Enter")){e.preventDefault();if(c==k.finish_field)el.blur()}};  // Enter never submits the form on its own
-  f.oninput=e=>{if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
+  f.oninput=e=>{st.dirty=true;if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
   const est=E("estimate"),normEst=()=>{const m=parseDur(est.value);est.value=fmtDur(m)};
   est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
   est.onchange=()=>{try{normEst();setErr("estimate","");$("#esthint").textContent=t("estimate_hint")}catch{setErr("estimate",t("err_invalid_estimate"))}};
@@ -439,19 +522,24 @@ function edit(x={}){const s=S.settings,st={photos:photosOf(x),socials:safe(x.cli
     if(bad)return E(bad).focus();
     await st.up;  // don't save while a photo is still uploading
     const d=Object.fromEntries(new FormData(f));
-    const body={id:x.id,title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",
+    const body={id:x.id,title:d.title.trim(),type:d.type,priority:d.priority,price:d.price,currency:d.currency,paid:!!d.paid,paid_amount:d.paid_amount||"",paid_time:d.paid?d.paid_time:"",payment_method:d.paid?d.payment_method:"",
       estimate:d.estimate,due:d.due,client_name:d.client_name,client_email:em,client_socials:st.socials.filter(r=>r.handle),notes:d.notes,photos:st.photos.join(";")};
+    if(d.status&&d.status!=x.status)body.status=d.status;  // left on Automatic: the server picks by priority; unchanged: a snoozed task stays snoozed
     try{await api("POST","/api/tasks",body);st.saved=true;$("#dlg").close();load()}catch(er){$("#perr").textContent=er.message}};
   $("#dlg").showModal();E("title").focus()}
 
 /* ---------- settings ---------- */
 const PARTS=["type","social","title","price","paid"];
-let stab=localStorage.stab||"general",importNote=null,toastTimer;
+let stab=localStorage.stab||"display",rolled=stab,importNote=null,toastTimer,sq="";  // sq = settings search text, kept while the page redraws
+// loose match like most apps: each word of the query appears with its letters in order, gaps allowed ("pay meth", "pymt" find "Payment methods")
+const fuzzy=(q,s)=>{s=s.toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>{let i=0;for(const c of s)if(c==w[i])i++;return i>=w.length})};
+console.assert(fuzzy("pay meth","Payment methods")&&fuzzy("PYMT","payment")&&fuzzy("","x")&&!fuzzy("xyz","Theme")&&!fuzzy("emeht","Theme"),"fuzzy");
 function flash(msg,bad){const el=$("#toast");el.textContent=msg;el.classList.toggle("bad",!!bad);el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),bad?4000:1600)}
 let saving=Promise.resolve();
 function saveSettings(patch){  // every setting saves as soon as it changes; saves go out one after another so the page never shows a stale copy
+  // patch may be a function of the current settings: it runs when its turn comes, so it builds on the saves queued before it
   return saving=saving.then(async()=>{
-    try{S.settings=await api("POST","/api/settings",patch);flash(t("saved"))}
+    try{S.settings=await api("POST","/api/settings",typeof patch=="function"?patch(S.settings):patch);flash(t("saved"))}
     catch(er){flash(er.message,true);await load()}  // show the problem, then fall back to what the server really has
   })
 }
@@ -459,14 +547,14 @@ function saveSettings(patch){  // every setting saves as soon as it changes; sav
 function tagEditor(el,{items,save,allowed}){let list=[...items],drag=null;
   const locked=v=>allowed&&v=="title";  // the title part can't be removed
   const has=(v,except)=>list.some((x,i)=>i!==except&&x.toLowerCase()==v.toLowerCase());
-  const commit=()=>save([...list]);
+  const commit=ren=>save([...list],ren);  // ren = {from,to} when a tag was renamed
   const draw=()=>{const rest=allowed?allowed.filter(v=>!list.includes(v)):[];
     el.innerHTML=list.map((v,i)=>`<span class="tg ${locked(v)?"locked":""}" draggable="true" data-i="${i}"><span class="tgt" ${allowed?"":`title="${t("edit")}"`}>${allowed?t("part_"+v):esc(v)}</span>${locked(v)?"":`<button type="button" class="tgx" data-x="${i}" title="${t("remove")}" aria-label="${t("remove")}">×</button>`}</span>`).join("")+
       (allowed?(rest.length?`<select class="tgsel"><option value="">${t("part_add")}</option>${rest.map(v=>`<option value="${v}">${t("part_"+v)}</option>`).join("")}</select>`:""):`<input class="tgin" maxlength="40" placeholder="${t("tag_add")}" aria-label="${t("tag_add")}">`)};
   const add=v=>{v=v.trim();if(!v||has(v))return false;list.push(v);commit();return true};
   const rename=(span,i)=>{const chip=span.closest(".tg"),inp=document.createElement("input");chip.draggable=false;  // a draggable parent blocks selecting text
     inp.className="tgedit";inp.maxLength=40;inp.value=list[i];span.replaceWith(inp);inp.focus();inp.select();let done=false;
-    const finish=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v&&v!==list[i]&&!has(v,i)){list[i]=v;commit()}draw()};
+    const finish=ok=>{if(done)return;done=true;const v=inp.value.trim();if(ok&&v&&v!==list[i]&&!has(v,i)){const from=list[i];list[i]=v;commit({from,to:v})}draw()};
     inp.onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();finish(true)}else if(e.key=="Escape"){e.preventDefault();e.stopPropagation();finish(false)}};
     inp.onblur=()=>finish(true)};
   el.onkeydown=e=>{if(e.target.matches(".tgin")&&(e.key=="Enter"||e.key==",")){e.preventDefault();const v=e.target.value;e.target.value="";if(add(v)){draw();$(".tgin",el).focus()}}};
@@ -480,38 +568,80 @@ function tagEditor(el,{items,save,allowed}){let list=[...items],drag=null;
     if(j!==drag){const [v]=list.splice(drag,1);list.splice(j,0,v);commit()}drag=null;draw()};
   el.ondragend=()=>{drag=null;draw()};
   draw()}
+async function iconURL(file){  // shrink to a 64px square so the icon fits in settings.json
+  const img=await createImageBitmap(file),n=64,k=Math.min(n/img.width,n/img.height),c=document.createElement("canvas");c.width=c.height=n;
+  c.getContext("2d").drawImage(img,(n-img.width*k)/2,(n-img.height*k)/2,img.width*k,img.height*k);
+  for(const q of [1,.85,.6,.35]){const u=q==1?c.toDataURL("image/png"):c.toDataURL("image/webp",q);if(u.startsWith("data:image/")&&u.length<=20000)return u}  // 20000 = the server's ICON_MAX; detailed pictures don't fit as png
+  throw 0}
 function settings(m){const s=S.settings,fp=S.finished_photos;
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
   const card=(title,body)=>`<div class="settings"><h3>${title}</h3>${body}</div>`;
   const pane={
-    general:()=>card(t("cat_general"),`<label>${t("theme")}</label><select id="sth">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>
-      <label>${t("currency")}</label><select id="scur">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>
-      <label>${t("default_due_time")}</label><select id="sdt">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`),
-    tasks:()=>card(t("default_priority"),`<select id="sdp">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
-      card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
+    display:()=>card(t("theme"),`<select id="sth" aria-label="${t("theme")}">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>`)+
+      card(t("animations"),`<label class="chk"><input type="checkbox" id="set-anim" ${s.animations?"checked":""}> ${t("animations_on")}</label><p class="note">${t("animations_hint")}</p>`)+
+      card(t("completed_limit"),`<input id="set-completed" type="number" min="1" max="500" step="1" value="${s.completed_limit}" aria-label="${t("completed_limit")}"><p class="note">${t("completed_limit_hint")}</p>`),
+    newtask:()=>card(t("default_priority"),`<select id="sdp" aria-label="${t("default_priority")}">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
+      card(t("default_due_time"),`<select id="sdt" aria-label="${t("default_due_time")}">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`)+
+      card(t("ready_priorities"),`<div id="set-ready">${s.priorities.map(p=>`<label class="chk"><input type="checkbox" data-rdy="${esc(p)}" ${s.ready_priorities.includes(p)?"checked":""}> ${pbars(p)} ${esc(p)}</label>`).join("")}</div><p class="note">${t("ready_priorities_hint")}</p>
+        <label class="chk" style="margin-top:.8rem"><input type="checkbox" id="set-paid-ready" ${s.paid_ready?"checked":""}> ${t("paid_ready")}</label><p class="note">${t("paid_ready_hint")}</p>`),
+    fields:()=>card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
       card(t("socials_label"),`<div class="tags" id="tg-socials"></div><p class="note">${t("tag_hint")}</p>`)+
       card(t("title_format"),`<div class="tags" id="tg-title"></div><p class="note">${t("title_format_hint")}</p>`),
-    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`),
-    storage:()=>card(t("cat_storage"),`<label>${t("finished_photos")}</label>
-      <div class="fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`),
-    file:()=>card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
-      <label>${t("file_path")}</label><code class="path">${esc(S.settings_file)}</code>
+    payments:()=>card(t("currency"),`<select id="scur" aria-label="${t("currency")}">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>`)+
+      card(t("payment_methods_label"),`<div class="tags" id="tg-pay"></div><p class="note">${t("tag_hint")}</p><label>${t("payment_icons")}</label><div id="pay-icons"></div>`),
+    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" id="sc-${k}" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`),
+    data:()=>card(t("finished_photos"),`<div class="fp" id="set-fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`)+
+      card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
+      <label>${t("file_path")}</label><code class="path" id="set-fpath">${esc(S.settings_file)}</code>
       <div class="frow"><button class="sm" id="fview">${t("file_view")}</button><a class="btn" href="/api/settings/file" download="pupqueue-settings.json">${t("file_download")}</a>
       <label class="btn">${t("file_upload")}<input type="file" id="fup" accept=".json,application/json" hidden></label></div>
       <p class="note">${t("file_upload_help")}</p><pre id="fpre" class="hide"></pre>
       ${importNote?`<div class="fres ${importNote.ok?"":"bad"}">${importNote.html}</div>`:""}`)};
-  if(!pane[stab])stab="general";
-  m.innerHTML=`<div class="slayout"><nav class="snav">${Object.keys(pane).map(k=>`<button data-tab="${k}" class="${k==stab?"on":""}">${t("cat_"+k)}</button>`).join("")}</nav><div class="spane">${pane[stab]()}</div></div>`;
-  m.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{stab=localStorage.stab=b.dataset.tab;importNote=null;render()});
-  if(stab=="general"){
+  if(!pane[stab])stab="display";
+  // [category, element id to jump to, label]; the open category lists its items under it, and search looks through all of them
+  const items=[["display","sth","theme"],["display","set-anim","animations"],["display","set-completed","completed_limit"],["newtask","sdp","default_priority"],["newtask","sdt","default_due_time"],
+    ["newtask","set-ready","ready_priorities"],["newtask","set-paid-ready","paid_ready"],["fields","tg-types","types_label"],["fields","tg-socials","socials_label"],
+    ["fields","tg-title","title_format"],["payments","scur","currency"],["payments","tg-pay","payment_methods_label"],...Object.keys(s.shortcuts).map(k=>["shortcuts","sc-"+k,"sc_"+k]),
+    ["data","set-fp","finished_photos"],["data","set-fpath","cat_file"]];
+  const sub=([c,id,k],cat,i)=>`<button class="sub" style="--i:${i}" data-go="${c}:${id}">${cat?`<small>${t("cat_"+c)}</small>`:""}${t(k)}</button>`;
+  const drawNav=()=>{const q=sq.trim(),rank=it=>t(it[2]).toLowerCase().includes(q.toLowerCase())?0:1;  // whole-word hits before spread-out ones
+    const hits=q&&items.filter(it=>fuzzy(q,t("cat_"+it[0])+" "+t(it[2]))).sort((a,b)=>rank(a)-rank(b));
+    $("#snavl").innerHTML=q?hits.map(it=>sub(it,true)).join("")||`<p class="note">${t("no_results")}</p>`:
+      Object.keys(pane).map(k=>{const own=items.filter(it=>it[0]==k),open=k==stab,roll=open&&rolled!=k?"roll":"";  // only a newly opened category rolls open, not every redraw
+        return `<button data-tab="${k}" class="${open?"on":""} ${roll}" aria-expanded="${open}">${t("cat_"+k)}<span class="car" aria-hidden="true">›</span></button>`+
+          (open?`<div class="subs ${roll}">${own.map((it,i)=>sub(it,false,i)).join("")}</div>`:"")}).join("");
+    if(!q)rolled=stab};
+  m.innerHTML=`<div class="slayout"><nav class="snav"><input type="search" id="ssearch" placeholder="${t("search_settings")}" aria-label="${t("search_settings")}" value="${esc(sq)}"><div id="snavl"></div></nav><div class="spane">${pane[stab]()}</div></div>`;
+  drawNav();
+  // unfold downward from 0 to the list's real height; kept with reduced motion on since it is a short, small expand (only the items' drop-in is skipped)
+  const rl=s.animations&&$(".subs.roll");if(rl)rl.animate([{height:0},{height:rl.scrollHeight+"px"}],{duration:350,easing:"cubic-bezier(.2,.7,.3,1)"});
+  const ss=$("#ssearch");ss.oninput=()=>{sq=ss.value;drawNav()};
+  ss.onkeydown=e=>{if(e.key=="Enter")$("#snavl [data-go]")?.click();else if(e.key=="Escape"&&ss.value){e.preventDefault();ss.value=sq="";drawNav()}};
+  $("#snavl").onclick=e=>{const b=e.target.closest("[data-tab]");if(b){stab=localStorage.stab=b.dataset.tab;importNote=null;render()}};
+  if(stab=="display"){
     $("#sth").onchange=e=>{localStorage.theme=document.documentElement.dataset.theme=e.target.value;saveSettings({theme:e.target.value})};  // applies at once
-    $("#scur").onchange=e=>saveSettings({currency:e.target.value});
-    $("#sdt").onchange=e=>saveSettings({default_due_time:e.target.value})}
-  if(stab=="tasks"){
+    $("#set-anim").onchange=e=>{document.documentElement.dataset.anim=e.target.checked?"on":"off";saveSettings({animations:e.target.checked})};
+    $("#set-completed").onchange=e=>{const v=+e.target.value;if(Number.isInteger(v)&&v>=1&&v<=500)saveSettings({completed_limit:v});else{flash(t("err_invalid_completed_limit"),true);e.target.value=S.settings.completed_limit}}}
+  if(stab=="newtask"){
     $("#sdp").onchange=e=>saveSettings({default_priority:e.target.value});
+    $("#sdt").onchange=e=>saveSettings({default_due_time:e.target.value});
+    m.querySelectorAll("[data-rdy]").forEach(c=>c.onchange=()=>saveSettings({ready_priorities:[...m.querySelectorAll("[data-rdy]:checked")].map(i=>i.dataset.rdy)}));
+    $("#set-paid-ready").onchange=e=>saveSettings({paid_ready:e.target.checked})}
+  if(stab=="fields"){
     tagEditor($("#tg-types"),{items:s.types,save:v=>saveSettings({types:v})});
     tagEditor($("#tg-socials"),{items:s.socials,save:v=>saveSettings({socials:v})});
     tagEditor($("#tg-title"),{items:s.title_order,allowed:PARTS,save:v=>saveSettings({title_order:v})})}
+  if(stab=="payments"){
+    $("#scur").onchange=e=>saveSettings({currency:e.target.value});
+    const icons=$("#pay-icons"),drawIcons=()=>{const ps=S.settings;
+      icons.innerHTML=ps.payment_methods.map(n=>`<div class="prow">${payIcon(n)}<span class="pn">${esc(n)}</span><label class="btn">${t("icon_upload")}<input type="file" accept="image/*" hidden data-pi="${esc(n)}"></label>${ps.payment_icons[n]?`<button class="sm" data-pr="${esc(n)}">${t("icon_reset")}</button>`:""}</div>`).join("")};
+    tagEditor($("#tg-pay"),{items:s.payment_methods,save:(v,ren)=>saveSettings(cs=>{const ic={...cs.payment_icons};  // a renamed method keeps its icon
+      if(ren&&ic[ren.from]){ic[ren.to]=ic[ren.from];delete ic[ren.from]}return{payment_methods:v,payment_icons:ic}}).then(drawIcons)});
+    icons.onchange=async e=>{const inp=e.target.closest("[data-pi]"),file=inp?.files[0];if(!file)return;inp.value="";
+      let url;try{url=await iconURL(file)}catch{return flash(t("err_invalid_icon"),true)}
+      await saveSettings(cs=>({payment_icons:{...cs.payment_icons,[inp.dataset.pi]:url}}));drawIcons()};
+    icons.onclick=e=>{const b=e.target.closest("[data-pr]");if(!b)return;saveSettings(cs=>{const{[b.dataset.pr]:_,...rest}=cs.payment_icons;return{payment_icons:rest}}).then(drawIcons)};
+    drawIcons()}
   if(stab=="shortcuts")m.querySelectorAll("[data-sc]").forEach(b=>{let rec=false;  // click, then press the new keys; Escape or clicking away cancels
     b.onclick=()=>{rec=true;b.textContent=t("sc_press");b.classList.add("on")};
     b.onblur=()=>{if(rec)render()};
@@ -519,8 +649,8 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
       const c=combo(e);if(c=="Escape")return render();
       if(Object.entries(s.shortcuts).some(([k,v])=>k!=b.dataset.sc&&v==c)){flash(t("err_invalid_shortcuts"),true);return render()}
       saveSettings({shortcuts:{...s.shortcuts,[b.dataset.sc]:c}}).then(render)}});
-  if(stab=="storage")$("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
-  if(stab=="file"){
+  if(stab=="data")$("#fpclear").onclick=async()=>{if(confirm(t("confirm_clear_finished"))){await api("POST","/api/photos/clear-finished");load()}};
+  if(stab=="data"){
     $("#fview").onclick=async()=>{const pre=$("#fpre"),show=pre.classList.contains("hide");
       if(show)pre.textContent=await fetch("/api/settings/file").then(r=>r.text());
       pre.classList.toggle("hide",!show);$("#fview").textContent=t(show?"file_hide":"file_view")};

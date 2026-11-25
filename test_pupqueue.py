@@ -42,7 +42,7 @@ def test_storage_and_api():
         data = b if isinstance(b, bytes) else json.dumps(b).encode() if b is not None else None
         try: return json.load(urllib.request.urlopen(urllib.request.Request(base + u, data, h, method=m)))
         except urllib.error.HTTPError as e: return {"status": e.code, **json.load(e)}
-    a = call("POST", "/api/tasks", {"title": "Cmsn", "type": "Commission", "estimate": "70min", "price": "50", "currency": "cny"})
+    a = call("POST", "/api/tasks", {"title": "Cmsn", "type": "Commission", "priority": "Low", "estimate": "70min", "price": "50", "currency": "cny"})
     b = call("POST", "/api/tasks", {"title": "Gift", "type": "Gift", "client_socials": [{"net": "QQ", "handle": "1"}]})
     assert a["status"] == "Waitlist" and b["status"] == "Ready" and a["estimate"] == "1h10min" and a["currency"] == "CNY"
     call("POST", "/api/tasks", {"id": a["id"], "status": "Completed"})
@@ -120,7 +120,7 @@ def test_settings_file_and_import():
     assert call("POST", "/api/settings/import", json.dumps({"theme": "light", "currency": "euro"}).encode())["error"] == "invalid_currency"
     for junk in (b"[1,2]", b"not json", b"\xff\xfe\x00", b'"text"'):
         assert call("POST", "/api/settings/import", junk)["error"] == "invalid_settings_file", junk
-    assert call("POST", "/api/settings/import", b"{" + b" " * 100_001 + b"}")["error"] == "file_too_big"
+    assert call("POST", "/api/settings/import", b"{" + b" " * pq.SETTINGS_FILE_MAX + b"}")["error"] == "file_too_big"
     assert saved() == before
     assert call("POST", "/api/settings/import", b"\xef\xbb\xbf" + json.dumps({"theme": "auto"}).encode())["applied"] == ["theme"]  # Windows editors add a BOM
 
@@ -294,3 +294,50 @@ def test_snooze_parks_in_waitlist_and_returns():
     pq.upsert({"id": t["id"], "snoozed_until": later})
     t = pq.upsert({"id": t["id"], "status": "Completed"})  # moved by hand while snoozed: snooze ends, no return later
     assert (t["status"], t["snoozed_from"], t["snoozed_until"]) == ("Completed", "", "")
+
+def test_start_status_payment_and_completed_time():
+    _sandbox()
+    # new tasks: priority decides Waitlist or Ready (default priority Medium is ready); a status chosen by hand wins
+    assert [pq.upsert({"title": p, "priority": p})["status"] for p in pq.PRIORITIES] == ["Ready"] * 3 + ["Waitlist"] * 2
+    assert pq.upsert({"title": "no priority"})["status"] == "Ready"
+    assert pq.upsert({"title": "by hand", "priority": "Critical", "status": "Waitlist"})["status"] == "Waitlist"
+    pq.save_settings({**pq.load_settings(), "ready_priorities": ["Lowest", "Critical"]})
+    assert pq.load_settings()["ready_priorities"] == ["Critical", "Lowest"]  # kept in priority order
+    assert pq.upsert({"title": "m", "priority": "Medium"})["status"] == "Waitlist"
+    # paid_ready: off by default; when on, paid tasks skip the waitlist unless Waitlist is chosen by hand or the task is snoozed
+    assert pq.upsert({"title": "p0", "priority": "Low", "paid": True})["status"] == "Waitlist"
+    pq.save_settings({**pq.load_settings(), "paid_ready": True})
+    assert pq.upsert({"title": "p1", "priority": "Low", "paid": True})["status"] == "Ready"
+    assert pq.upsert({"title": "p2", "priority": "Low", "paid": True, "status": "Waitlist"})["status"] == "Waitlist"
+    w = pq.upsert({"title": "p3", "priority": "Low"})
+    assert w["status"] == "Waitlist" and pq.upsert({"id": w["id"], "paid": True})["status"] == "Ready"
+    z = pq.upsert({"title": "p4", "priority": "Low", "status": "WIP"}); z = pq.upsert({"id": z["id"], "snoozed_until": "2999-01-01T00:00"})
+    assert pq.upsert({"id": z["id"], "paid": True})["status"] == "Waitlist"  # snoozed: stays parked
+    try: pq.save_settings({**pq.load_settings(), "paid_ready": "yes"}); assert False
+    except ValueError as e: assert str(e) == "invalid_paid_ready"
+    assert pq.load_settings()["animations"] is True  # on by default
+    try: pq.save_settings({**pq.load_settings(), "animations": "off"}); assert False
+    except ValueError as e: assert str(e) == "invalid_animations"
+    # payment method is kept only while paid
+    t = pq.upsert({"title": "pay", "paid": True, "payment_method": " Paypal "})
+    assert t["payment_method"] == "Paypal"
+    assert pq.upsert({"id": t["id"], "paid": False})["payment_method"] == ""
+    # completed_at: stamped when the task is finished, kept on later edits, cleared when it leaves Completed
+    t = pq.upsert({"id": t["id"], "status": "Completed"})
+    stamp = t["completed_at"]
+    assert stamp and pq.upsert({"id": t["id"], "notes": "x"})["completed_at"] == stamp
+    assert pq.upsert({"id": t["id"], "status": "WIP"})["completed_at"] == ""
+    # settings: limits, priorities and icons are validated; an icon of a removed method is dropped
+    for bad, code in [({"completed_limit": 0}, "invalid_completed_limit"), ({"completed_limit": "10"}, "invalid_completed_limit"),
+                      ({"completed_limit": True}, "invalid_completed_limit"), ({"ready_priorities": ["Urgent"]}, "invalid_priority"),
+                      ({"payment_icons": {"Paypal": "javascript:alert(1)"}}, "invalid_icon"), ({"payment_methods": [1]}, "invalid_list")]:
+        try: pq.save_settings({**pq.load_settings(), **bad}); assert False, bad
+        except ValueError as e: assert str(e) == code, (bad, e)
+    icon = "data:image/png;base64,iVBORw0KGgo="
+    s = pq.save_settings({**pq.load_settings(), "payment_icons": {"Paypal": icon, "Gone": icon}, "completed_limit": 25})
+    assert s["payment_icons"] == {"Paypal": icon} and s["completed_limit"] == 25
+    # a settings file with the largest icon on every one of the most methods still loads
+    big = "data:image/png;base64," + "A" * (pq.ICON_MAX - 22)
+    names = [f"M{i}" for i in range(pq.LIST_MAX)]
+    data = json.dumps({**pq.load_settings(), "payment_methods": names, "payment_icons": dict.fromkeys(names, big)}).encode()
+    assert len(data) <= pq.SETTINGS_FILE_MAX and len(pq.import_settings(json.loads(data))["applied"]) > 0
