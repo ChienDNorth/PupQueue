@@ -382,14 +382,20 @@ function card(x,board){const soc=safe(x.client_socials).map(s=>`${esc(s.net)}: $
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
   else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at||x.created;  // tasks finished before v2.3 have no completed_at
-    m.innerHTML=`<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s);const n=l.length,done=s=="Completed";
+    m.innerHTML=`<div class="toolbar">${searchBox()}</div><div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&findTask(F.q,x));const n=l.length,done=s=="Completed";
       l=done?l.sort((a,b)=>when(b).localeCompare(when(a))).slice(0,lim):l.sort(byPrio);
       return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${n}</span>${done?`<span class="sp"></span><button class="ib" data-go="display:set-completed" title="${t("completed_settings")}" aria-label="${t("completed_settings")}">${GEAR}</button>`:""}</h3>
-      ${done&&n>lim?`<p class="count">${t("completed_showing").replace("{n}",lim).replace("{total}",n)}</p>`:""}${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;board(m)}
+      ${done&&n>lim?`<p class="count">${t("completed_showing").replace("{n}",lim).replace("{total}",n)}</p>`:""}${l.map(x=>card(x,1)).join("")}</div>`}).join("")}</div>`;bindSearch();board(m)}
   else queue(m);
   detail();$("#foot").textContent=`${t("app")} · ${t("version")} ${S.version} · © ${S.year} ${S.author}`}
 $("#main").onclick=e=>{const pm=e.target.closest("[data-pm]");if(pm)return pmClick(pm);const g=e.target.closest("[data-go]");if(g)return goSetting(...g.dataset.go.split(":"));const b=e.target.closest("[data-a]");if(b)return act(b.dataset.a,b.dataset.id,b);
   const c=e.target.closest(".card[data-id]");if(c){sel=c.dataset.id;document.querySelectorAll(".card.sel").forEach(o=>o.classList.remove("sel"));c.classList.add("sel");detail()}};
+// one search text for queue and board, so it stays when switching views
+const searchBox=()=>`<input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}">`;
+function bindSearch(){
+  const fq=$("#fq");fq.oninput=()=>{F.q=fq.value;const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
+  fq.onkeydown=e=>{if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
+}
 const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.due||"~");
 function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&&+v<=r[1],est=x=>x.estimate_min===""?null:+x.estimate_min;
   const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
@@ -407,7 +413,7 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   const rng=(r,f)=>r?`: ${f(r[0])}–${r[1]===Infinity?"∞":f(r[1])}`:"";
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
   m.innerHTML=`<div class="wrap"><div class="toolbar"><b>${t("filters")}</b>
-  <input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}">
+  ${searchBox()}
   ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),["sort:desc",t("prio_high_low")],["sort:asc",t("prio_low_high")]],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
@@ -417,8 +423,7 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
-  const fq=$("#fq");fq.oninput=()=>{F.q=fq.value;const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
-  fq.onkeydown=e=>{if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
+  bindSearch();
   bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked);
   $("#fpr").onclick=e=>rangeMenu(e.currentTarget,{max:pmax,step:1,val:F.price||lastPrice()||[0,pmax],show:n=>n===Infinity?"":String(n),read:numRead,
     apply:r=>{F.price=r;if(r)localStorage.priceRange=JSON.stringify(r);render()}});  // the last range used is offered again next time

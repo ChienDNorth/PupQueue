@@ -1,6 +1,6 @@
 # Changelog
 ## v2.3.1
-- Task search: a search box in the queue filters finds tasks by what you type. Matching is loose, so each word only needs its letters in order inside one word of the task (title, type, priority, status, client, email, social handles, payment method, notes): "comm sket" finds "Commission - Sketch". Escape clears it, and it works together with the other filters.
+- Task search: a search box above the queue and the board finds tasks by what you type. Matching is loose, so each word only needs its letters in order inside one word of the task (title, type, priority, status, client, email, social handles, payment method, notes): "comm sket" finds "Commission - Sketch". Escape clears it, and in the queue it works together with the other filters. The search stays when you switch between queue and board.
 ## v2.3.0
 - Queue filters: the priority filter drops the "and above" choices and adds "Priority: high to low" and "Priority: low to high" sorting.
 - Price range: a small window with a two-handle slider, or type the lowest and highest price. It opens with the last range you used.
