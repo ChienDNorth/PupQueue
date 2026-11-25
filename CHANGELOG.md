@@ -1,4 +1,7 @@
 # Changelog
+## v2.2.4
+- Photo thumbnails in the task window are bigger, so they are easier to see.
+
 ## v2.2.1
 - Board column colours are more vibrant, in both themes.
 
