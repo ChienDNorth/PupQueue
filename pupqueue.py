@@ -5,14 +5,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "2.2.5", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "2.3.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
 SETTINGS_FILE = ROOT / "settings.json"
-FIELDS = ["id", "title", "type", "priority", "price", "currency", "paid", "paid_amount", "paid_time",
+FIELDS = ["id", "title", "type", "priority", "price", "currency", "paid", "paid_amount", "paid_time", "payment_method",
           "estimate_min", "due", "client_name", "client_email", "client_socials",
-          "notes", "photos", "status", "snoozed_until", "snoozed_from", "created"]  # snoozed_from: status to return to when the snooze ends
+          "notes", "photos", "status", "snoozed_until", "snoozed_from", "created", "completed_at"]  # snoozed_from: status to return to when the snooze ends
 STATUSES = ["Waitlist", "Ready", "WIP", "Completed"]
 PRIORITIES = ["Critical", "High", "Medium", "Low", "Lowest"]  # fixed, highest first; the icon shows one bar per level
 TITLE_PARTS = ["type", "social", "title", "price", "paid"]
@@ -26,11 +26,20 @@ DEFAULT_SETTINGS = {
     "default_due_time": "00:00",  # time of day filled in when a due date is picked
     "title_order": list(TITLE_PARTS),  # parts of the displayed title, in order
     "shortcuts": {"save_task": "Shift+Enter", "finish_field": "Enter"},  # keys in the task window, written like the page records them
+    "completed_limit": 10,  # how many of the latest completed tasks the board shows
+    "ready_priorities": ["Critical", "High", "Medium"],  # new tasks with these priorities start in Ready, the rest in Waitlist
+    "paid_ready": False,  # a task that is (or becomes) paid goes from Waitlist to Ready
+    "animations": True,  # off = the page shows no animations (the Mark done countdown bar still runs)
+    "payment_methods": ["Wechat", "Alipay", "Paypal", "Stripe", "Zelle", "Venmo", "Vgen"],
+    "payment_icons": {},  # method -> small image as a data URL; a method without one shows a letter badge
 }
 SHORTCUT_RE = re.compile(r"((Ctrl|Alt|Shift|Meta)\+)*[^\s+]{1,20}")
 FINISHED_DIR = "finished_task_photos"  # inside the photos folder
 RESERVED_NAME = re.compile(r"CON|PRN|AUX|NUL|COM\d|LPT\d")
 DATA_LOCK = threading.Lock()  # requests run in threads: writes must not interleave, and nobody may read a file while it is replaced (Windows refuses)
+ICON_MAX, LIST_MAX = 20_000, 50  # characters per icon, items per list
+ICON_RE = re.compile(r"data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}")
+SETTINGS_FILE_MAX = LIST_MAX * ICON_MAX + 100_000  # room for an icon on every payment method
 IMAGE_EXTS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "heic"}
 UNITS = {**dict.fromkeys(("min", "mins", "minute", "minutes", "m", "分", "分钟"), 1),
          **dict.fromkeys(("h", "hr", "hrs", "hour", "hours", "时", "小时"), 60),
@@ -187,9 +196,9 @@ def clean_settings(s):
     need(isinstance(out["currency"], str) and re.fullmatch(r"([A-Z]{3})?", out["currency"]), "invalid_currency")
     need(isinstance(out["default_due_time"], str) and re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", out["default_due_time"]), "invalid_time")
     need(out["default_priority"] in PRIORITIES, "invalid_priority")
-    for k in ("types", "socials"):
+    for k in ("types", "socials", "payment_methods"):
         v = out[k]
-        need(isinstance(v, list) and len(v) <= 50 and all(isinstance(x, str) and len(x.strip()) <= 40 for x in v), "invalid_list")
+        need(isinstance(v, list) and len(v) <= LIST_MAX and all(isinstance(x, str) and len(x.strip()) <= 40 for x in v), "invalid_list")
         items = []
         for x in (x.strip() for x in v):
             if x and x.lower() not in [i.lower() for i in items]:  # drop blanks and case-insensitive duplicates
@@ -201,6 +210,16 @@ def clean_settings(s):
     need(all(isinstance(x, str) and SHORTCUT_RE.fullmatch(x) for x in v.values()) and len(set(v.values())) == len(v), "invalid_shortcuts")
     v = out["title_order"]
     need(isinstance(v, list) and len(set(v)) == len(v) and "title" in v and all(x in TITLE_PARTS for x in v), "invalid_title_order")
+    v = out["completed_limit"]
+    need(type(v) is int and 1 <= v <= 500, "invalid_completed_limit")
+    v = out["ready_priorities"]
+    need(isinstance(v, list) and all(x in PRIORITIES for x in v), "invalid_priority")
+    out["ready_priorities"] = [p for p in PRIORITIES if p in v]
+    need(type(out["paid_ready"]) is bool, "invalid_paid_ready")
+    need(type(out["animations"]) is bool, "invalid_animations")
+    v = out["payment_icons"]
+    need(isinstance(v, dict) and all(isinstance(x, str) and len(x) <= ICON_MAX and ICON_RE.fullmatch(x) for x in v.values()), "invalid_icon")
+    out["payment_icons"] = {k: x for k, x in v.items() if k in out["payment_methods"]}  # a removed method takes its icon with it
     return out
 
 
@@ -257,9 +276,9 @@ def clean_task(data, old=None):
                 if k == "client_socials" else str(data[k])
     if not t["title"].strip():
         raise ValueError("title_required")
-    if t["status"] not in STATUSES:
-        paid = t["paid"] == "1"
-        t["status"] = "Ready" if paid or t["type"] != "Commission" else "Waitlist"
+    if t["status"] not in STATUSES:  # a new task with no status chosen: its priority decides
+        s = load_settings()
+        t["status"] = "Ready" if (t["priority"] or s["default_priority"]) in s["ready_priorities"] else "Waitlist"
     t["estimate_min"] = parse_duration(data.get("estimate", format_duration(t["estimate_min"])))
     for k in ("price", "paid_amount"):
         if t[k].strip():
@@ -277,6 +296,7 @@ def clean_task(data, old=None):
     if not re.fullmatch(r"([A-Z]{3})?", t["currency"]):
         raise ValueError("invalid_currency")
     t["paid"] = "1" if str(t["paid"]) in ("1", "true", "True") else ""
+    t["payment_method"] = t["payment_method"].strip()[:40] if t["paid"] else ""
     if not t["id"]:
         t["id"], t["created"] = uuid.uuid4().hex[:8], datetime.now().isoformat(timespec="minutes")
     return t
@@ -286,6 +306,9 @@ def upsert(data):
     tasks = load_tasks()
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
+    if (new["paid"] and not (old and old["paid"]) and new["status"] == "Waitlist" and "status" not in data
+            and not new["snoozed_from"] and load_settings()["paid_ready"]):  # Waitlist picked by hand, or a snooze, still wins
+        new["status"] = "Ready"
     if "snoozed_until" in data:
         if new["snoozed_until"] and not new["snoozed_from"]:  # snoozing parks the task in Waitlist; re-snoozing keeps the first status
             new["snoozed_from"], new["status"] = new["status"], "Waitlist"
@@ -293,6 +316,10 @@ def upsert(data):
             new["status"], new["snoozed_from"] = new["snoozed_from"], ""
     elif "status" in data and new["snoozed_from"]:  # moved by hand while snoozed: that ends the snooze
         new["snoozed_until"] = new["snoozed_from"] = ""
+    if new["status"] != "Completed":
+        new["completed_at"] = ""
+    elif not old or old["status"] != "Completed":
+        new["completed_at"] = datetime.now().isoformat(timespec="minutes")
     for rel in set(photo_list(old)) - set(photo_list(new)):  # photos removed from the task
         discard_photo(rel)
     organize_photos(new)
@@ -315,6 +342,8 @@ def wake_snoozed():
     woke = [t for t in tasks if t["snoozed_from"] and t["snoozed_until"] <= now]
     for t in woke:
         t["status"], t["snoozed_from"], t["snoozed_until"] = t["snoozed_from"], "", ""
+        if t["status"] == "Completed":
+            t["completed_at"] = now
         organize_photos(t)  # it may be returning to Completed
     if woke:
         save_tasks(tasks)
@@ -397,7 +426,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(200, load_settings())
             elif self.path == "/api/settings/import":
                 raw = self._body()
-                if len(raw) > 100_000:
+                if len(raw) > SETTINGS_FILE_MAX:
                     raise ValueError("file_too_big")
                 try:
                     data = json.loads(raw.decode("utf-8-sig"))

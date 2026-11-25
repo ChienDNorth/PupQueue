@@ -1,4 +1,18 @@
 # Changelog
+## v2.3.0
+- Queue filters: the priority filter drops the "and above" choices and adds "Priority: high to low" and "Priority: low to high" sorting.
+- Price range: a small window with a two-handle slider, or type the lowest and highest price. It opens with the last range you used.
+- Estimate time: pick a range of estimated time the same way, and sort shortest to longest or longest to shortest.
+- Settings moved to a gear icon in the top right corner; hovering it shows "Settings" in your language.
+- Board: the Completed column shows only the latest finished tasks (10 by default). Change the number in Settings > Display, or with the gear on the Completed column.
+- Payment method: when a task is paid you can record how (Wechat, Alipay, Paypal, Stripe, Zelle, Venmo, Vgen by default). Edit the list and upload an icon for each method in Settings > Payments.
+- New tasks start in Ready or Waitlist by priority: Critical, High and Medium are ready, Low and Lowest wait. Choose by hand in the task window (the info icon explains it) or change which priorities are ready in Settings > New tasks. This replaces the old rule (unpaid commissions waited).
+- New setting "Paid tasks go to Ready" (Settings > New tasks, off by default): a paid task goes to Ready instead of Waitlist, including a Waitlist task when it gets marked paid.
+- Settings are regrouped: Display (theme, animations, Completed column), New tasks (default priority, default due time, Waitlist or Ready), Task details (drawing types, social media, title format), Payments (currency, payment methods), Shortcuts, and Data (photos of finished tasks, settings file).
+- Settings: clicking a category rolls open the list of its settings on the left; click one to jump to it.
+- Settings search: type in the box above the categories to find a setting. Matching is loose, so "pay meth" or "pymt" finds Payment methods; Enter opens the first result, Escape clears the search.
+- New setting "Animations" (Settings > Display, on by default): turn it off to stop all movement on the page. The Mark done countdown bar still runs so you can see the time left.
+
 ## v2.2.5
 - Photo thumbnails are bigger on task cards and in the task window.
 
