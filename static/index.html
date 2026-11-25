@@ -21,6 +21,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:var(--fs-lg)/1.45 system
 @media(min-width:60rem){body.has-detail #page{margin-right:var(--dw)}}
 header{display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--line);border-top:3px solid var(--accent);background:var(--card);flex-wrap:wrap}
 header h1{font-size:var(--fs-xl);margin:0 .8rem 0 0;color:var(--accent-text)}
+header .logo{height:2.2rem;width:auto}
 .nav{display:flex;gap:.3rem}
 .lang{display:inline-flex;align-items:center;gap:.25rem;font-size:var(--fs-md)}
 .lang select{padding:.25rem .4rem}
@@ -176,7 +177,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .toast.show{opacity:1;transform:translate(-50%,0)}.toast.bad{background:var(--danger);color:#fff}
 </style></head><body>
 <div id="page">
-<header><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
+<header><img src="/logo.png" alt="" class="logo"><h1 id="appname"></h1><nav class="nav"><button data-v="queue"></button><button data-v="board"></button><button data-v="settings"></button></nav>
 <span style="flex:1"></span><button class="primary" id="add"></button><label class="lang">🌐<select id="lang"></select></label></header>
 <main id="main"></main>
 <footer id="foot"></footer>

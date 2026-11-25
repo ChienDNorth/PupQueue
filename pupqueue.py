@@ -351,6 +351,8 @@ class Handler(BaseHTTPRequestHandler):
         p = self.path.split("?")[0]
         if p == "/":
             self._file(ROOT / "static" / "index.html", "text/html")
+        elif p == "/logo.png":
+            self._file(ROOT / "static" / "logo.png", "image/png")
         elif p == "/api/state":
             with DATA_LOCK:  # build under the lock, send outside it so a slow browser can't stall saves
                 wake_snoozed()
