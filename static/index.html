@@ -224,7 +224,7 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 const $=(s,r=document)=>r.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 document.documentElement.dataset.theme=localStorage.theme||"auto";  // applied before first paint
-let S,T,L={},view=localStorage.view||"queue",F={prio:"all",price:null,paid:"any",type:"all",est:null,estSort:"",snoozed:false,done:false},sel=null;
+let S,T,L={},view=localStorage.view||"queue",F={q:"",prio:"all",price:null,paid:"any",type:"all",est:null,estSort:"",snoozed:false,done:false},sel=null;
 const t=k=>L[k]??k;
 const api=async(m,u,b,h={})=>{const r=await fetch(u,{method:m,body:b===undefined?undefined:(typeof b=="string"||b instanceof Blob?b:JSON.stringify(b)),headers:h});const j=await r.json();
   if(!r.ok){const k="err_"+j.error;throw new Error(t(k)!=k?t(k):j.error)}return j};
@@ -394,6 +394,7 @@ const byPrio=(a,b)=>pr(a.priority)-pr(b.priority)||(a.due||"~").localeCompare(b.
 function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&&+v<=r[1],est=x=>x.estimate_min===""?null:+x.estimate_min;
   const list=T.filter(x=>F.done||x.status!="Completed").filter(x=>{
     if(!F.snoozed&&snoozed(x))return false;
+    if(!findTask(F.q,x))return false;
     if(F.prio.startsWith("eq:")&&x.priority!=F.prio.slice(3))return false;
     if(!inR(x.price.trim(),F.price))return false;
     if(F.paid!="any"&&!!x.paid!=(F.paid=="yes"))return false;
@@ -406,6 +407,7 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   const rng=(r,f)=>r?`: ${f(r[0])}–${r[1]===Infinity?"∞":f(r[1])}`:"";
   const sl=(id,opts,v)=>`<select id="${id}">${opts.map(([a,b])=>`<option value="${esc(a)}" ${a==v?"selected":""}>${esc(b)}</option>`).join("")}</select>`;
   m.innerHTML=`<div class="wrap"><div class="toolbar"><b>${t("filters")}</b>
+  <input type="search" id="fq" placeholder="${t("search_tasks")}" aria-label="${t("search_tasks")}" value="${esc(F.q)}">
   ${sl("fp",[["all",t("priority")+": "+t("all")],...P.map(p=>["eq:"+p,t("only")+" "+p]),["sort:desc",t("prio_high_low")],["sort:asc",t("prio_low_high")]],F.prio)}
   ${sl("ft",[["all",t("type")+": "+t("all")],...S.settings.types.map(x=>[x,x])],F.type)}
   ${sl("fd",[["any",t("paid")+" "+t("any")],["yes",t("yes")],["no",t("no")]],F.paid)}
@@ -415,6 +417,8 @@ function queue(m){const P=S.settings.priorities,inR=(v,r)=>!r||v!==""&&+v>=r[0]&
   <label><input type="checkbox" id="fc" ${F.done?"checked":""}> ${t("show_finished")}</label><span class="sp"></span><span class="count">${list.length} ${t("tasks_word")}</span></div>
   ${list.map(x=>card(x)).join("")||`<p class="count">${t("no_tasks")}</p>`}</div>`;
   const bind=(id,k,f=e=>e.value)=>{$("#"+id).onchange=e=>{F[k]=f(e.target);render()}};
+  const fq=$("#fq");fq.oninput=()=>{F.q=fq.value;const c=fq.selectionStart;render();const n=$("#fq");n.focus();n.setSelectionRange(c,c)};  // redraw replaces the box, so keep typing in the new one
+  fq.onkeydown=e=>{if(e.key=="Escape"&&fq.value){e.preventDefault();fq.value="";fq.oninput()}};
   bind("fp","prio");bind("ft","type");bind("fd","paid");bind("fs","snoozed",e=>e.checked);bind("fc","done",e=>e.checked);
   $("#fpr").onclick=e=>rangeMenu(e.currentTarget,{max:pmax,step:1,val:F.price||lastPrice()||[0,pmax],show:n=>n===Infinity?"":String(n),read:numRead,
     apply:r=>{F.price=r;if(r)localStorage.priceRange=JSON.stringify(r);render()}});  // the last range used is offered again next time
@@ -534,6 +538,9 @@ let stab=localStorage.stab||"display",rolled=stab,importNote=null,toastTimer,sq=
 // loose match like most apps: each word of the query appears with its letters in order, gaps allowed ("pay meth", "pymt" find "Payment methods")
 const fuzzy=(q,s)=>{s=s.toLowerCase();return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>{let i=0;for(const c of s)if(c==w[i])i++;return i>=w.length})};
 console.assert(fuzzy("pay meth","Payment methods")&&fuzzy("PYMT","payment")&&fuzzy("","x")&&!fuzzy("xyz","Theme")&&!fuzzy("emeht","Theme"),"fuzzy");
+// each query word loosely matches one word of the task, so letters spread across long notes don't count as a hit
+const findTask=(q,x)=>{const h=[fullTitle(x),x.title,x.type,x.priority,t(x.status),x.client_name,x.client_email,x.payment_method,x.notes,...safe(x.client_socials).map(r=>r.net+" "+r.handle)].join(" ").toLowerCase().split(/\s+/);
+  return q.split(/\s+/).filter(Boolean).every(w=>h.some(v=>fuzzy(w,v)))};
 function flash(msg,bad){const el=$("#toast");el.textContent=msg;el.classList.toggle("bad",!!bad);el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),bad?4000:1600)}
 let saving=Promise.resolve();
 function saveSettings(patch){  // every setting saves as soon as it changes; saves go out one after another so the page never shows a stale copy
