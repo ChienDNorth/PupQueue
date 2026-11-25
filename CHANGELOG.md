@@ -1,4 +1,7 @@
 # Changelog
+## v2.2.5
+- Photo thumbnails are bigger on task cards and in the task window.
+
 ## v2.2.4
 - Photo thumbnails in the task window are bigger, so they are easier to see.
 
