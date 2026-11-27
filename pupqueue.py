@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "3.1.1", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "3.2.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -40,6 +40,7 @@ DEFAULT_SETTINGS = {
     "kind_colors": {"project": "#8b5cf6", "task": "#3b82f6", "todo": "#22a06b"},  # colour of the round type icon before each title
     "emoji": False,  # on = each item can show an emoji before its title
     "todo_done_last": True,  # done and crossed-out todos move to the bottom of their list
+    "project_order": "due",  # Projects page: priority first, then "due" date or the dragged order ("priority"); "hand" = the dragged order only
 }
 SHORTCUT_RE = re.compile(r"((Ctrl|Alt|Shift|Meta)\+)*[^\s+]{1,20}")
 FINISHED_DIR = "finished_task_photos"  # inside the photos folder
@@ -235,6 +236,7 @@ def clean_settings(s):
     need(isinstance(v, dict) and set(v) <= set(PARENT_KIND) and all(isinstance(x, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", x) for x in v.values()), "invalid_color")
     out["kind_colors"] = {**DEFAULT_SETTINGS["kind_colors"], **{k: x.lower() for k, x in v.items()}}
     need(out["delete_children"] in DELETE_CHILDREN, "invalid_delete_children")
+    need(out["project_order"] in ("due", "priority", "hand"), "invalid_project_order")
     v = out["payment_icons"]
     need(isinstance(v, dict) and all(isinstance(x, str) and len(x) <= ICON_MAX and ICON_RE.fullmatch(x) for x in v.values()), "invalid_icon")
     out["payment_icons"] = {k: x for k, x in v.items() if k in out["payment_methods"]}  # a removed method takes its icon with it
@@ -362,7 +364,7 @@ def upsert(data):
         discard_photo(rel)
     organize_photos(new)
     tasks = [t for t in tasks if t["id"] != new["id"]] + [new]
-    if not old or old["status"] != new["status"]:
+    if not old or old["status"] != new["status"] or old["parent"] != new["parent"]:  # dragged under a new parent counts too
         pull_parents(tasks, new)
     save_tasks(tasks)
     return new

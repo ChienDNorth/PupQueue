@@ -1,4 +1,12 @@
 # Changelog
+## v3.2.0
+- Projects page: drag a row to move it. Drop it on a project (for a task) or a task (for a todo) to put it inside; drop it on the top or bottom half of a row to place it right before or after; drop a task or todo on "No parent" to take it out of its parent. A spot that breaks the rules slides the row back and a message says why. Alt+↑/↓ on a row moves it one place.
+- Moving a Ready or WIP item into a Waitlist parent brings that parent to Ready or WIP too, the same as changing the item's status.
+- New setting, Settings > Projects > Projects page order: by priority then due date (the default, as before), by priority then your dragged order, or fully by hand. Finished items always stay at the bottom.
+- Projects page filters: search, status (including "Unfinished"), priority, drawing type and paid. Each match shows under its parents, which are faded when they don't match themselves.
+- Details panel: Basic information shows plain values; click one (or press Enter on it) to change just that field, and it saves right away. Escape or clicking away leaves it unchanged. Parent, title, drawing type, price and currency, amount paid, paid time, payment method and status can all be changed here.
+- Details panel: Paid is a green or red badge that switches between Paid and Unpaid with one click.
+- A project's details list its tasks in the Projects page order. Drag a task (or press Alt+↑/↓ on it) to change the order, and each one has an Edit button, like the todos inside a task.
 ## v3.1.1
 - Estimated time: a number after minutes, like 1min30, is read as 1 minute, because seconds aren't kept. A note under the field says the number was left out and shows how to write hours instead (e.g. 1h30min). In English and Chinese.
 - A half minute rounds up the same way every time: 0.5 is 1 minute, 2.5 is 3 (it used to round 0.5 down to 0 and 2.5 down to 2).

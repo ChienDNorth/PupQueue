@@ -384,7 +384,8 @@ def test_projects_tasks_todos():
     # type icon colours and the emoji setting are validated; an item's emoji is trimmed and kept
     s = pq.save_settings({**pq.load_settings(), "kind_colors": {"task": "#ABCDEF"}, "emoji": True})
     assert s["kind_colors"] == {**pq.DEFAULT_SETTINGS["kind_colors"], "task": "#abcdef"} and s["emoji"] is True
-    for bad, code in [({"kind_colors": {"task": "red"}}, "invalid_color"), ({"kind_colors": {"epic": "#000000"}}, "invalid_color"), ({"emoji": "yes"}, "invalid_bool")]:
+    assert pq.DEFAULT_SETTINGS["project_order"] == "due"  # Projects page keeps its old order (priority, then due date) until changed
+    for bad, code in [({"kind_colors": {"task": "red"}}, "invalid_color"), ({"kind_colors": {"epic": "#000000"}}, "invalid_color"), ({"emoji": "yes"}, "invalid_bool"), ({"project_order": "random"}, "invalid_project_order")]:
         try: pq.save_settings({**pq.load_settings(), **bad}); assert False, bad
         except ValueError as e: assert str(e) == code, (bad, e)
     e = pq.upsert({"title": "E", "emoji": " 🐶 "})
@@ -407,6 +408,10 @@ def test_projects_tasks_todos():
     w = pq.upsert({"title": "W", "kind": "task", "status": "Waitlist"})
     pq.upsert({"title": "R", "kind": "todo", "parent": w["id"], "status": "Ready"})
     assert next(r["status"] for r in pq.load_tasks() if r["id"] == w["id"]) == "Ready"
+    # dragging a Ready child under a Waitlist parent takes that parent along too
+    w2, r2 = pq.upsert({"title": "W2", "kind": "task", "status": "Waitlist"}), pq.upsert({"title": "R2", "kind": "todo", "status": "Ready"})
+    pq.upsert({"id": r2["id"], "parent": w2["id"]})
+    assert next(r["status"] for r in pq.load_tasks() if r["id"] == w2["id"]) == "Ready"
 
 def test_other_sites_refused_and_locked_files_lose_nothing():
     import pathlib
