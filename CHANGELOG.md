@@ -1,4 +1,12 @@
 # Changelog
+## v3.1.0
+- In a task's details, every todo under Children has a small three-line handle on the right to show it can be dragged up or down. It's only a sign: clicking it does nothing.
+- Smoother todo dragging: the todo you pick up lifts out of the list (highlighted, with a shadow) and follows the mouse, a dashed slot shows where it will land, and the other todos slide out of the way. Letting go glides it into place; Escape puts it back. On touch screens, drag by the handle. Turning off Animations keeps dragging but without the sliding.
+- Safety: only PupQueue's own page can use the app. Other websites open in your browser can no longer add or change tasks, change settings, delete finished photos, or read your task list.
+- Saving no longer loses a task when task_records/active.csv or completed.csv is open in another program such as Excel. The save is refused before anything changes, and a message says to close the file and try again.
+- A new todo (or task) that starts in Ready now moves its parent out of Waitlist too, the same as moving one by hand.
+- A photo that another program has open no longer breaks saving: it keeps its old file name until a later save.
+- Removed unused icon images and two unused texts.
 ## v3.0.4
 - Custom emoji (renamed from "Emoji" in Settings > Projects): when on, every project, task and todo gets a small emoji button before its title, on cards, the Projects page and the details panel. Click it to pick an emoji, or type or paste your own and press Enter; "Remove emoji" clears it. Items without one show a faint dashed smiley button. The edit window uses the same picker.
 - The emoji picker is bigger and tidier: 32 emojis in a grid, the current one highlighted.

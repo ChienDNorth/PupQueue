@@ -395,3 +395,49 @@ def test_projects_tasks_todos():
         try: pq.reorder(bad); assert False, bad
         except ValueError as e: assert str(e) == "invalid_order"
     assert pq.load_settings()["todo_done_last"] is True
+    # a new child that starts in Ready takes its Waitlist parent along
+    w = pq.upsert({"title": "W", "kind": "task", "status": "Waitlist"})
+    pq.upsert({"title": "R", "kind": "todo", "parent": w["id"], "status": "Ready"})
+    assert next(r["status"] for r in pq.load_tasks() if r["id"] == w["id"]) == "Ready"
+
+def test_other_sites_refused_and_locked_files_lose_nothing():
+    import pathlib
+    tmp = _sandbox()
+    srv = pq.ThreadingHTTPServer(("127.0.0.1", 0), pq.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    port = srv.server_port
+    def call(m, u, b=None, h={}):
+        c = http.client.HTTPConnection("127.0.0.1", port)
+        c.request(m, u, json.dumps(b).encode() if b is not None else None, {"Host": f"127.0.0.1:{port}", **h})
+        r = c.getresponse(); return r.status, json.loads(r.read() or b"{}")
+    # another website: a cross-site write, or DNS rebinding (its own name pointed at this computer) to read
+    assert call("POST", "/api/tasks", {"title": "planted"}, {"Origin": "https://evil.example", "Content-Type": "text/plain"}) == (403, {"error": "forbidden"})
+    assert call("GET", "/api/state", h={"Host": f"evil.example:{port}"})[0] == 403
+    assert call("POST", "/api/photos/clear-finished", h={"Origin": "null"})[0] == 403
+    assert pq.load_tasks() == []
+    # the app's own page still works, with either address
+    assert call("POST", "/api/tasks", {"title": "Mine", "status": "WIP"}, {"Origin": f"http://127.0.0.1:{port}"})[0] == 200
+    assert call("GET", "/api/state", h={"Host": f"localhost:{port}"})[0] == 200
+    t = pq.load_tasks()[0]
+    # completed.csv open in Excel (Windows locks it): the save is refused before anything changes, and the page is told why
+    real_open = pathlib.Path.open
+    def locked(self, mode="r", *a, **k):
+        if self.name == "completed.csv" and mode == "r+b": raise PermissionError(13, "in use")
+        return real_open(self, mode, *a, **k)
+    pq.save_tasks(pq.load_tasks())  # make sure completed.csv exists
+    pathlib.Path.open = locked
+    try:
+        assert call("POST", "/api/tasks", {"id": t["id"], "status": "Completed"}) == (500, {"error": "file_locked"})
+    finally:
+        pathlib.Path.open = real_open
+    assert [(r["title"], r["status"]) for r in pq.load_tasks()] == [("Mine", "WIP")]
+    # a photo held open by another program can't be renamed: it keeps its old name and stays on the task
+    t = pq.upsert({"id": t["id"], "photos": _upload(b"img")})
+    real_rename = pathlib.Path.rename
+    pathlib.Path.rename = lambda self, dst: (_ for _ in ()).throw(PermissionError(13, "in use"))
+    try:
+        done = pq.upsert({"id": t["id"], "status": "Completed"})
+    finally:
+        pathlib.Path.rename = real_rename
+    assert done["status"] == "Completed" and pq.photo_file(done["photos"]) and pq.photo_file(done["photos"]).read_bytes() == b"img"
+    srv.shutdown()

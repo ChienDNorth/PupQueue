@@ -10,7 +10,6 @@
   "files": "个文件", "finished_photos": "已完成任务的图片",
   "clear_finished": "删除所有已完成任务的图片", "confirm_clear_finished": "确定永久删除所有已完成任务的图片？此操作无法撤销。",
   "save": "保存", "cancel": "取消", "close": "关闭", "clear": "清除", "remove": "移除",
-  "details": "任务详情",
   "sec_title": "标题", "sec_basic": "基本信息", "sec_time": "时间", "sec_client": "客户信息",
   "title": "标题", "type": "绘画类型", "priority": "优先级", "price": "价格", "currency": "货币",
   "paid": "已付款？", "paid_amount": "付款金额", "paid_time": "付款时间",
@@ -18,7 +17,7 @@
   "pick_datetime": "选择日期与时间", "today": "今天", "tomorrow": "明天", "next_week": "下周", "done": "完成",
   "hour": "时", "minute": "分", "time": "时间", "none": "未设置",
   "client_name": "客户名称", "client_email": "客户邮箱", "socials": "社交媒体", "add_social": "+ 添加社交账号",
-  "notes": "其他信息", "photos": "参考图", "add_photos": "添加参考图",
+  "notes": "其他信息", "photos": "参考图",
   "status": "状态", "created": "创建时间", "email_placeholder": "name@example.com",
   "filters": "筛选", "all": "全部", "only": "仅", "any": "不限", "yes": "已付款", "no": "未付款",
   "show_snoozed": "显示已推迟", "snoozed_until": "推迟至",
@@ -149,5 +148,7 @@
   "todo_done_last": "{todo}顺序",
   "todo_done_last_on": "把完成和划掉的{todo}移到最后",
   "todo_done_last_hint": "关闭时，它们留在原来的位置。拖动{todo}（或在上面按 Alt+↑/↓）可以手动调整顺序。",
-  "err_invalid_order": "这个顺序无效。"
+  "err_invalid_order": "这个顺序无效。",
+  "err_forbidden": "只有 PupQueue 自己的页面可以修改你的数据。",
+  "err_file_locked": "无法保存：task_records 里的文件正被其他程序（比如 Excel）打开。关闭后再试一次；没有任何内容被改动。"
 }

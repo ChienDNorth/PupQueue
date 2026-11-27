@@ -10,7 +10,6 @@
   "files": "files", "finished_photos": "Photos of finished tasks",
   "clear_finished": "Delete all finished photos", "confirm_clear_finished": "Permanently delete all photos of finished tasks? This can't be undone.",
   "save": "Save", "cancel": "Cancel", "close": "Close", "clear": "Clear", "remove": "Remove",
-  "details": "Task details",
   "sec_title": "Title", "sec_basic": "Basic information", "sec_time": "Time", "sec_client": "Client information",
   "title": "Title", "type": "Drawing type", "priority": "Priority", "price": "Price", "currency": "Currency",
   "paid": "Paid?", "paid_amount": "Amount paid", "paid_time": "Paid at",
@@ -18,7 +17,7 @@
   "pick_datetime": "Pick a date & time", "today": "Today", "tomorrow": "Tomorrow", "next_week": "Next week", "done": "Done",
   "hour": "Hour", "minute": "Minute", "time": "Time", "none": "Not set",
   "client_name": "Client name", "client_email": "Client email", "socials": "Social media", "add_social": "+ Add social",
-  "notes": "Other information", "photos": "Reference photos", "add_photos": "Add reference photos",
+  "notes": "Other information", "photos": "Reference photos",
   "status": "Status", "created": "Created", "email_placeholder": "name@example.com",
   "filters": "Filters", "all": "All", "only": "Only", "any": "Any", "yes": "Paid", "no": "Unpaid",
   "show_snoozed": "Show snoozed", "snoozed_until": "Snoozed until",
@@ -149,5 +148,7 @@
   "todo_done_last": "{todo} order",
   "todo_done_last_on": "Move done and crossed-out {todos} to the bottom",
   "todo_done_last_hint": "Off: they stay where they are. Drag a {todo} (or press Alt+↑/↓ on it) to change the order by hand.",
-  "err_invalid_order": "That order isn't valid."
+  "err_invalid_order": "That order isn't valid.",
+  "err_forbidden": "Only PupQueue's own page can change your data.",
+  "err_file_locked": "Couldn't save: a file in task_records is open in another program (like Excel). Close it and try again; nothing was changed."
 }

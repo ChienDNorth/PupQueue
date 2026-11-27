@@ -259,7 +259,11 @@ button.emo:hover{background:var(--accent-soft);border-color:var(--line)}button.e
 .tdo.done .tdm{background:#22a06b;border-color:#22a06b}.tdo.x .tdm{background:var(--muted);border-color:var(--muted)}.tdo.done .tdt,.tdo.x .tdt{text-decoration:line-through;color:var(--muted)}
 #detail .tdin{width:100%;font-size:var(--fs-sm);padding:.2rem .45rem}
 .tdrow{display:flex;gap:.3rem;align-items:center;margin-top:.25rem}.tdrow .tdin{flex:1;margin-top:0}.tdrow .ib{flex:none}
-.tdo.dropb{box-shadow:inset 0 2px var(--accent)}.tdo.dropa{box-shadow:inset 0 -2px var(--accent)}
+.grip{margin-left:auto;padding:0 .35rem;display:inline-flex;color:var(--muted);opacity:.6;cursor:grab}.grip svg{width:1rem;height:.7rem}.tdo:hover .grip{opacity:1}
+.dghost{position:fixed;z-index:90;margin:0;display:flex;gap:.4rem;align-items:center;box-sizing:border-box;pointer-events:none;background:var(--card);border-radius:.5rem;box-shadow:0 .9rem 2rem var(--shadow-c),0 0 0 1.5px var(--accent);transform:scale(1.03)}
+.dghost .tdo{background:var(--accent-soft);border-radius:.5rem}.dghost .grip{opacity:1;color:var(--accent-text)}
+.dslot{background:var(--accent-soft);outline:1.5px dashed var(--accent);outline-offset:-1.5px;border-radius:.45rem}.dslot>*{visibility:hidden}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
 .todos .tdin{width:100%;margin-top:.25rem;font-size:var(--fs-sm);padding:.2rem .45rem}
 .c-par{font-size:var(--fs-xs);color:var(--muted);margin-bottom:.15rem}
 .lnk{border:0;background:none;padding:0;color:var(--accent-text);text-align:left;font-size:inherit}.lnk:hover{text-decoration:underline}
@@ -319,6 +323,7 @@ const pr=p=>S.settings.priorities.indexOf(p);
 const KINDS=["project","task","todo"],PK={task:"project",todo:"task"},CK={project:"task",task:"todo"};  // parent kind / child kind
 const kname=(k,pl)=>t(`kind_${k}${pl?"_pl":""}${S.settings.agile?"_agile":""}`);
 const kt=k=>t(k).replace(/\{(project|task|todo)(s?)\}/g,(_,k,pl)=>kname(k,pl));  // fills in the current names (agile or not)
+const looseItems=()=>T.filter(x=>x.kind!="project"&&!T.some(p=>p.id==x.parent));  // tasks and todos with no parent
 const kidsOf=id=>T.filter(y=>y.parent==id),allKids=id=>kidsOf(id).flatMap(y=>[y,...allKids(y.id)]);
 const KICON={project:"M13 2 4 14h7l-1 8 9-12h-7z",task:"M5 12l5 5L20 7",todo:"M6 3h12v18l-6-4-6 4z"};
 const kicon=k=>`<span class="ki" style="background:${S.settings.kind_colors[k]}" title="${esc(kname(k))}" role="img" aria-label="${esc(kname(k))}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${KICON[k]}"/></svg></span>`;
@@ -450,12 +455,13 @@ const doneIcon=on=>on?`<svg viewBox="0 0 550 550" aria-hidden="true"><circle cx=
 const doneBtn=x=>{const p=pending[x.id];return x.status=="Completed"?"":`<button class="sm mdone" data-a="done" data-id="${x.id}" aria-pressed="${!!p}" title="${p?t("done_undo_hint"):""}">${doneIcon(p)}${t("mark_done")}</button>`};
 const doneBar=x=>{const p=pending[x.id];return p?`<div class="cd"><i style="animation-duration:${DONE_MS}ms;animation-delay:-${Date.now()-p.start}ms"></i></div>`:""};
 const snoozeBtns=(x,cls="sm")=>`${snoozed(x)?`<button class="${cls}" data-a="unsnz" data-id="${x.id}">${t("cancel_snooze")}</button>`:""}<button class="${cls}" data-a="snz" data-id="${x.id}">${t("snooze")} ▾</button>`;
-const todoBtn=d=>{const c=d.crossed?"x":d.status=="Completed"?"done":"";
-  return `<button type="button" draggable="true" class="tdo ${c}" data-todo="${d.id}" aria-pressed="${!!c}" title="${t("todo_hint")}"><span class="tdm" aria-hidden="true">${{x:"✕",done:"✓"}[c]||""}</span>${kicon("todo")}${emo(d)}<span class="tdt">${esc(d.title)}</span></button>`};
+const GRIP=`<span class="grip" aria-hidden="true"><svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 2h16M2 7h16M2 12h16"/></svg></span>`;  // only shows the row can be dragged
+const todoBtn=(d,grip)=>{const c=d.crossed?"x":d.status=="Completed"?"done":"";
+  return `<button type="button" class="tdo ${c}" data-todo="${d.id}" aria-pressed="${!!c}" title="${t("todo_hint")}"><span class="tdm" aria-hidden="true">${{x:"✕",done:"✓"}[c]||""}</span>${kicon("todo")}${emo(d)}<span class="tdt">${esc(d.title)}</span>${grip?GRIP:""}</button>`};
 const addTodo=p=>`<div class="tdrow"><input class="tdin" data-addto="${p}" placeholder="${esc(kt("add_todo"))}" aria-label="${esc(kt("add_todo"))}"><button type="button" class="ib" data-go="structure:set-todo-order" title="${esc(kt("todo_settings"))}" aria-label="${esc(kt("todo_settings"))}">${GEAR}</button></div>`;
 const bySort=(a,b)=>(+a.sort||0)-(+b.sort||0);
 const todosOf=id=>{const k=kidsOf(id).sort(bySort);return S.settings.todo_done_last?[...k.filter(d=>d.status!="Completed"),...k.filter(d=>d.status=="Completed")]:k};
-const todoList=x=>x.kind!="task"?"":`<div class="todos">${todosOf(x.id).filter(d=>d.status!="Completed").map(todoBtn).join("")}${addTodo(x.id)}</div>`;  // finished todos leave the card; the details panel still lists them
+const todoList=x=>x.kind!="task"?"":`<div class="todos">${todosOf(x.id).filter(d=>d.status!="Completed").map(d=>todoBtn(d)).join("")}${addTodo(x.id)}</div>`;  // finished todos leave the card; the details panel still lists them
 function card(x,board){const par=T.find(y=>y.id==x.parent),soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
   const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
   const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
@@ -487,23 +493,45 @@ async function setTodo(id,cross){const d=T.find(y=>y.id==id),open=d.status!="Com
   const body=open||cross&&!d.crossed?{id,status:"Completed",crossed:!!cross}:{id,status:"Waitlist"};
   try{await api("POST","/api/tasks",body)}catch(er){flash(er.message,true)}await load();$(`${where} [data-todo="${id}"]`)?.focus()}
 let holdT,held=false;
-document.addEventListener("pointerdown",e=>{const b=e.target.closest("[data-todo]");held=false;clearTimeout(holdT);if(b)holdT=setTimeout(()=>{held=true;setTodo(b.dataset.todo,1)},500)});
+document.addEventListener("pointerdown",e=>{const b=!e.target.closest(".grip")&&e.target.closest("[data-todo]");held=false;clearTimeout(holdT);if(b)holdT=setTimeout(()=>{held=true;setTodo(b.dataset.todo,1)},500)});
 ["pointerup","pointercancel","dragstart"].forEach(n=>document.addEventListener(n,()=>clearTimeout(holdT)));
-document.addEventListener("click",e=>{const b=e.target.closest("[data-todo]");if(!b)return;if(held){held=false;return}setTodo(b.dataset.todo,0)});  // a hold already crossed it
-async function moveTodo(id,to,after){const d=T.find(y=>y.id==id),o=T.find(y=>y.id==to),where=$("#detail").contains(document.activeElement)?"#detail":"#main";
+document.addEventListener("click",e=>{const b=e.target.closest("[data-todo]");if(!b||e.target.closest(".grip"))return;if(held){held=false;return}setTodo(b.dataset.todo,0)});  // a hold already crossed it
+async function moveTodo(id,to,after){const d=T.find(y=>y.id==id),o=T.find(y=>y.id==to);
   if(!o||id==to||!d.parent||o.parent!=d.parent)return;  // only within one task's list
-  const ids=kidsOf(d.parent).sort(bySort).map(y=>y.id).filter(i=>i!=id);ids.splice(ids.indexOf(to)+(after?1:0),0,id);
+  const ids=kidsOf(d.parent).sort(bySort).map(y=>y.id).filter(i=>i!=id);ids.splice(ids.indexOf(to)+(after?1:0),0,id);saveOrder(ids,id)}
+// drag to reorder, like SortableJS: the picked row lifts and follows the pointer, a dashed slot marks where it lands, the others slide aside (FLIP)
+let tdDrag=null,pressTodo=false;
+const rowOf=b=>b.closest(".kids>div")||b;  // details: the row with its Edit button; cards: the todo itself
+const sibsOf=r=>[...r.parentElement.children].filter(el=>el.matches("[data-todo]")||el.querySelector(":scope>[data-todo]"));
+const slide=(els,fn)=>{const first=new Map(els.map(el=>[el,el.getBoundingClientRect().top]));fn();  // FLIP: measure, move, then animate from the old spot
+  if(S.settings.animations)els.forEach(el=>{const dy=first.get(el)-el.getBoundingClientRect().top;if(dy)el.animate([{transform:`translateY(${dy}px)`},{transform:"none"}],{duration:150,easing:"cubic-bezier(.2,.7,.3,1)"})})};
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("[data-todo]");pressTodo=!!b;
+  if(!b||e.button||e.pointerType!="mouse"&&!e.target.closest(".grip"))return;  // touch: a row scrolls or (held) crosses out; drag it by the handle
+  tdDrag={b,row:rowOf(b),x0:e.clientX,y0:e.clientY,on:false}});
+document.addEventListener("dragstart",e=>{if(pressTodo)e.preventDefault()},true);  // a todo inside a board card must not drag the card
+document.addEventListener("pointermove",e=>{const d=tdDrag;if(!d)return;
+  if(!d.on){if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<5)return;  // a small wobble is still a click
+    clearTimeout(holdT);const r=d.row.getBoundingClientRect();Object.assign(d,{on:true,dy:d.y0-r.top,back:d.row.nextElementSibling,ghost:d.row.cloneNode(true)});
+    d.ghost.classList.add("dghost");Object.assign(d.ghost.style,{left:r.left+"px",top:r.top+"px",width:r.width+"px",fontSize:getComputedStyle(d.row).fontSize});document.body.append(d.ghost);
+    if(S.settings.animations)d.ghost.animate([{transform:"scale(1)",boxShadow:"none"},{}],{duration:120,easing:"ease-out"});  // lift
+    d.row.classList.add("dslot");document.body.classList.add("dragging")}
+  const sibs=sibsOf(d.row),lr=d.row.parentElement.getBoundingClientRect();
+  d.ghost.style.top=Math.max(lr.top-8,Math.min(e.clientY-d.dy,lr.bottom-d.ghost.offsetHeight+8))+"px";
+  const base=d.row.getBoundingClientRect().top-d.row.offsetTop;  // layout positions, so rows still sliding don't make it flicker
+  const before=sibs.find(el=>el!=d.row&&e.clientY<base+el.offsetTop+el.offsetHeight/2),ref=before||sibs.at(-1).nextElementSibling;
+  if(ref!=d.row&&d.row.nextElementSibling!=ref)slide(sibs.filter(el=>el!=d.row),()=>d.row.parentElement.insertBefore(d.row,ref))});
+function endDrag(save){const d=tdDrag;tdDrag=null;pressTodo=false;if(!d?.on)return;held=true;  // swallow the click that follows the drop
+  if(!save)d.row.parentElement.insertBefore(d.row,d.back);
+  const done=()=>{d.ghost.remove();d.row.classList.remove("dslot");document.body.classList.remove("dragging");
+    const shown=sibsOf(d.row).map(el=>(el.dataset.todo?el:el.querySelector("[data-todo]")).dataset.todo),id=d.b.dataset.todo,par=T.find(y=>y.id==id).parent;
+    const full=kidsOf(par).sort(bySort).map(y=>y.id),q=[...shown],ids=full.map(i=>shown.includes(i)?q.shift():i);  // a card hides finished todos: they keep their places
+    if(save&&ids.join()!=full.join())saveOrder(ids,id)};
+  if(!S.settings.animations)return done();
+  d.ghost.animate([{},{top:d.row.getBoundingClientRect().top+"px",transform:"scale(1)",boxShadow:"none"}],{duration:150,easing:"cubic-bezier(.2,.7,.3,1)",fill:"forwards"}).finished.then(done)}  // glide into the slot
+document.addEventListener("pointerup",()=>endDrag(true));document.addEventListener("pointercancel",()=>endDrag(false));
+document.addEventListener("keydown",e=>{if(e.key=="Escape"&&tdDrag?.on){e.stopPropagation();endDrag(false)}},true);
+async function saveOrder(ids,id){const where=$("#detail").contains(document.activeElement)?"#detail":"#main";
   try{await api("POST","/api/tasks/order",{ids})}catch(er){flash(er.message,true)}await load();$(`${where} [data-todo="${id}"]`)?.focus()}
-// capture phase: a todo dragged inside a board card must not drag the card or drop it on a column
-// Limitation: HTML drag and drop needs a mouse; on touch screens use Alt+Up/Down with a keyboard, or add a touch drag if needed
-let dragTodo=null;const clearDrop=()=>document.querySelectorAll(".dropb,.dropa").forEach(x=>x.classList.remove("dropb","dropa"));
-const dropAt=e=>{const o=e.target.closest?.("[data-todo]");if(!o||o.dataset.todo==dragTodo||T.find(y=>y.id==o.dataset.todo)?.parent!=T.find(y=>y.id==dragTodo)?.parent)return null;
-  const r=o.getBoundingClientRect();return{o,after:e.clientY>r.top+r.height/2}};
-document.addEventListener("dragstart",e=>{const b=e.target.closest?.("[data-todo]");if(!b)return;e.stopPropagation();clearTimeout(holdT);dragTodo=b.dataset.todo;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","")},true);
-document.addEventListener("dragover",e=>{if(!dragTodo)return;e.stopPropagation();clearDrop();const d=dropAt(e);if(d){e.preventDefault();d.o.classList.add(d.after?"dropa":"dropb")}},true);
-document.addEventListener("drop",e=>{if(!dragTodo)return;e.stopPropagation();e.preventDefault();clearDrop();const d=dropAt(e),id=dragTodo;dragTodo=null;if(d)moveTodo(id,d.o.dataset.todo,d.after)},true);
-document.addEventListener("dragend",()=>{dragTodo=null;clearDrop()},true);
-document.addEventListener("pointermove",e=>{if(holdT&&e.buttons&&(Math.abs(e.movementX)+Math.abs(e.movementY)>3))clearTimeout(holdT)});  // moving = dragging, not holding
 document.addEventListener("contextmenu",e=>{if(e.target.closest("[data-todo]"))e.preventDefault()});  // touch: a hold opens no menu
 document.addEventListener("keydown",async e=>{const b=e.target.closest?.("[data-todo]");
   if(b&&e.key.toLowerCase()=="x"){e.preventDefault();return setTodo(b.dataset.todo,1)}  // keyboard way to cross out
@@ -518,7 +546,7 @@ const openT=new Set(JSON.parse(localStorage.openT||"[]"));  // expanded items, k
 function tree(){const node=x=>{const kids=kidsOf(x.id),lab=`${kicon(x.kind)}${emo(x)}<span class="${x.status=="Completed"?"done":""}">${esc(x.title)}</span>`;
     return kids.length?`<details ${openT.has(x.id)?"open":""}><summary data-pick="${x.id}" class="${sel==x.id?"on":""}">${lab}</summary><div>${kids.map(node).join("")}</div></details>`
       :`<div class="leaf ${sel==x.id?"on":""}" data-pick="${x.id}" tabindex="0" role="button">${lab}</div>`};
-  const loose=T.filter(x=>x.kind!="project"&&!T.some(p=>p.id==x.parent));
+  const loose=looseItems();
   return `<div class="tree">${T.filter(x=>x.kind=="project").map(node).join("")}${loose.length?`<div class="kd" style="margin:.6rem .4rem .2rem">${esc(kt("no_parent"))}</div>${loose.map(node).join("")}`:""}${T.length?"":`<p class="count">${t("no_tasks")}</p>`}</div>`}
 function projects(m){const ord=l=>[...l].sort((a,b)=>(a.status=="Completed")-(b.status=="Completed")||byPrio(a,b));  // unfinished first
   const prog=x=>{const k=kidsOf(x.id),d=k.filter(y=>y.status=="Completed").length;  // share of the items inside that are finished
@@ -530,7 +558,7 @@ function projects(m){const ord=l=>[...l].sort((a,b)=>(a.status=="Completed")-(b.
       <div><span class="st" data-s="${x.status}">${t(x.status)}</span></div>
       <div class="pp">${pbars(x.priority)}<small>${esc(x.priority)}</small></div><div class="pgc">${prog(x)}</div><div>${due(x)}</div><div>${esc(x.estimate)}</div>
       <div>${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}</div></div>${open?ord(kids).map(k=>row(k,lv+1)).join(""):""}`};
-  const loose=T.filter(x=>x.kind!="project"&&!T.some(p=>p.id==x.parent));
+  const loose=looseItems();
   m.innerHTML=`<div class="wrap"><div class="ph"><h2>${esc(kname("project",1))}</h2><span class="count">${KINDS.map(k=>{const n=T.filter(x=>x.kind==k).length;return `${n} ${esc(kname(k,n!=1))}`}).join(" · ")}</span>
     <span class="sp"></span><button class="sm" data-all="1">${t("expand_all")}</button><button class="sm" data-all="0">${t("collapse_all")}</button></div>
     <div class="ptab"><div class="pr hd"><div>${t("title")}</div><div>${t("status")}</div><div>${t("priority")}</div><div>${t("progress")}</div><div>${t("due_short")}</div><div>${t("estimate_short")}</div><div>${t("paid")}</div></div>
@@ -624,7 +652,7 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   <div class="dsec"><h3>${t("sec_basic")}</h3><dl>${PK[x.kind]?`<dt>${t("parent")}</dt><dd>${par?`<button class="lnk" data-pick="${par.id}">${esc(par.title)}</button>`:`<span class="dim">${t("parent_none")}</span>`}</dd>`:""}${row("title",esc(x.title))}${row("type",esc(x.type))}${row("price",x.price&&esc(x.price)+" "+esc(cur(x)))}
     ${row("paid",x.paid?"✅ "+t("yes"):"❌ "+t("no"))}${x.paid?row("paid_amount",x.paid_amount&&esc(x.paid_amount)+" "+esc(cur(x)))+row("paid_time",esc(fmtDT(x.paid_time)))+row("payment_method",x.payment_method&&payIcon(x.payment_method)+" "+esc(x.payment_method)):""}
     <dt>${t("status")}</dt><dd><select data-st>${S.statuses.map(s=>`<option value="${s}" ${s==x.status?"selected":""}>${t(s)}</option>`).join("")}</select></dd></dl></div>
-  ${CK[x.kind]?`<div class="dsec"><h3>${t("children")}</h3><div class="kids">${(x.kind=="task"?todosOf(x.id):kidsOf(x.id)).map(k=>k.kind=="todo"?`<div>${todoBtn(k)}<button class="sm" data-a="edit" data-id="${k.id}">${t("edit")}</button></div>`:`<div>${kicon(k.kind)}${emo(k)}<button class="lnk ${k.status=="Completed"?"done":""}" data-pick="${k.id}">${esc(k.title)}</button>${chip(t(k.status),"gray")}</div>`).join("")}</div>
+  ${CK[x.kind]?`<div class="dsec"><h3>${t("children")}</h3><div class="kids">${(x.kind=="task"?todosOf(x.id):kidsOf(x.id)).map(k=>k.kind=="todo"?`<div>${todoBtn(k,1)}<button class="sm" data-a="edit" data-id="${k.id}">${t("edit")}</button></div>`:`<div>${kicon(k.kind)}${emo(k)}<button class="lnk ${k.status=="Completed"?"done":""}" data-pick="${k.id}">${esc(k.title)}</button>${chip(t(k.status),"gray")}</div>`).join("")}</div>
     ${x.kind=="task"?addTodo(x.id):`<button class="sm" data-addkid="${x.id}">+ ${esc(kname(CK[x.kind]))}</button>`}</div>`:""}
   <div class="dsec"><h3>${t("sec_time")}</h3><dl>${row("estimate",esc(x.estimate))}${row("due",esc(fmtDT(x.due)))}${snoozed(x)?row("snoozed_until",esc(fmtDT(x.snoozed_until))):""}</dl></div>
   <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}

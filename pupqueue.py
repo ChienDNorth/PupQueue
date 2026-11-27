@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "3.0.4", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "3.1.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -144,8 +144,10 @@ def organize_photos(t):
         if src.parent != folder or not re.fullmatch(re.escape(stem) + r"(_\d+)?", src.stem):
             folder.mkdir(parents=True, exist_ok=True)
             dst = free_path(folder, stem, src.suffix)
-            src.rename(dst)
-            src = dst
+            try:
+                src = src.rename(dst)
+            except OSError:  # open in another program (Windows): keep the old name, a later save tidies it
+                pass
         kept.append(src)
     t["photos"] = ";".join(photo_rel(p) for p in kept)
 
@@ -270,16 +272,25 @@ def load_tasks():
     return tasks
 
 
+def ensure_writable():
+    """Raise before changing anything if a task file is locked (Windows locks a csv while Excel or a sync tool has it open)."""
+    for name in ("active.csv", "completed.csv"):
+        if (RECORDS / name).exists():
+            (RECORDS / name).open("r+b").close()
+
+
 def save_tasks(tasks):
     # Limitation: one file per kind, no size rollover; add active_2.csv splitting if files grow huge
     RECORDS.mkdir(parents=True, exist_ok=True)
-    for name, done in (("active.csv", False), ("completed.csv", True)):
-        tmp = RECORDS / (name + ".tmp")
-        with tmp.open("w", newline="", encoding="utf-8-sig") as f:
+    names = (("active.csv", False), ("completed.csv", True))
+    for name, done in names:
+        with (RECORDS / (name + ".tmp")).open("w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, FIELDS, extrasaction="ignore")
             w.writeheader()
             w.writerows(t for t in tasks if (t["status"] == "Completed") == done)
-        tmp.replace(RECORDS / name)  # atomic: a crash never leaves a half-written csv
+    ensure_writable()  # replacing only one file would drop a task that moved between them
+    for name, _ in names:
+        (RECORDS / (name + ".tmp")).replace(RECORDS / name)  # atomic: a crash never leaves a half-written csv
 
 
 def clean_task(data, old=None):
@@ -327,6 +338,7 @@ def upsert(data):
     tasks = load_tasks()
     old = next((t for t in tasks if t["id"] == data.get("id")), None)
     new = clean_task(data, old)
+    ensure_writable()  # before photos get renamed, so a locked file can't leave them out of step with the csv
     if new["parent"] and not any(t["id"] == new["parent"] and t["kind"] == PARENT_KIND[new["kind"]] for t in tasks):
         raise ValueError("invalid_parent")
     if (new["paid"] and not (old and old["paid"]) and new["status"] == "Waitlist" and "status" not in data
@@ -347,7 +359,7 @@ def upsert(data):
         discard_photo(rel)
     organize_photos(new)
     tasks = [t for t in tasks if t["id"] != new["id"]] + [new]
-    if old and old["status"] != new["status"]:
+    if not old or old["status"] != new["status"]:
         pull_parents(tasks, new)
     save_tasks(tasks)
     return new
@@ -378,6 +390,7 @@ def reorder(ids):
 
 def delete_task(tid, children="keep"):
     """children="delete" also deletes everything inside the item; "keep" leaves its direct children without a parent."""
+    ensure_writable()  # before any photo is deleted
     tasks, ids = load_tasks(), {tid}
     while children == "delete" and (more := {t["id"] for t in tasks if t["parent"] in ids} - ids):
         ids |= more
@@ -394,6 +407,8 @@ def wake_snoozed():
     """Tasks whose snooze has ended go back to the status they had before it."""
     tasks, now = load_tasks(), datetime.now().isoformat(timespec="minutes")  # snoozed_until is local time, like now()
     woke = [t for t in tasks if t["snoozed_from"] and t["snoozed_until"] <= now]
+    if woke:
+        ensure_writable()  # before photos move back to the finished folder
     for t in woke:
         t["status"], t["snoozed_from"], t["snoozed_until"] = t["snoozed_from"], "", ""
         if t["status"] == "Completed":
@@ -430,7 +445,24 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(404, {"error": "not found"})
 
+    def _trusted(self):
+        """Refuse other websites: a foreign Host is DNS rebinding (reading our data), a foreign Origin a cross-site write."""
+        own = {f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}"}
+        origin = self.headers.get("Origin")
+        return self.headers.get("Host") in own and (origin is None or origin.removeprefix("http://") in own)
+
+    def _guard(self, handle):
+        if not self._trusted():
+            return self._send(403, {"error": "forbidden"})
+        try:
+            handle()
+        except OSError:  # a task file locked by another program: say so instead of dropping the connection
+            self._send(500, {"error": "file_locked"})
+
     def do_GET(self):
+        self._guard(self._get)
+
+    def _get(self):
         p = self.path.split("?")[0]
         if p == "/":
             self._file(ROOT / "static" / "index.html", "text/html")
@@ -439,10 +471,10 @@ class Handler(BaseHTTPRequestHandler):
         elif p == "/api/state":
             with DATA_LOCK:  # build under the lock, send outside it so a slow browser can't stall saves
                 wake_snoozed()
+                fin = finished_photos()
                 state = {"tasks": [view(t) for t in load_tasks()], "settings": load_settings(),
                          "statuses": STATUSES, "version": VERSION, "settings_file": str(SETTINGS_FILE.resolve()),
-                         "finished_photos": {"count": len(finished_photos()),
-                                             "bytes": sum(f.stat().st_size for f in finished_photos())}, "author": AUTHOR, "year": YEAR,
+                         "finished_photos": {"count": len(fin), "bytes": sum(f.stat().st_size for f in fin)}, "author": AUTHOR, "year": YEAR,
                          "languages": {f.stem: json.loads(f.read_text(encoding="utf-8"))["name"]
                                        for f in sorted((ROOT / "locales").glob("*.json"))}}
             self._send(200, state)
@@ -455,18 +487,20 @@ class Handler(BaseHTTPRequestHandler):
         elif m := re.fullmatch(r"/locales/([a-z\-]+)\.json", p):
             self._file(ROOT / "locales" / f"{m[1]}.json", "application/json")
         elif p.startswith("/photos/"):
-            f = photo_file("photos/" + unquote(p[8:]))  # resolves inside photos/ only: blocks path traversal
-            self._file(f) if f else self._send(404, {"error": "not found"})
+            with DATA_LOCK:  # a save renaming this photo waits for the read (Windows can't rename an open file)
+                f = photo_file("photos/" + unquote(p[8:]))  # resolves inside photos/ only: blocks path traversal
+                data = f.read_bytes() if f else None
+            self._send(200, data, mimetypes.guess_type(f.name)[0] or "application/octet-stream") if f else self._send(404, {"error": "not found"})
         else:
             self._send(404, {"error": "not found"})
 
     def do_POST(self):
         with DATA_LOCK:
-            self._post()
+            self._guard(self._post)
 
     def do_DELETE(self):
         with DATA_LOCK:
-            self._delete()
+            self._guard(self._delete)
 
     def _post(self):
         try:
