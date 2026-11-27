@@ -1,4 +1,11 @@
 # Changelog
+## v3.1.1
+- Estimated time: a number after minutes, like 1min30, is read as 1 minute, because seconds aren't kept. A note under the field says the number was left out and shows how to write hours instead (e.g. 1h30min). In English and Chinese.
+- A half minute rounds up the same way every time: 0.5 is 1 minute, 2.5 is 3 (it used to round 0.5 down to 0 and 2.5 down to 2).
+- An estimate with hundreds of digits gets the normal "can't read that time" message instead of failing silently.
+- A field sent empty (null) is cleared instead of being saved as the word "None".
+- A broken request can no longer freeze saving for the whole app.
+- Starting with port 0 (python pupqueue.py 0) opens the port that was actually picked.
 ## v3.1.0
 - In a task's details, every todo under Children has a small three-line handle on the right to show it can be dragged up or down. It's only a sign: clicking it does nothing.
 - Smoother todo dragging: the todo you pick up lifts out of the list (highlighted, with a shadow) and follows the mouse, a dashed slot shows where it will land, and the other todos slide out of the way. Letting go glides it into place; Escape puts it back. On touch screens, drag by the handle. Turning off Animations keeps dragging but without the sliding.

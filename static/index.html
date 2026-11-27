@@ -307,8 +307,10 @@ const UN={min:1,mins:1,minute:1,minutes:1,m:1,"分":1,"分钟":1,h:60,hr:60,hrs:
 function parseDur(s){s=s.toLowerCase().replace(/[\s,]/g,"");if(!s)return"";
   const toks=[...s.matchAll(/(\d+(?:\.\d+)?)([^\d.]*)/g)];
   if(!toks.length||toks.map(m=>m[0]).join("")!=s)throw 0;
-  let sum=0;toks.forEach(([,n,u],i)=>{if(Object.hasOwn(UN,u))sum+=n*UN[u];else if(u===""&&i==toks.length-1)sum+=+n;else throw 0});
+  let sum=0;toks.forEach(([,n,u],i)=>{if(Object.hasOwn(UN,u))sum+=n*UN[u];else if(u===""&&i==toks.length-1){if(!(i&&UN[toks[i-1][2]]==1))sum+=+n}else throw 0});  // after minutes a bare number would be seconds: left out
   return Math.round(sum)}
+const secNote=s=>{const k=[...s.toLowerCase().replace(/[\s,]/g,"").matchAll(/(\d+(?:\.\d+)?)([^\d.]*)/g)],a=k.at(-2),b=k.at(-1);  // the warning for what parseDur left out
+  return a&&b[2]===""&&UN[a[2]]==1?t("est_no_seconds").replace("{n}",b[1]).replace("{u}",a[2]).replace("{h}",`${a[1]}h${b[1]}min`):""};
 const fmtDur=m=>{if(m==="")return"";const d=Math.floor(m/1440),h=Math.floor(m%1440/60),n=m%60;return(d?d+"d":"")+(h?h+"h":"")+(n?n+"min":"")||"0min"};
 const loc=()=>L.intl||S.settings.language;
 const fmtT=(h,m)=>L.hour12?`${h%12||12}:${pad(m)} ${t(h<12?"am":"pm")}`:`${pad(h)}:${pad(m)}`;
@@ -720,8 +722,8 @@ function edit(x={}){const kind=x.kind||"task",lite=kind=="todo"&&!x.id?"hide":""
     if(field&&(c==k.finish_field||e.key=="Enter")){e.preventDefault();if(c==k.finish_field)el.blur()}};  // Enter never submits the form on its own
   f.oninput=e=>{st.dirty=true;if(e.target.name&&e.target.closest(".fld")&&$(".ferr",e.target.closest(".fld")))setErr(e.target.name,"")};
   const est=E("estimate"),normEst=()=>{const m=parseDur(est.value);est.value=fmtDur(m)};
-  est.oninput=()=>{try{const m=parseDur(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)}catch{$("#esthint").textContent=""}};
-  est.onchange=()=>{try{normEst();setErr("estimate","");$("#esthint").textContent=t("estimate_hint")}catch{setErr("estimate",t("err_invalid_estimate"))}};
+  est.oninput=()=>{try{const m=parseDur(est.value),n=secNote(est.value);$("#esthint").textContent=m===""?t("estimate_hint"):"→ "+fmtDur(m)+(n&&" · "+n)}catch{$("#esthint").textContent=""}};
+  est.onchange=()=>{try{const n=secNote(est.value);normEst();setErr("estimate","");$("#esthint").textContent=n||t("estimate_hint")}catch{setErr("estimate",t("err_invalid_estimate"))}};  // the note stays after the value is tidied, so the dropped number isn't missed
   $("#file").onchange=e=>{const fs=[...e.target.files];e.target.value="";$("#perr").textContent="";
     st.up=st.up.then(async()=>{for(const file of fs){try{const p=(await api("POST","/api/upload",file,{"X-Filename":encodeURIComponent(file.name)})).path;st.photos.push(p);st.fresh.add(p)}
       catch(er){$("#perr").textContent=`${t("err_upload")}: ${file.name} (${er.message})`}}thumbs()})};

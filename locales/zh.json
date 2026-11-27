@@ -13,7 +13,7 @@
   "sec_title": "标题", "sec_basic": "基本信息", "sec_time": "时间", "sec_client": "客户信息",
   "title": "标题", "type": "绘画类型", "priority": "优先级", "price": "价格", "currency": "货币",
   "paid": "已付款？", "paid_amount": "付款金额", "paid_time": "付款时间",
-  "estimate": "预计用时", "estimate_hint": "如 90min、1.5h、2d（不写单位按分钟）", "due": "截止日期与时间",
+  "estimate": "预计用时", "estimate_hint": "如 90min、1.5h、2d（不写单位按分钟）", "est_no_seconds": "不支持秒，{u} 后面的 {n} 已忽略。如果是小时请写 h，例如 {h}。", "due": "截止日期与时间",
   "pick_datetime": "选择日期与时间", "today": "今天", "tomorrow": "明天", "next_week": "下周", "done": "完成",
   "hour": "时", "minute": "分", "time": "时间", "none": "未设置",
   "client_name": "客户名称", "client_email": "客户邮箱", "socials": "社交媒体", "add_social": "+ 添加社交账号",

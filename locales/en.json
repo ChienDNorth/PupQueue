@@ -13,7 +13,7 @@
   "sec_title": "Title", "sec_basic": "Basic information", "sec_time": "Time", "sec_client": "Client information",
   "title": "Title", "type": "Drawing type", "priority": "Priority", "price": "Price", "currency": "Currency",
   "paid": "Paid?", "paid_amount": "Amount paid", "paid_time": "Paid at",
-  "estimate": "Estimated time", "estimate_hint": "e.g. 90min, 1.5h, 2d (no unit = minutes)", "due": "Due date & time",
+  "estimate": "Estimated time", "estimate_hint": "e.g. 90min, 1.5h, 2d (no unit = minutes)", "est_no_seconds": "Seconds aren't kept, so the {n} after {u} is left out. For hours write h, e.g. {h}.", "due": "Due date & time",
   "pick_datetime": "Pick a date & time", "today": "Today", "tomorrow": "Tomorrow", "next_week": "Next week", "done": "Done",
   "hour": "Hour", "minute": "Minute", "time": "Time", "none": "Not set",
   "client_name": "Client name", "client_email": "Client email", "socials": "Social media", "add_social": "+ Add social",

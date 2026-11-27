@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "3.1.0", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "3.1.1", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -57,8 +57,8 @@ EMAIL_RE = re.compile(rf"{_ATOM}(?:\.{_ATOM})*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{{0,
 
 
 def parse_duration(text):
-    """'70min'->70, '0.5h'->30, '1d2h'->1560, '1h30'->90; a bare number means minutes. '' -> ''."""
-    text = re.sub(r"[\s,]", "", str(text).lower())
+    """'70min'->70, '0.5h'->30, '1d2h'->1560, '1h30'->90, '1min30'->1; a bare number means minutes. '' -> ''."""
+    text = re.sub(r"[\s,]", "", "" if text is None else str(text).lower())
     if not text:
         return ""
     toks = re.findall(r"(\d+(?:\.\d+)?)([^\d.]*)", text)
@@ -69,10 +69,13 @@ def parse_duration(text):
         if u in UNITS:
             total += float(n) * UNITS[u]
         elif u == "" and i == len(toks) - 1:
-            total += float(n)  # unit omitted -> minutes
+            if not (i and UNITS[toks[i - 1][1]] == 1):  # after minutes it would be seconds, which aren't kept: '1min30' -> 1
+                total += float(n)  # unit omitted -> minutes
         else:
             raise ValueError("invalid_estimate")
-    return round(total)
+    if not math.isfinite(total):  # hundreds of digits overflow to inf
+        raise ValueError("invalid_estimate")
+    return math.floor(total + 0.5)  # round half up: round() would give 0.5 -> 0 but 1.5 -> 2
 
 
 def format_duration(minutes):
@@ -298,7 +301,7 @@ def clean_task(data, old=None):
     t.update(old or {})
     for k in FIELDS:
         if k in data:
-            t[k] = data[k] if isinstance(data[k], str) else json.dumps(data[k], ensure_ascii=False) \
+            t[k] = "" if data[k] is None else data[k] if isinstance(data[k], str) else json.dumps(data[k], ensure_ascii=False) \
                 if k == "client_socials" else str(data[k])
     if not t["title"].strip():
         raise ValueError("title_required")
@@ -437,7 +440,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self):
-        return self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        return self.rfile.read(max(0, int(self.headers.get("Content-Length", 0))))  # read(-1) waits for EOF, freezing every save behind DATA_LOCK
 
     def _file(self, path, ctype=None):
         if path.is_file():
@@ -560,6 +563,7 @@ if __name__ == "__main__":
     ensure_settings_file()
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)  # localhost only: no auth
+    port = srv.server_port  # port 0 means the system picked one
     print(f"PupQueue v{VERSION} running at http://127.0.0.1:{port}  (Ctrl+C to stop)")
     webbrowser.open(f"http://127.0.0.1:{port}")
     srv.serve_forever()

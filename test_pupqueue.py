@@ -22,7 +22,10 @@ def test_duration():
     for h in range(300):  # whole hours and days convert up
         assert pq.parse_duration(f"{h}h") == h * 60 and pq.parse_duration(f"{h}d") == h * 1440
     assert pq.parse_duration("1.5h") == 90 and pq.parse_duration("0.25d") == 360 and pq.parse_duration("") == ""
-    for bad in ("abc", "5x", "h", "-5", "1.5.5", "1 h 2 x", "min5"):
+    assert [pq.parse_duration(x) for x in ("0.4", "0.5", "1.5", "2.5")] == [0, 1, 2, 3]  # halves round up, every time
+    for s, m in (("1min30", 1), ("1min20", 1), ("1m30", 1), ("1分30", 1), ("2h1min30", 121), ("1h30", 90), ("1d2", 1442)):
+        assert pq.parse_duration(s) == m, s  # a number after minutes would be seconds: left out
+    for bad in ("abc", "5x", "h", "-5", "1.5.5", "1 h 2 x", "min5", "9" * 400):
         try: pq.parse_duration(bad); assert False, bad
         except ValueError: pass
 
@@ -55,6 +58,11 @@ def test_storage_and_api():
     assert call("POST", "/api/tasks", {"title": "x", "client_email": "nope@x"})["error"] == "invalid_email"
     ok = call("POST", "/api/tasks", {"id": b["id"], "client_email": " me@example.com "})
     assert ok["client_email"] == "me@example.com"
+    ok = call("POST", "/api/tasks", {"id": b["id"], "client_email": None, "notes": None, "estimate": None})  # JSON null clears, never stores "None"
+    assert ok["client_email"] == ok["notes"] == ok["estimate"] == "" and ok["title"] == "Gift"
+    c = http.client.HTTPConnection("127.0.0.1", srv.server_port, timeout=5)  # a negative length must not hang the server
+    c.putrequest("POST", "/api/tasks"); c.putheader("Content-Length", "-1"); c.endheaders()
+    assert c.getresponse().status == 400
     # photos land in task_records/photos, even for a Chinese filename (sent percent-encoded)
     p = call("POST", "/api/upload", b"img", {"X-Filename": "%E5%9B%BE%E7%89%87.PNG"})["path"]
     assert p.startswith("task_records/photos/") and (pq.RECORDS.parent / p).read_bytes() == b"img"
