@@ -1,4 +1,6 @@
 # Changelog
+## v3.2.1
+- Settings > Projects: the two todo settings are now one Todos card, with the small headings "On the board" and "Order".
 ## v3.2.0
 - Projects page: drag a row to move it. Drop it on a project (for a task) or a task (for a todo) to put it inside; drop it on the top or bottom half of a row to place it right before or after; drop a task or todo on "No parent" to take it out of its parent. A spot that breaks the rules slides the row back and a message says why. Alt+↑/↓ on a row moves it one place.
 - Moving a Ready or WIP item into a Waitlist parent brings that parent to Ready or WIP too, the same as changing the item's status.
