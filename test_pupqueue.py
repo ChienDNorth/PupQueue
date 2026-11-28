@@ -335,6 +335,11 @@ def test_start_status_payment_and_completed_time():
     stamp = t["completed_at"]
     assert stamp and pq.upsert({"id": t["id"], "notes": "x"})["completed_at"] == stamp
     assert pq.upsert({"id": t["id"], "status": "WIP"})["completed_at"] == ""
+    # a finished row from before completed_at existed reads its created date as the finish date
+    old = pq.upsert({"id": t["id"], "status": "Completed"})
+    tasks = pq.load_tasks(); next(x for x in tasks if x["id"] == old["id"])["completed_at"] = ""; pq.save_tasks(tasks)
+    assert next(x for x in pq.load_tasks() if x["id"] == old["id"])["completed_at"] == old["created"]
+    pq.upsert({"id": t["id"], "status": "WIP"})
     # settings: limits, priorities and icons are validated; an icon of a removed method is dropped
     for bad, code in [({"completed_limit": 0}, "invalid_completed_limit"), ({"completed_limit": "10"}, "invalid_completed_limit"),
                       ({"completed_limit": True}, "invalid_completed_limit"), ({"ready_priorities": ["Urgent"]}, "invalid_priority"),

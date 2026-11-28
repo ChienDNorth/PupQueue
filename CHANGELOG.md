@@ -1,4 +1,8 @@
 # Changelog
+## v3.3.0
+- Info icons: most setting descriptions now sit behind an ⓘ that shows the text when you point at it (or Tab to it). Descriptions you need to use a field stay on the page. The two info buttons in the task window work the same way.
+- Settings > Shortcuts lists the other keys too: Enter / Space to open, Alt+↑/↓ to move, X to cross out, Enter to add, Escape to close or cancel.
+- Finished date: the details panel shows when an item was finished, finished cards show it, and the Projects page shows it under the Completed badge. Items finished before v2.3 use their created date.
 ## v3.2.1
 - Settings > Projects: the two todo settings are now one Todos card, with the small headings "On the board" and "Order".
 ## v3.2.0

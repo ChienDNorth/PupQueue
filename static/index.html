@@ -197,6 +197,13 @@ dt{color:var(--muted);font-size:var(--fs-sm);padding-top:.05rem}dd{margin:0;word
 .settings{margin:0 0 .9rem;background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.2rem 1.1rem}
 .settings label{display:block;margin:.8rem 0 .2rem;font-size:var(--fs-sm);color:var(--muted)}
 .settings>h3+label{margin-top:0}
+.chkrow{display:flex;align-items:center;gap:.3rem}.tip{position:relative;cursor:help}
+.tipbox{display:none;position:absolute;left:0;top:100%;z-index:5;width:max-content;max-width:20rem;padding:.5rem .7rem;background:var(--card);border:1px solid var(--line);border-radius:.5rem;box-shadow:var(--shadow);font-size:var(--fs-sm);color:var(--fg)}
+.tip:hover .tipbox,.tip:focus .tipbox{display:block}
+.tipbox{text-transform:none;letter-spacing:normal;font-weight:normal;line-height:1.45;text-align:left}.tipbox.end{left:auto;right:0}h3 .tip{margin-left:.3rem}
+.fd{display:block;white-space:nowrap;margin-top:.15rem}
+.keys{display:grid;grid-template-columns:max-content 1fr;gap:.45rem 1rem;margin:0;align-items:baseline}.keys dd{margin:0}
+kbd{font:inherit;font-size:var(--fs-sm);padding:.05rem .45rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:.35rem;white-space:nowrap}
 .settings select,.settings input:not([type=file]):not([type=checkbox]){width:100%}
 .settings label.chk{display:flex;margin:.35rem 0;font-size:var(--fs-md);color:var(--fg)}
 #set-kcol input[type=color]{flex:none;width:3rem;height:1.8rem;padding:.1rem}
@@ -357,6 +364,8 @@ const combo=e=>[e.ctrlKey&&"Ctrl",e.altKey&&"Alt",e.shiftKey&&"Shift",e.metaKey&
 const chip=(txt,cls="")=>`<span class="chip ${cls}">${txt}</span>`;
 const GEAR=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
 const INFO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
+let tipN=0;  // info icon with its text in a hover box; focusable so keyboard users can show it too
+const tip=(text,id="tip"+ ++tipN,end)=>`<span class="ib tip" tabindex="0" role="img" aria-label="${t("more_info")}" aria-describedby="${id}">${INFO}<span class="tipbox${end?" end":""}" role="tooltip" id="${id}">${text}</span></span>`;
 const PAY_COLORS={Wechat:"#07c160",Alipay:"#1677ff",Paypal:"#003087",Stripe:"#635bff",Zelle:"#6d1ed4",Venmo:"#008cff",Vgen:"#ff5c38"};
 const payIcon=n=>{if(!n)return"";const u=S.settings.payment_icons[n];if(u)return `<img class="picon" src="${esc(u)}" alt="">`;
   const c=PAY_COLORS[n]||`hsl(${[...n].reduce((h,ch)=>(h*31+ch.codePointAt(0))>>>0,7)%360} 55% 42%)`;  // other methods: a steady colour from the name
@@ -469,7 +478,7 @@ const bySort=(a,b)=>(+a.sort||0)-(+b.sort||0);
 const todosOf=id=>{const k=kidsOf(id).sort(bySort);return S.settings.todo_done_last?[...k.filter(d=>d.status!="Completed"),...k.filter(d=>d.status=="Completed")]:k};
 const todoList=x=>x.kind!="task"?"":`<div class="todos">${todosOf(x.id).filter(d=>d.status!="Completed").map(d=>todoBtn(d)).join("")}${addTodo(x.id)}</div>`;  // finished todos leave the card; the details panel still lists them
 function card(x,board){const par=T.find(y=>y.id==x.parent),soc=safe(x.client_socials).map(s=>`${esc(s.net)}: ${esc(s.handle)}`).join(", ");
-  const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))]].filter(f=>f[1]);
+  const facts=[["price",x.price&&`${esc(x.price)} ${esc(cur(x))}`],["estimate_short",esc(x.estimate)],["due_short",x.due&&esc(fmtDT(x.due))],["finished_at",x.status=="Completed"&&esc(fmtDT(x.completed_at))]].filter(f=>f[1]);
   const client=[x.client_name,x.client_email].filter(Boolean).map(esc).concat(soc?[soc]:[]).join(" · "),ph=photosOf(x);
   return `<div class="card ${snoozed(x)?"snoozed":""} ${sel==x.id?"sel":""}" data-id="${x.id}" ${board?'draggable="true"':""}>
   ${par?`<div class="c-par">↳ ${esc(par.title)}</div>`:""}<div class="c-top"><div class="c-title ttl">${kicon(x.kind)}${emo(x,1)}<span>${esc(fullTitle(x))}</span></div>${pbadge(x)}</div>
@@ -480,7 +489,7 @@ function card(x,board){const par=T.find(y=>y.id==x.parent),soc=safe(x.client_soc
   <div class="c-foot">${doneBtn(x)}<button class="sm" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<span class="sp"></span><button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div>${doneBar(x)}</div>`}
 function render(){closeMenu();chrome();const m=$("#main");
   if(view=="settings"){sel=null;settings(m)}
-  else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at||x.created;  // tasks finished before v2.3 have no completed_at
+  else if(view=="board"){const lim=S.settings.completed_limit,when=x=>x.completed_at;
     m.innerHTML=`${searchBox()}<div class="board">${S.statuses.map(s=>{let l=T.filter(x=>x.status==s&&(x.kind!="todo"||S.settings.todos_on_board)&&findTask(F.q,x));const n=l.length,done=s=="Completed";
       l=done?l.sort((a,b)=>when(b).localeCompare(when(a))).slice(0,lim):l.sort(byPrio);
       return `<div class="col" data-s="${s}"><h3>${t(s)} <span class="cnt">${n}</span>${done?`<span class="sp"></span><button class="ib" data-go="display:set-completed" title="${t("completed_settings")}" aria-label="${t("completed_settings")}">${GEAR}</button>`:""}</h3>
@@ -589,7 +598,7 @@ function projects(m){const ord=pord;
   const row=(x,lv)=>{const kids=kidsIn(x.id),open=fon||openT.has(x.id);  // filtering: every match is unfolded
     return `<div class="pr ${lv?"":"top"} ${sel==x.id?"on":""} ${x.status=="Completed"?"fin":""} ${fon&&!hits.includes(x)?"ctx":""}" data-row="${x.id}" style="--lv:${lv}" tabindex="0" draggable="true">
       <div class="pt">${kids.length&&fon?`<span class="chev open" aria-hidden="true">›</span>`:kids.length?`<button class="chev ${open?"open":""}" data-tog="${x.id}" aria-expanded="${open}" title="${t("toggle_children")}" aria-label="${t("toggle_children")}">›</button>`:`<span class="chev"></span>`}${kicon(x.kind)}${emo(x,1)}<span class="pn" title="${esc(fullTitle(x))}">${esc(x.title)}</span>${x.type?`<span class="kd">${esc(x.type)}</span>`:""}${snoozed(x)?"💤":""}</div>
-      <div><span class="st" data-s="${x.status}">${t(x.status)}</span></div>
+      <div><span class="st" data-s="${x.status}">${t(x.status)}</span>${x.status=="Completed"&&x.completed_at?`<small class="dim fd" title="${t("finished_at")}: ${esc(fmtDT(x.completed_at))}">${esc(new Date(x.completed_at).toLocaleDateString(loc(),{month:"short",day:"numeric"}))}</small>`:""}</div>
       <div class="pp">${pbars(x.priority)}<small>${esc(x.priority)}</small></div><div class="pgc">${prog(x)}</div><div>${due(x)}</div><div>${esc(x.estimate)}</div>
       <div>${x.price?chip(x.paid?payIcon(x.payment_method)+t("yes"):t("no"),x.paid?"ok":"bad"):""}</div></div>${open?ord(kids).map(k=>row(k,lv+1)).join(""):""}`};
   const loose=looseItems().filter(x=>!fon||shown.has(x.id)),tops=T.filter(x=>x.kind=="project"&&(!fon||shown.has(x.id)));
@@ -718,7 +727,7 @@ function detail(){const d=$("#detail"),x=sel&&T.find(y=>y.id==sel);
   <div class="dsec"><h3>${t("sec_client")}</h3><dl>${row("client_name",esc(x.client_name))}${row("client_email",x.client_email&&`<a href="mailto:${esc(x.client_email)}">${esc(x.client_email)}</a>`)}
     ${row("socials",soc)}${row("notes",x.notes&&`<div class="pre">${esc(x.notes)}</div>`)}</dl></div>
   ${photosOf(x).length?`<div class="dsec"><h3>${t("photos")}</h3><div class="pgrid">${photosOf(x).map(p=>`<a href="${purl(p)}" target="_blank"><img src="${purl(p)}" alt=""></a>`).join("")}</div></div>`:""}
-  <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}</dl>
+  <div class="dsec"><dl>${row("created",esc(fmtDT(x.created)))}${x.status=="Completed"?row("finished_at",esc(fmtDT(x.completed_at))):""}</dl>
   <div class="acts"><button class="sm primary" data-a="edit" data-id="${x.id}">${t("edit")}</button>${snoozeBtns(x)}<button class="sm danger" data-a="del" data-id="${x.id}">${t("delete")}</button></div></div>`;
   d.querySelectorAll(".bi .iv").forEach(b=>b.setAttribute("aria-label",`${b.parentElement.previousElementSibling.textContent}: ${b.textContent}`))}
 // Basic information shows plain values; clicking one (or Enter on it) opens that field's editor. [field, value shown, editor]
@@ -758,16 +767,15 @@ function edit(x={}){const kind=x.kind||"task",lite=kind=="todo"&&!x.id?"hide":""
   const dropFresh=p=>api("DELETE","/api/photos/"+encodeURIComponent(p.split("/").pop())).catch(()=>{});  // an upload no task references yet
   f.innerHTML=`<div class="dhead"><h2>${t(x.id?"edit_item":"new_item").replace("{x}",esc(kname(kind)))}</h2>
     <span><input type="hidden" name="priority" value="${esc(curP)}"><button type="button" class="pickp" id="pickp" title="${t("priority")}"></button>
-    <button type="button" class="ib" id="kinfo" title="${esc(t("kind_info"))}" aria-label="${esc(t("kind_info"))}" aria-expanded="false" aria-controls="khelp">${INFO}</button></span>
-    <p class="note hide" id="khelp" style="flex-basis:100%;margin:0">${esc(kt("kind_info_"+kind))}</p></div>
+    ${tip(esc(kt("kind_info_"+kind)),"khelp",1)}</span></div>
   <div class="dbody">
   <section class="sec"><h3>${t("sec_title")}</h3><div class="fld"><div class="inl">${s.emoji?`<input type="hidden" name="emoji" value="${esc(x.emoji)}"><button type="button" id="pickemo" class="emob" title="${t("emoji_pick")}" aria-label="${t("emoji_pick")}"></button>`:""}<input name="title" value="${esc(x.title)}" autocomplete="off" aria-label="${t("title")}"></div><em class="ferr"></em></div>
     ${PK[kind]?`<label class="fld"><span>${t("parent")} (${esc(kname(PK[kind]))})</span><select name="parent"><option value="">${t("parent_none")}</option>${T.filter(y=>y.kind==PK[kind]).map(y=>`<option value="${y.id}" ${y.id==x.parent?"selected":""}>${esc(y.title)}</option>`).join("")}</select></label>`:""}</section>
   <section class="sec ${lite}"><h3>${t("sec_basic")}</h3><div class="grid">
     <label class="fld"><span>${t("type")}</span>${sel_("type",withVal(s.types,x.type),x.type,1)}</label>
     <label class="fld"><span>${t("price")}</span><div class="inl"><input name="price" type="number" step="any" min="0" value="${esc(x.price)}">${curSel("currency",cur(x))}</div><em class="ferr"></em></label></div>
-    ${startable?`<div class="fld" style="margin-top:.7rem"><span>${t("start_in")} <button type="button" class="ib" id="sinfo" title="${t("start_info")}" aria-label="${t("start_info")}" aria-expanded="false" aria-controls="shelp">${INFO}</button><button type="button" class="ib" data-go="newtask:set-ready" title="${t("open_setting")}" aria-label="${t("open_setting")}">${GEAR}</button></span>
-      <select name="status" aria-label="${t("start_in")}">${x.id?"":`<option value=""></option>`}${["Waitlist","Ready"].map(v=>`<option value="${v}" ${v==x.status?"selected":""}>${t(v)}</option>`).join("")}</select><p class="note hide" id="shelp">${t("start_help")}${s.paid_ready?" "+t("start_help_paid"):""}</p></div>`:""}
+    ${startable?`<div class="fld" style="margin-top:.7rem"><span>${t("start_in")} ${tip(t("start_help")+(s.paid_ready?" "+t("start_help_paid"):""),"shelp")}<button type="button" class="ib" data-go="newtask:set-ready" title="${t("open_setting")}" aria-label="${t("open_setting")}">${GEAR}</button></span>
+      <select name="status" aria-label="${t("start_in")}">${x.id?"":`<option value=""></option>`}${["Waitlist","Ready"].map(v=>`<option value="${v}" ${v==x.status?"selected":""}>${t(v)}</option>`).join("")}</select></div>`:""}
     <label class="chk"><input type="checkbox" name="paid" ${x.paid?"checked":""}> ${t("paid")}</label>
     <div id="pbox" class="grid ${x.paid?"":"hide"}"><label class="fld"><span>${t("paid_amount")}</span><input name="paid_amount" type="number" step="any" min="0" value="${esc(x.paid_amount)}"></label>
     <div class="fld"><span>${t("paid_time")}</span>${dtField("paid_time",x.paid_time,"now")}</div>
@@ -792,8 +800,6 @@ function edit(x={}){const kind=x.kind||"task",lite=kind=="todo"&&!x.id?"hide":""
   const showAuto=()=>{const o=f.querySelector('select[name=status] option[value=""]');if(o)o.textContent=`${t("start_auto")} (${t(s.ready_priorities.includes(E("priority").value)||s.paid_ready&&E("paid").checked?"Ready":"Waitlist")})`};
   const showP=()=>{$("#pickp").innerHTML=pbars(E("priority").value)+esc(E("priority").value)+' <small>▾</small>';showAuto()};
   const showPay=()=>$("#picon").innerHTML=payIcon(E("payment_method").value);E("payment_method").onchange=showPay;showPay();
-  $("#kinfo").onclick=e=>{const h=$("#khelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
-  if(startable)$("#sinfo").onclick=e=>{const h=$("#shelp");h.classList.toggle("hide");e.currentTarget.setAttribute("aria-expanded",!h.classList.contains("hide"))};
   f.onclick=e=>{const g=e.target.closest("[data-go]");if(!g||st.dirty&&!confirm(t("confirm_leave_task")))return;$("#dlg").close();goSetting(...g.dataset.go.split(":"))};
   const showEmo=()=>{const v=E("emoji").value;$("#pickemo").innerHTML=v?esc(v):SMILE;$("#pickemo").classList.toggle("empty",!v)};
   if(s.emoji){showEmo();$("#pickemo").onclick=()=>emojiMenu($("#pickemo"),E("emoji").value,v=>{E("emoji").value=v;st.dirty=true;showEmo()})}
@@ -880,28 +886,29 @@ async function iconURL(file){  // shrink to a 64px square so the icon fits in se
   throw 0}
 function settings(m){const s=S.settings,fp=S.finished_photos;
   const opt=(v,l,cur_)=>`<option value="${esc(v)}" ${v==cur_?"selected":""}>${esc(l)}</option>`;
-  const card=(title,body)=>`<div class="settings"><h3>${title}</h3>${body}</div>`;
+  const card=(title,body,hint)=>`<div class="settings"><h3>${title}${hint?tip(hint):""}</h3>${body}</div>`;
+  const tipChk=(id,on,label,hint)=>`<div class="chkrow"><label class="chk"><input type="checkbox" id="${id}" ${on?"checked":""} aria-describedby="${id}-tip"> ${label}</label>${tip(hint,id+"-tip")}</div>`;  // the checkbox is described by the hint too
   const pane={
     display:()=>card(t("theme"),`<select id="sth" aria-label="${t("theme")}">${["auto","light","dark"].map(v=>opt(v,t("theme_"+v),s.theme)).join("")}</select>`)+
-      card(t("animations"),`<label class="chk"><input type="checkbox" id="set-anim" ${s.animations?"checked":""}> ${t("animations_on")}</label><p class="note">${t("animations_hint")}</p>`)+
-      card(t("completed_limit"),`<input id="set-completed" type="number" min="1" max="500" step="1" value="${s.completed_limit}" aria-label="${t("completed_limit")}"><p class="note">${t("completed_limit_hint")}</p>`),
-    structure:()=>card(t("agile"),`<label class="chk"><input type="checkbox" id="set-agile" ${s.agile?"checked":""}> ${t("agile_on")}</label><p class="note">${t("agile_hint")}</p>`)+
-      card(kt("todos_card"),`<label>${t("todos_sub_board")}</label><label class="chk"><input type="checkbox" id="set-todos" ${s.todos_on_board?"checked":""}> ${kt("todos_on_board_on")}</label><p class="note">${kt("todos_on_board_hint")}</p>
-        <label>${t("todos_sub_order")}</label><label class="chk"><input type="checkbox" id="set-todo-order" ${s.todo_done_last?"checked":""}> ${kt("todo_done_last_on")}</label><p class="note">${kt("todo_done_last_hint")}</p>`)+
-      card(t("kind_colors"),`<div id="set-kcol">${KINDS.map(k=>`<label class="chk">${kicon(k)} <input type="color" data-kc="${k}" value="${s.kind_colors[k]}"> ${esc(kname(k))}</label>`).join("")}</div><p class="note">${kt("kind_colors_hint")}</p>`)+
-      card(t("emoji"),`<label class="chk"><input type="checkbox" id="set-emoji" ${s.emoji?"checked":""}> ${t("emoji_on")}</label><p class="note">${t("emoji_hint")}</p>`)+
-      card(t("project_order"),`<select id="set-porder" aria-label="${t("project_order")}">${["due","priority","hand"].map(v=>opt(v,t("project_order_"+v),s.project_order)).join("")}</select><p class="note">${kt("project_order_hint")}</p>`)+
+      card(t("animations"),tipChk("set-anim",s.animations,t("animations_on"),t("animations_hint")))+
+      card(t("completed_limit"),`<input id="set-completed" type="number" min="1" max="500" step="1" value="${s.completed_limit}" aria-label="${t("completed_limit")}">`,t("completed_limit_hint")),
+    structure:()=>card(t("agile"),tipChk("set-agile",s.agile,t("agile_on"),t("agile_hint")))+
+      card(kt("todos_card"),tipChk("set-todos",s.todos_on_board,kt("todos_on_board_on"),kt("todos_on_board_hint"))+tipChk("set-todo-order",s.todo_done_last,kt("todo_done_last_on"),kt("todo_done_last_hint")))+
+      card(t("kind_colors"),`<div id="set-kcol">${KINDS.map(k=>`<label class="chk">${kicon(k)} <input type="color" data-kc="${k}" value="${s.kind_colors[k]}"> ${esc(kname(k))}</label>`).join("")}</div>`,kt("kind_colors_hint"))+
+      card(t("emoji"),tipChk("set-emoji",s.emoji,t("emoji_on"),t("emoji_hint")))+
+      card(t("project_order"),`<select id="set-porder" aria-label="${t("project_order")}">${["due","priority","hand"].map(v=>opt(v,t("project_order_"+v),s.project_order)).join("")}</select>`,kt("project_order_hint"))+
       card(t("delete_children"),`<select id="set-delch" aria-label="${t("delete_children")}">${["ask","delete","keep"].map(v=>opt(v,t("delete_children_"+v),s.delete_children)).join("")}</select>`),
     newtask:()=>card(t("default_priority"),`<select id="sdp" aria-label="${t("default_priority")}">${s.priorities.map(p=>opt(p,p,s.default_priority)).join("")}</select>`)+
       card(t("default_due_time"),`<select id="sdt" aria-label="${t("default_due_time")}">${[...Array(24)].map((_,h)=>opt(pad(h)+":00",fmtT(h,0),s.default_due_time)).join("")}</select>`)+
       card(t("ready_priorities"),`<div id="set-ready">${s.priorities.map(p=>`<label class="chk"><input type="checkbox" data-rdy="${esc(p)}" ${s.ready_priorities.includes(p)?"checked":""}> ${pbars(p)} ${esc(p)}</label>`).join("")}</div><p class="note">${t("ready_priorities_hint")}</p>
-        <label class="chk" style="margin-top:.8rem"><input type="checkbox" id="set-paid-ready" ${s.paid_ready?"checked":""}> ${t("paid_ready")}</label><p class="note">${t("paid_ready_hint")}</p>`),
-    fields:()=>card(t("types_label"),`<div class="tags" id="tg-types"></div><p class="note">${t("tag_hint")}</p>`)+
-      card(t("socials_label"),`<div class="tags" id="tg-socials"></div><p class="note">${t("tag_hint")}</p>`)+
-      card(t("title_format"),`<div class="tags" id="tg-title"></div><p class="note">${t("title_format_hint")}</p>`),
+        <div style="margin-top:.8rem">${tipChk("set-paid-ready",s.paid_ready,t("paid_ready"),t("paid_ready_hint"))}</div>`),
+    fields:()=>card(t("types_label"),`<div class="tags" id="tg-types"></div>`,t("tag_hint"))+
+      card(t("socials_label"),`<div class="tags" id="tg-socials"></div>`,t("tag_hint"))+
+      card(t("title_format"),`<div class="tags" id="tg-title"></div>`,t("title_format_hint")),
     payments:()=>card(t("currency"),`<select id="scur" aria-label="${t("currency")}">${opt("",`${t("currency_auto")} (${L.default_currency||"USD"})`,s.currency)}${(CURS.includes(s.currency)||!s.currency?CURS:[...CURS,s.currency]).map(c=>opt(c,c,s.currency)).join("")}</select>`)+
-      card(t("payment_methods_label"),`<div class="tags" id="tg-pay"></div><p class="note">${t("tag_hint")}</p><label>${t("payment_icons")}</label><div id="pay-icons"></div>`),
-    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" id="sc-${k}" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`),
+      card(t("payment_methods_label"),`<div class="tags" id="tg-pay"></div><label>${t("payment_icons")}</label><div id="pay-icons"></div>`,t("tag_hint")),
+    shortcuts:()=>card(t("cat_shortcuts"),Object.entries(s.shortcuts).map(([k,v])=>`<label>${t("sc_"+k)}</label><button class="sm" id="sc-${k}" data-sc="${k}">${esc(v)}</button>`).join("")+`<p class="note">${t("sc_hint")}</p>`)+
+      card(t("sc_fixed"),`<dl class="keys" id="sc-fixed">${[["Enter / Space","scf_open"],["Alt+↑ / Alt+↓","scf_move"],["X","scf_cross"],["Enter","scf_add"],["Enter / ,","scf_tag"],["Enter","scf_search"],["Escape","scf_esc"]].map(([k,d])=>`<dt><kbd>${k}</kbd></dt><dd>${kt(d)}</dd>`).join("")}</dl>`),
     data:()=>card(t("finished_photos"),`<div class="fp" id="set-fp"><span>${fp.count} ${t("files")} · ${fmtBytes(fp.bytes)}</span><button class="sm danger" id="fpclear" ${fp.count?"":"disabled"}>${t("clear_finished")}</button></div>`)+
       card(t("cat_file"),`<p class="note" style="margin-top:0">${t("file_intro")}</p>
       <label>${t("file_path")}</label><code class="path" id="set-fpath">${esc(S.settings_file)}</code>
@@ -913,7 +920,7 @@ function settings(m){const s=S.settings,fp=S.finished_photos;
   // [category, element id to jump to, label]; the open category lists its items under it, and search looks through all of them
   const items=[["display","sth","theme"],["display","set-anim","animations"],["display","set-completed","completed_limit"],["structure","set-agile","agile"],["structure","set-todos","todos_on_board"],["structure","set-todo-order","todo_done_last"],["structure","set-kcol","kind_colors"],["structure","set-emoji","emoji"],["structure","set-delch","delete_children"],["structure","set-porder","project_order"],["newtask","sdp","default_priority"],["newtask","sdt","default_due_time"],
     ["newtask","set-ready","ready_priorities"],["newtask","set-paid-ready","paid_ready"],["fields","tg-types","types_label"],["fields","tg-socials","socials_label"],
-    ["fields","tg-title","title_format"],["payments","scur","currency"],["payments","tg-pay","payment_methods_label"],...Object.keys(s.shortcuts).map(k=>["shortcuts","sc-"+k,"sc_"+k]),
+    ["fields","tg-title","title_format"],["payments","scur","currency"],["payments","tg-pay","payment_methods_label"],...Object.keys(s.shortcuts).map(k=>["shortcuts","sc-"+k,"sc_"+k]),["shortcuts","sc-fixed","sc_fixed"],
     ["data","set-fp","finished_photos"],["data","set-fpath","cat_file"]];
   const sub=([c,id,k],cat,i)=>`<button class="sub" style="--i:${i}" data-go="${c}:${id}">${cat?`<small>${t("cat_"+c)}</small>`:""}${kt(k)}</button>`;
   const drawNav=()=>{const q=sq.trim(),rank=it=>kt(it[2]).toLowerCase().includes(q.toLowerCase())?0:1;  // whole-word hits before spread-out ones

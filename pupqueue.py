@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-VERSION, AUTHOR, YEAR = "3.2.1", "北原啸ChienDNorth", 2026
+VERSION, AUTHOR, YEAR = "3.3.0", "北原啸ChienDNorth", 2026
 ROOT = Path(__file__).parent
 RECORDS = ROOT / "task_records"
 PHOTOS = RECORDS / "photos"
@@ -274,6 +274,8 @@ def load_tasks():
                 tasks += [{k: row.get(k) or "" for k in FIELDS} for row in csv.DictReader(f)]
     for t in tasks:
         t["kind"] = t["kind"] or "task"  # rows from before v3.0 are tasks
+        if t["status"] == "Completed" and not t["completed_at"]:
+            t["completed_at"] = t["created"]  # finished before v2.3, when the date wasn't kept: created is the best guess
     return tasks
 
 
